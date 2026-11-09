@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>🔄 Transactions</h1><p>Complete issue / return history</p></div>
+  <div class="actions">
+    <a class="btn {{ 'btn-primary' if status=='All' else 'btn-ghost' }} btn-sm" href="{{ url_for('transactions', status='All') }}">All</a>
+    <a class="btn {{ 'btn-primary' if status=='Issued' else 'btn-ghost' }} btn-sm" href="{{ url_for('transactions', status='Issued') }}">Issued</a>
+    <a class="btn {{ 'btn-primary' if status=='Returned' else 'btn-ghost' }} btn-sm" href="{{ url_for('transactions', status='Returned') }}">Returned</a>
+  </div>
+</div>
+{% if txns %}
+<div class="table-wrap"><table class="tbl">
+  <thead><tr><th>#</th><th>Book</th><th>Member</th><th>Issue Date</th><th>Due Date</th><th>Return Date</th><th>Status</th><th>Fine</th></tr></thead>
+  <tbody>
+    {% for t in txns %}
+    <tr>
+      <td>#{{ t.issue_id }}</td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.member_name }} <span class="help">({{ t.roll_no }})</span></td>
+      <td>{{ t.issue_date }}</td>
+      <td>{{ t.due_date }}</td>
+      <td>{{ t.return_date or '—' }}</td>
+      <td>{% if t.status == 'Issued' %}<span class="badge {{ 'badge-red' if t.is_overdue else 'badge-blue' }}">{{ 'Overdue' if t.is_overdue else 'Issued' }}</span>{% else %}<span class="badge badge-green">Returned</span>{% endif %}</td>
+      <td>{% if t.payable_fine %}₹{{ t.payable_fine }}{% else %}₹0{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="empty-state"><div class="big">📭</div><p>No transactions found for this filter.</p></div>
+{% endif %}
+{% endblock %}

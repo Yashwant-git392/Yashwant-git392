@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Books{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>📖 Book Catalog</h1><p>Search, filter and maintain the library inventory</p></div>
+  <a class="btn btn-gold" href="{{ url_for('add_book') }}">+ Add New Book</a>
+</div>
+<form class="toolbar" method="get" action="{{ url_for('books') }}">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search title / author / ISBN…" aria-label="Search books">
+  <select name="category" aria-label="Filter by category">
+    <option value="">All categories</option>
+    {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == category }}>{{ c }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit">🔍 Search</button>
+  {% if q or category %}<a class="btn btn-ghost" href="{{ url_for('books') }}">Clear</a>{% endif %}
+</form>
+{% if books %}
+<div class="table-wrap"><table class="tbl">
+  <thead><tr><th>ISBN</th><th>Title</th><th>Author</th><th>Category</th><th>Qty</th><th>Available</th><th>Shelf</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for b in books %}
+    <tr>
+      <td><code>{{ b.isbn }}</code></td>
+      <td><strong>{{ b.title }}</strong><br><span class="help">{{ b.publisher }} · {{ b.edition }}</span></td>
+      <td>{{ b.author }}</td>
+      <td><span class="badge badge-gray">{{ b.category }}</span></td>
+      <td>{{ b.quantity }}</td>
+      <td>{% if b.available_quantity == 0 %}<span class="badge badge-red">0 — issued out</span>{% elif b.available_quantity <= 1 %}<span class="badge badge-amber">{{ b.available_quantity }} left</span>{% else %}<span class="badge badge-green">{{ b.available_quantity }}</span>{% endif %}</td>
+      <td>{{ b.shelf_location }}</td>
+      <td class="actions">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('edit_book', book_id=b.book_id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_book', book_id=b.book_id) }}" onsubmit="return confirm('Delete “{{ b.title }}”? This cannot be undone.');">
+          <button class="btn btn-red btn-sm" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="empty-state"><div class="big">🔍</div><p>No books match your search. Try a different keyword.</p></div>
+{% endif %}
+{% endblock %}

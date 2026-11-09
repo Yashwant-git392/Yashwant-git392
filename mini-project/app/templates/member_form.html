@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Register' if mode=='add' else 'Edit' }} Member{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>{{ '➕ Register Member' if mode=='add' else '✏️ Edit Member' }}</h1><p>Roll number and email must be unique. Phone must be a 10-digit Indian mobile number.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('members') }}">← Back to Members</a>
+</div>
+<form method="post" class="card" action="{{ url_for('add_member') if mode=='add' else url_for('edit_member', member_id=member_id) }}">
+  <div class="form-grid">
+    <div class="field"><label for="roll_no">Roll No / Employee ID *</label><input id="roll_no" name="roll_no" required minlength="4" maxlength="15" pattern="[A-Za-z0-9/-]{4,15}" placeholder="e.g. MCA2026001" value="{{ member.roll_no or form.roll_no or '' }}"></div>
+    <div class="field"><label for="name">Full Name *</label><input id="name" name="name" required minlength="2" maxlength="120" placeholder="e.g. Yashwant Shelke" value="{{ member.name or form.name or '' }}"></div>
+    <div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" required placeholder="e.g. yashwant@bvhmc.edu.in" value="{{ member.email or form.email or '' }}"><span class="help">Use the college domain, e.g. @bvhmc.edu.in</span></div>
+    <div class="field"><label for="phone">Mobile No *</label><input id="phone" name="phone" required pattern="[6-9][0-9]{9}" maxlength="10" inputmode="numeric" placeholder="e.g. 9876543201" value="{{ member.phone or form.phone or '' }}"><span class="help">10 digits starting 6–9</span></div>
+    <div class="field"><label for="department">Department *</label>
+      <select id="department" name="department" required>
+        {% for d in ['MCA-I','MCA-II','MBA-I','MBA-II','BBA','BCA','MSc','Faculty'] %}
+        <option value="{{ d }}" {{ 'selected' if (member.department or form.department) == d }}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="semester">Semester / Designation *</label><input id="semester" name="semester" required placeholder="e.g. 1 or Faculty" value="{{ member.semester or form.semester or '' }}"></div>
+    <div class="field"><label for="membership_type">Membership Type *</label>
+      <select id="membership_type" name="membership_type" required>
+        {% for t in ['Student','Faculty'] %}<option value="{{ t }}" {{ 'selected' if (member.membership_type or form.membership_type) == t }}>{{ t }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="status">Status *</label>
+      <select id="status" name="status" required>
+        {% for s in ['Active','Inactive'] %}<option value="{{ s }}" {{ 'selected' if (member.status or form.status or 'Active') == s }}>{{ s }}</option>{% endfor %}
+      </select>
+      <span class="help">Inactive members cannot borrow books</span>
+    </div>
+  </div>
+  <div class="actions" style="margin-top:18px">
+    <button class="btn btn-primary" type="submit">💾 {{ 'Register Member' if mode=='add' else 'Save Changes' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('members') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

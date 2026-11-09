@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Issue Book{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>➡️ Issue a Book</h1><p>Loan period {{ loan_days }} days · max {{ 3 }} books per member · only available copies are listed</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('transactions') }}">View Transactions →</a>
+</div>
+<form method="post" class="card" action="{{ url_for('issue_book') }}">
+  <div class="form-grid">
+    <div class="field">
+      <label for="member_id">Member *</label>
+      <select id="member_id" name="member_id" required>
+        <option value="">— select active member —</option>
+        {% for m in members %}<option value="{{ m.member_id }}">{{ m.roll_no }} — {{ m.name }} ({{ m.department }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="book_id">Book *</label>
+      <select id="book_id" name="book_id" required>
+        <option value="">— select available book —</option>
+        {% for b in books %}<option value="{{ b.book_id }}">{{ b.title }} · {{ b.author }} ({{ b.available_quantity }} available)</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="card" style="box-shadow:none;border:1.5px dashed #d9d5c6;background:#fffdf6;margin:16px 0 0">
+    <strong>Issue policy</strong>
+    <ul style="margin:8px 0 0 20px;color:var(--muted);line-height:1.8">
+      <li>Maximum <strong>3 books</strong> may be held by one member at a time.</li>
+      <li>Due date is auto-calculated as <strong>issue date + {{ loan_days }} days</strong>.</li>
+      <li>Inactive members are blocked from issuing.</li>
+      <li>Fine of <strong>₹2 per day</strong> applies after the due date.</li>
+    </ul>
+  </div>
+  <div class="actions" style="margin-top:18px">
+    <button class="btn btn-gold" type="submit">✅ Issue Book</button>
+    <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

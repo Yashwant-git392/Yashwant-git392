@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SmartLibrary{% endblock %} | Dr. B.V. Hiray College of Management and Research Centre</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+{% if session.get('admin_id') %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">📚</div>
+      <div>
+        <div class="brand-name">SmartLibrary</div>
+        <div class="brand-sub">Dr. B.V. Hiray College of<br>Management &amp; Research Centre, Malegaon</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-link {{ 'active' if request.endpoint=='dashboard' }}">📊 Dashboard</a>
+      <div class="nav-section">Catalog</div>
+      <a href="{{ url_for('books') }}" class="nav-link {{ 'active' if request.endpoint in ['books','add_book','edit_book'] }}">📖 Books</a>
+      <a href="{{ url_for('members') }}" class="nav-link {{ 'active' if request.endpoint in ['members','add_member','edit_member'] }}">🎓 Members</a>
+      <div class="nav-section">Circulation</div>
+      <a href="{{ url_for('issue_book') }}" class="nav-link {{ 'active' if request.endpoint=='issue_book' }}">➡️ Issue Book</a>
+      <a href="{{ url_for('return_book') }}" class="nav-link {{ 'active' if request.endpoint=='return_book' }}">↩️ Return Book</a>
+      <a href="{{ url_for('transactions') }}" class="nav-link {{ 'active' if request.endpoint=='transactions' }}">🔄 Transactions</a>
+      <div class="nav-section">Analytics</div>
+      <a href="{{ url_for('fines') }}" class="nav-link {{ 'active' if request.endpoint=='fines' }}">💰 Fines</a>
+      <a href="{{ url_for('reports') }}" class="nav-link {{ 'active' if request.endpoint=='reports' }}">📑 Reports</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="admin-chip">👤 {{ session.get('admin_name') }}</div>
+      <a href="{{ url_for('change_password') }}">Change Password</a> ·
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </aside>
+  <main class="content">
+{% endif %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap{% if not session.get('admin_id') %} standalone{% endif %}">
+      {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% block body %}{% endblock %}
+{% if session.get('admin_id') %}
+  </main>
+</div>
+{% endif %}
+</body>
+</html>

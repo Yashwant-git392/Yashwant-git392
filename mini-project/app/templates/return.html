@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Return Book{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>↩️ Return a Book</h1><p>Fine of ₹{{ fine_per_day }} per day is auto-computed from the due date</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('transactions') }}">View All Transactions →</a>
+</div>
+{% if txns %}
+<div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Issue ID</th><th>Book</th><th>Member</th><th>Issued</th><th>Due Date</th><th>Status</th><th>Fine Payable</th><th>Action</th></tr></thead>
+  <tbody>
+    {% for t in txns %}
+    <tr>
+      <td>#{{ t.issue_id }}</td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.member_name }}<br><span class="help">{{ t.roll_no }}</span></td>
+      <td>{{ t.issue_date }}</td>
+      <td>{{ t.due_date }}</td>
+      <td>{% if t.is_overdue %}<span class="badge badge-red">Overdue by {{ t.late_days }} day(s)</span>{% else %}<span class="badge badge-blue">Within due date</span>{% endif %}</td>
+      <td>{% if t.payable_fine %}<strong style="color:var(--red)">₹{{ t.payable_fine }}</strong>{% else %}<span class="badge badge-green">₹0</span>{% endif %}</td>
+      <td>
+        <form method="post" action="{{ url_for('process_return', issue_id=t.issue_id) }}" onsubmit="return confirm('Confirm return of “{{ t.title }}” from {{ t.member_name }}?');">
+          <button class="btn btn-green btn-sm" type="submit">Accept Return</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="empty-state"><div class="big">🎉</div><p>No books are currently issued. The shelf is full!</p></div>
+{% endif %}
+{% endblock %}
