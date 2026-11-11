@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My Complaints{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>My Complaints</h1><p>Track each complaint — the code needed for public tracking is in the first column.</p></div>
+  <a class="btn btn-gold" href="{{ url_for('lodge') }}">✍️ New Complaint</a></div>
+<div class="card">
+  {% if rows %}
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th><th>SLA Due</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
+          <td>{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="empty-state"><div class="big">📭</div><p>You haven't lodged any complaints yet.</p></div>{% endif %}
+</div>
+{% endblock %}

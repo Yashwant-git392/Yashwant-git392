@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ code or 404 }}{% endblock %}
+{% block body %}
+<div class="empty-state" style="margin-top:60px">
+  <div class="big">🚧</div>
+  <h1 style="color:var(--navy)">{{ code or 404 }}</h1>
+  <p>{{ message or 'Something went wrong.' }}</p>
+  <p style="margin-top:14px"><a class="btn btn-primary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a></p>
+</div>
+{% endblock %}

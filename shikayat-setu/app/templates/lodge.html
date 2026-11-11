@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Lodge Complaint{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Lodge a Complaint</h1><p>Be specific — describe what broke, where, and since when. The system routes it to the right department automatically.</p></div></div>
+<div class="card">
+  <form method="post">
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1"><label>Title (min 8 characters)</label>
+        <input name="title" value="{{ form.get('title','') }}" placeholder="e.g. Leaking tap in washroom near Lab 3" required></div>
+      <div class="field" style="grid-column:1/-1"><label>Description (min 20 characters)</label>
+        <textarea name="description" rows="4" required placeholder="What exactly is wrong? Where? Since when? Who is affected?">{{ form.get('description','') }}</textarea></div>
+      <div class="field"><label>Category (the engine double-checks)</label>
+        <select name="category_id" required>
+          <option value="">— choose —</option>
+          {% for c in cats %}<option value="{{ c['id'] }}" {{ 'selected' if form.get('category_id')|string == c['id']|string }}>{{ c['name'] }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label>Location</label>
+        <input name="location" value="{{ form.get('location','') }}" placeholder="e.g. Washroom, 2nd Floor"></div>
+    </div>
+    <div style="margin:12px 0"><label style="display:flex;gap:8px;align-items:center;font-weight:600">
+      <input type="checkbox" name="is_anonymous" {{ 'checked' if form.get('is_anonymous') }}> Lodge anonymously <span class="help">(identity visible only to administrators)</span></label></div>
+    <button type="submit" class="btn btn-gold">Submit Complaint →</button>
+  </form>
+</div>
+{% endblock %}

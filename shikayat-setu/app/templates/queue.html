@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Complaint Queue{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Complaint Queue</h1><p>Hottest first — High priority and overdue SLA at the top.</p></div></div>
+<form class="toolbar" method="get">
+  {% if depts %}
+  <select name="department_id"><option value="">All departments</option>
+    {% for d in depts %}<option value="{{ d['id'] }}" {{ 'selected' if sel_dept|string == d['id']|string }}>{{ d['name'] }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <select name="status"><option value="">All statuses</option>
+    {% for s in ['Submitted','Acknowledged','In Progress','Resolved'] %}<option {{ 'selected' if filt_status==s }}>{{ s }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-ghost" type="submit">Filter</button>
+</form>
+<div class="card">
+  {% if rows %}
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Code</th><th>Title</th><th>Priority</th><th>Status</th><th>SLA Due</th><th></th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><b>{{ r['code'] }}</b></td>
+          <td>{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ 'anonymous' if r['is_anonymous'] else r['student_name'] }}</span></td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td>{{ r['status'] }}</td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td>
+          <td><a class="btn btn-sm btn-primary" href="{{ url_for('complaint_detail', code=r['code']) }}">Open →</a></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="empty-state"><div class="big">✅</div><p>Queue clear.</p></div>{% endif %}
+</div>
+{% endblock %}

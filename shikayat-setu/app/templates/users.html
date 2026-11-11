@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Users &amp; Officers{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Users &amp; Officers</h1><p>Create department officers; activate/deactivate accounts.</p></div></div>
+<div class="grid two-col">
+  <div class="card">
+    <h2>👥 All accounts</h2>
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Department</th><th>Status</th><th></th></tr></thead>
+      <tbody>{% for u in rows %}
+        <tr><td>{{ u['username'] }}</td><td>{{ u['full_name'] }}</td><td>{{ u['role'] }}</td>
+            <td>{{ u['department_name'] or '—' }}</td>
+            <td><span class="badge {{ 'badge-green' if u['status']=='Active' else 'badge-gray' }}">{{ u['status'] }}</span></td>
+            <td>{% if u['username'] != 'admin' %}<form method="post" action="{{ url_for('toggle_user', uid=u['id']) }}"><button class="btn btn-sm btn-ghost" type="submit">{{ 'Deactivate' if u['status']=='Active' else 'Activate' }}</button></form>{% endif %}</td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+  <div class="card">
+    <h2>➕ Create department officer</h2>
+    <form method="post" action="{{ url_for('create_officer') }}">
+      <div class="field"><label>Full name</label><input name="full_name" required placeholder="e.g. Mrs. S. Kulkarni"></div>
+      <div class="field" style="margin-top:10px"><label>Department</label>
+        <select name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
+      <div class="field" style="margin-top:10px"><label>Username</label><input name="username" required placeholder="e.g. hostel.officer"></div>
+      <div class="field" style="margin-top:10px"><label>Initial password</label><input name="password" value="officer123" required></div>
+      <button class="btn btn-gold" style="margin-top:12px" type="submit">Create Officer</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Track Complaint{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Track a Complaint</h1><p>Enter the complaint code and your roll number — no login needed.</p></div></div>
+<div class="card" style="max-width:560px">
+  <form method="post" class="form-grid" style="grid-template-columns:1fr">
+    <div class="field"><label>Complaint code</label><input name="code" placeholder="CMP-2026-0007" required></div>
+    <div class="field"><label>Roll number</label><input name="roll_no" placeholder="MCA2026###" required></div>
+    <button class="btn btn-primary" type="submit">Track →</button>
+  </form>
+</div>
+{% if result %}
+<div class="card">
+  <h2>{{ result['code'] }} — {{ result['status'] }}</h2>
+  <p style="margin:4px 0 12px">{{ result['title'] }}</p>
+  <table class="kv"><tbody>
+    <tr><td>Department</td><td>{{ result['department_name'] }}</td></tr>
+    <tr><td>Priority</td><td>{{ result['priority'] }}</td></tr>
+    <tr><td>Submitted</td><td>{{ result['submitted_at'] }}</td></tr>
+    <tr><td>SLA due</td><td class="{{ 'sla-late' if result['is_overdue'] else 'sla-ok' }}">{{ result['sla_due_at'] }}</td></tr>
+  </tbody></table>
+  <ul class="timeline" style="margin-top:14px">
+    {% for s in result['steps'] %}
+    <li><span class="t-time">{{ s['created_at'] }}</span><br><span class="t-type">{{ s['event_type'] }}</span> {{ s['note'] }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

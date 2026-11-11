@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block body %}
+{% if role == 'student' %}
+<div class="page-head"><div><h1>My Dashboard</h1><p>Your complaints at a glance — SLA-tracked by the college.</p></div>
+  <a class="btn btn-gold" href="{{ url_for('lodge') }}">✍️ Lodge a Complaint</a></div>
+<div class="grid stats">
+  <div class="stat"><div class="label">Total</div><div class="value">{{ total }}</div><div class="hint">complaints lodged</div></div>
+  <div class="stat"><div class="label">Submitted</div><div class="value">{{ counts['Submitted'] }}</div></div>
+  <div class="stat"><div class="label">Acknowledged</div><div class="value">{{ counts['Acknowledged'] }}</div></div>
+  <div class="stat"><div class="label">In Progress</div><div class="value">{{ counts['In Progress'] }}</div></div>
+  <div class="stat"><div class="label">Resolved</div><div class="value">{{ counts['Resolved'] }}</div></div>
+  <div class="stat"><div class="label">Closed</div><div class="value">{{ counts['Closed'] }}</div></div>
+</div>
+<div class="card">
+  <h2>🔎 Latest complaints</h2>
+  {% if recent %}
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
+    <tbody>{% for r in recent %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
+          <td>{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty-state"><div class="big">🌱</div><p>No complaints yet. When something breaks, tell us.</p></div>{% endif %}
+</div>
+{% elif role == 'officer' %}
+<div class="page-head"><div><h1>Department Queue — {{ department }}</h1><p>Complaints assigned to your department, hottest first.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('queue') }}">📥 Open full queue</a></div>
+<div class="grid stats">
+  <div class="stat"><div class="label">Active assigned</div><div class="value">{{ assigned }}</div></div>
+  <div class="stat"><div class="label">High priority</div><div class="value">{{ high }}</div><div class="hint">24-hour SLA</div></div>
+  <div class="stat"><div class="label">Overdue</div><div class="value">{{ overdue }}</div><div class="hint">past SLA deadline</div></div>
+</div>
+<div class="card">
+  <h2>📥 Incoming complaints</h2>
+  {% if queue %}
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Priority</th><th>Status</th><th>SLA</th></tr></thead>
+    <tbody>{% for r in queue %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
+          <td>{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ 'anonymous' if r['is_anonymous'] else r['student_name'] }}</span></td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td>{{ r['status'] }}</td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<div class="empty-state"><div class="big">✅</div><p>Queue clear. Nothing assigned right now.</p></div>{% endif %}
+</div>
+{% else %}
+<div class="page-head"><div><h1>Administration Overview</h1><p>Every complaint in the college, one screen.</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('console') }}">🗂️ Console</a><a class="btn btn-gold" href="{{ url_for('reports') }}">🖨️ Reports</a></div></div>
+<div class="grid stats">
+  <div class="stat"><div class="label">Total complaints</div><div class="value">{{ total }}</div></div>
+  <div class="stat"><div class="label">Submitted</div><div class="value">{{ by_status.get('Submitted', 0) }}</div></div>
+  <div class="stat"><div class="label">Acknowledged</div><div class="value">{{ by_status.get('Acknowledged', 0) }}</div></div>
+  <div class="stat"><div class="label">In Progress</div><div class="value">{{ by_status.get('In Progress', 0) }}</div></div>
+  <div class="stat"><div class="label">Resolved</div><div class="value">{{ by_status.get('Resolved', 0) }}</div></div>
+  <div class="stat"><div class="label">Closed</div><div class="value">{{ by_status.get('Closed', 0) }}</div></div>
+  <div class="stat"><div class="label">Overdue</div><div class="value">{{ overdue }}</div><div class="hint">breaching SLA right now</div></div>
+</div>
+<div class="card">
+  <h2>🕑 Latest activity</h2>
+  <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
+    <tbody>{% for r in recent %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
+          <td>{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td>{{ r['status'] }}</td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+{% endblock %}

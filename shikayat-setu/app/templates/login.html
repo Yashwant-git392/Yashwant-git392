@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-crest">
+      <div class="crest-logo">📢</div>
+      <h1>Campus Shikayat Setu</h1>
+      <p>Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik)<br>Grievances registered today, resolved within SLA tomorrow.</p>
+    </div>
+    <div class="login-body">
+      <h2>Sign in</h2>
+      <form method="post">
+        <div class="field"><label>Roll number / Username</label>
+          <input type="text" name="username" placeholder="e.g. MCA2026001 or admin" required autofocus></div>
+        <div class="field"><label>Password</label>
+          <input type="password" name="password" placeholder="Password" required></div>
+        <button type="submit" class="btn btn-gold full">Sign in</button>
+      </form>
+      <div class="login-link-row">
+        <a href="{{ url_for('register') }}">New student? Register</a>
+        <a href="{{ url_for('public_track') }}">Track complaint with code →</a>
+      </div>
+      <div class="demo-note">Demo — <b>admin / admin123</b> · officer <b>hostel.officer / officer123</b> · student <b>MCA2026001 / student123</b></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

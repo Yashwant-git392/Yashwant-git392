@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Print-Ready Registers</h1><p>Ctrl+P on any tab — A4, no chrome, clean tables.</p></div></div>
+<div class="report-tabs">
+  <a href="?report=pendency" class="{{ 'active' if which=='pendency' }}">Department Pendency</a>
+  <a href="?report=sla"       class="{{ 'active' if which=='sla' }}">SLA Compliance</a>
+  <a href="?report=restime"   class="{{ 'active' if which=='restime' }}">Resolution Time</a>
+  <a href="?report=trend"     class="{{ 'active' if which=='trend' }}">Monthly Trend</a>
+  <a href="?report=feedback"  class="{{ 'active' if which=='feedback' }}">Feedback Summary</a>
+  <a href="?report=routing"   class="{{ 'active' if which=='routing' }}">Routing Audit</a>
+</div>
+
+{% if which == 'pendency' %}
+<div class="card"><h2>Department Pendency &amp; Workload</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Department</th><th>Submitted</th><th>Acknowledged</th><th>In Progress</th><th>Resolved</th><th>Closed</th><th>Total</th><th>Overdue</th></tr></thead>
+<tbody>{% for r in rows %}
+<tr><td>{{ r['dept'] }}</td><td>{{ r['submitted'] }}</td><td>{{ r['acknowledged'] }}</td><td>{{ r['in_progress'] }}</td><td>{{ r['resolved'] }}</td><td>{{ r['closed'] }}</td><td><b>{{ r['total'] }}</b></td><td class="{{ 'sla-late' if r['overdue'] else '' }}">{{ r['overdue'] }}</td></tr>
+{% endfor %}</tbody></table></div></div>
+
+{% elif which == 'sla' %}
+<div class="card"><h2>SLA Compliance by Department</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Department</th><th>Resolved complaints</th><th>Within SLA</th><th>Compliance</th></tr></thead>
+<tbody>{% for r in rows %}
+<tr><td>{{ r['dept'] }}</td><td>{{ r['resolved_total'] }}</td><td>{{ r['within_sla'] }}</td>
+<td><b>{% if r['pct'] is none %}—{% else %}{{ r['pct'] }}%{% endif %}</b></td></tr>
+{% endfor %}</tbody></table></div></div>
+
+{% elif which == 'restime' %}
+<div class="card"><h2>Average Resolution Time by Category</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Category</th><th>Resolved</th><th>Avg hours</th></tr></thead>
+<tbody>{% for r in rows %}
+<tr><td>{{ r['category'] }}</td><td>{{ r['n'] }}</td><td><b>{{ r['avg_hours'] }}</b></td></tr>
+{% endfor %}</tbody></table></div></div>
+
+{% elif which == 'trend' %}
+<div class="card"><h2>Monthly Complaint Trend</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Month</th><th>Lodged</th><th>Resolved</th><th>Net open</th></tr></thead>
+<tbody>{% for r in rows %}
+<tr><td>{{ r['month'] }}</td><td>{{ r['lodged'] }}</td><td>{{ r['resolved'] }}</td><td><b>{{ r['lodged'] - r['resolved'] }}</b></td></tr>
+{% endfor %}</tbody></table></div></div>
+
+{% elif which == 'feedback' %}
+<div class="card"><h2>Feedback Summary by Department</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Department</th><th>Avg rating</th><th>Responses</th></tr></thead>
+<tbody>{% for r in rows %}
+<tr><td>{{ r['dept'] }}</td><td><b>{{ r['avg_rating'] }} ★</b></td><td>{{ r['n'] }}</td></tr>
+{% endfor %}</tbody></table></div></div>
+{% if recent %}
+<div class="card"><h2>Recent comments</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Dept</th><th>Rating</th><th>Comment</th></tr></thead>
+<tbody>{% for r in recent %}<tr><td>{{ r['code'] }}</td><td>{{ r['dept'] }}</td><td>{{ r['rating'] }} ★</td><td>{{ r['comment'] }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+
+{% elif which == 'routing' %}
+<div class="card"><h2>Routing Audit — automatic vs manual</h2>
+<div class="table-wrap"><table class="tbl">
+<thead><tr><th>Routing mode</th><th>Complaints</th><th>Avg keyword score</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ r['routing']|capitalize }}</td><td>{{ r['n'] }}</td><td>{{ r['avg_score'] }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% if manual %}
+<div class="card"><h2>Manually reassigned complaints</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Final department</th></tr></thead>
+<tbody>{% for r in manual %}<tr><td>{{ r['code'] }}</td><td>{{ r['title'] }}</td><td>{{ r['dept'] }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -16,3 +16,6 @@ mini-project/app/smartlibrary.db
 Thumbs.db
 .idea/
 .vscode/
+
+# Shikayat Setu demo DB
+shikayat-setu/app/shikayat_setu.db

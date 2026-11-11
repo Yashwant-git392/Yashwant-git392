@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Admin Console{% endblock %}
+{% block body %}
+<div class="page-head"><div><h1>Admin Console</h1><p>Every complaint, filterable — reassign, escalate, or close stale ones.</p></div></div>
+<form class="toolbar" method="get">
+  <select name="department_id"><option value="">All departments</option>
+    {% for d in depts %}<option value="{{ d['id'] }}" {{ 'selected' if sel_dept|string == d['id']|string }}>{{ d['name'] }}</option>{% endfor %}
+  </select>
+  <select name="status"><option value="">All statuses</option>
+    {% for s in ['Submitted','Acknowledged','In Progress','Resolved','Closed'] %}<option {{ 'selected' if sel_status==s }}>{{ s }}</option>{% endfor %}
+  </select>
+  <select name="priority"><option value="">All priorities</option>
+    {% for p in ['High','Medium','Low'] %}<option {{ 'selected' if sel_prio==p }}>{{ p }}</option>{% endfor %}
+  </select>
+  <button class="btn btn-ghost" type="submit">Filter</button>
+</form>
+<div class="card">
+  <p class="help" style="margin-bottom:10px">{{ rows|length }} complaint(s) match.</p>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><b>{{ r['code'] }}</b></td>
+          <td>{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ r['student_name'] }}</span></td>
+          <td>{{ r['department_name'] }}</td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td>{{ r['status'] }}</td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td>
+          <td><a class="btn btn-sm btn-primary" href="{{ url_for('complaint_detail', code=r['code']) }}">Open →</a></td></tr>
+    {% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

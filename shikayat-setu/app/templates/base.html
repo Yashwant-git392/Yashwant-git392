@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Campus Shikayat Setu{% endblock %} | Dr. B.V. Hiray College of Management and Research Centre</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📢</text></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+{% if session.get('user_id') %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">📢</div>
+      <div>
+        <div class="brand-name">Campus Shikayat Setu</div>
+        <div class="brand-sub">College Grievance Redressal System<br>Dr. B.V. Hiray College of Management &amp; Research Centre, Malegaon</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('dashboard') }}" class="nav-link {{ 'active' if request.endpoint=='dashboard' }}">📊 Dashboard</a>
+      {% if session.get('role') == 'student' %}
+      <div class="nav-section">Student</div>
+      <a href="{{ url_for('lodge') }}" class="nav-link {{ 'active' if request.endpoint=='lodge' }}">✍️ Lodge Complaint</a>
+      <a href="{{ url_for('my_complaints') }}" class="nav-link {{ 'active' if request.endpoint=='my_complaints' }}">📑 My Complaints</a>
+      {% endif %}
+      {% if session.get('role') in ['officer','admin'] %}
+      <div class="nav-section">Department</div>
+      <a href="{{ url_for('queue') }}" class="nav-link {{ 'active' if request.endpoint=='queue' }}">📥 Complaint Queue</a>
+      {% endif %}
+      {% if session.get('role') == 'admin' %}
+      <div class="nav-section">Administration</div>
+      <a href="{{ url_for('console') }}" class="nav-link {{ 'active' if request.endpoint=='console' }}">🗂️ Admin Console</a>
+      <a href="{{ url_for('users') }}" class="nav-link {{ 'active' if request.endpoint=='users' }}">👥 Users &amp; Officers</a>
+      <a href="{{ url_for('reports') }}" class="nav-link {{ 'active' if request.endpoint=='reports' }}">🖨️ Reports</a>
+      {% endif %}
+      <div class="nav-section">Account</div>
+      <a href="{{ url_for('change_password') }}" class="nav-link {{ 'active' if request.endpoint=='change_password' }}">🔑 Change Password</a>
+      <a href="{{ url_for('public_track') }}" class="nav-link">🔎 Public Tracker</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="admin-chip">👤 {{ session.get('full_name') }} <span style="opacity:.6">· {{ session.get('role')|capitalize }}</span></div>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </aside>
+  <main class="content">
+{% endif %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-wrap{% if not session.get('user_id') %} standalone{% endif %}">
+      {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+{% block body %}{% endblock %}
+{% if session.get('user_id') %}
+  </main>
+</div>
+{% endif %}
+</body>
+</html>

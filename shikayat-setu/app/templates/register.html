@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="login-card" style="width:min(520px,100%)">
+    <div class="login-crest">
+      <div class="crest-logo">📝</div>
+      <h1 style="font-size:1.25rem">Student Registration</h1>
+      <p>For SPPU MCA-I students. Officers are created by the administrator.</p>
+    </div>
+    <div class="login-body">
+      <form method="post">
+        <div class="field"><label>Full Name</label><input name="full_name" value="{{ form.get('full_name','') }}" placeholder="e.g. Yashwant Santosh Ahire" required></div>
+        <div class="field"><label>Roll Number</label><input name="roll_no" value="{{ form.get('roll_no','') }}" placeholder="MCA2026###" required></div>
+        <div class="field"><label>Email</label><input type="email" name="email" value="{{ form.get('email','') }}" placeholder="name@bvhrcet.ac.in" required></div>
+        <div class="field"><label>Mobile (10 digits)</label><input name="phone" value="{{ form.get('phone','') }}" placeholder="9XXXXXXXXX" required></div>
+        <div class="field"><label>Password (min 6)</label><input type="password" name="password" required></div>
+        <div class="field"><label>Confirm Password</label><input type="password" name="confirm_password" required></div>
+        <button type="submit" class="btn btn-primary full">Create Account</button>
+      </form>
+      <div class="login-link-row"><a href="{{ url_for('login') }}">← Back to sign in</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
