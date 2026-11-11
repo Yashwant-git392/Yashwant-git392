@@ -1,28 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Sign in{% endblock %}
 {% block body %}
-<div class="login-wrap">
-  <div class="login-card">
-    <div class="login-crest">
-      <div class="crest-logo">📢</div>
-      <h1>Campus Shikayat Setu</h1>
-      <p>Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik)<br>Grievances registered today, resolved within SLA tomorrow.</p>
+<div class="auth-wrap">
+  <aside class="auth-hero" aria-hidden="true">
+    <div class="auth-hero-top">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffd95e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/><path d="M9 13.5h6M9 16.5h4"/></svg>
+      Dr. B.V. Hiray College of Mgmt &amp; Research Centre · Malegaon
     </div>
-    <div class="login-body">
-      <h2>Sign in</h2>
-      <form method="post">
-        <div class="field"><label>Roll number / Username</label>
-          <input type="text" name="username" placeholder="e.g. MCA2026001 or admin" required autofocus></div>
-        <div class="field"><label>Password</label>
-          <input type="password" name="password" placeholder="Password" required></div>
-        <button type="submit" class="btn btn-gold full">Sign in</button>
-      </form>
-      <div class="login-link-row">
-        <a href="{{ url_for('register') }}">New student? Register</a>
-        <a href="{{ url_for('public_track') }}">Track complaint with code →</a>
+    <div class="auth-hero-mid">
+      <h1>Every grievance, <span class="hl">heard &amp; tracked</span>.</h1>
+      <p>Campus Shikayat Setu turns the college’s complaint box into an SLA-bound, audit-trailed redressal pipeline — lodge in one page, auto-routed to the right department, visible end-to-end.</p>
+      <div class="hero-points">
+        <div class="hero-point"><span class="hp-ic">⚡</span> Auto-routing with explainable keyword scoring</div>
+        <div class="hero-point"><span class="hp-ic">⏱️</span> SLA clock on every complaint — High 24h · Medium 72h · Low 7d</div>
+        <div class="hero-point"><span class="hp-ic">🕶️</span> Anonymous lodgement for sensitive matters</div>
+        <div class="hero-point"><span class="hp-ic">🧾</span> Append-only audit timeline for every action</div>
       </div>
-      <div class="demo-note">Demo — <b>admin / admin123</b> · officer <b>hostel.officer / officer123</b> · student <b>MCA2026001 / student123</b></div>
     </div>
-  </div>
+    <div class="auth-hero-foot">
+      <div class="hero-stat"><b>6</b><span>Departments</span></div>
+      <div class="hero-stat"><b>15</b><span>Categories</span></div>
+      <div class="hero-stat"><b>32</b><span>Seeded complaints</span></div>
+      <div class="hero-stat"><b>100%</b><span>Audit-trailed</span></div>
+    </div>
+  </aside>
+  <main class="auth-panel">
+    <div class="auth-card">
+      <h2>Welcome back</h2>
+      <p class="sub">Campus Shikayat Setu — College Grievance Redressal System</p>
+      <form method="post" autocomplete="on">
+        <div class="auth-field">
+          <label for="login-user">Roll number / Username</label>
+          <input id="login-user" type="text" name="username" placeholder="e.g. MCA2026001 or admin" required autofocus>
+        </div>
+        <div class="auth-field">
+          <label for="login-pass">Password</label>
+          <input id="login-pass" type="password" name="password" placeholder="Your password" required>
+        </div>
+        <button type="submit" class="auth-btn">Sign in &nbsp;→</button>
+      </form>
+      <div class="demo-chips" aria-label="Demo credentials — click to fill">
+        <button class="demo-chip" type="button" data-fill="admin|admin123">admin / admin123</button>
+        <button class="demo-chip" type="button" data-fill="hostel.officer|officer123">hostel.officer / officer123</button>
+        <button class="demo-chip" type="button" data-fill="MCA2026001|student123">MCA2026001 / student123</button>
+      </div>
+      <div class="auth-alt">
+        <a href="{{ url_for('register') }}">New student? Register →</a>
+        <a href="{{ url_for('public_track') }}">Track with code →</a>
+      </div>
+    </div>
+  </main>
 </div>
 {% endblock %}

@@ -1,15 +1,20 @@
-"""Stylized renderings of the Campus Shikayat Setu UI (representative of the running app)."""
+"""Stylized renderings of the Campus Shikayat Setu v2 UI (representative of the running app).
+
+Mirrors the Nov-2026 redesign: dark collapsible sidebar with gold house badge,
+sticky topbar, modern stat cards, donut charts, side panel actions, audit timeline.
+"""
 import sqlite3
 from datetime import date, datetime
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, Rectangle
+from matplotlib.patches import FancyBboxPatch, Circle, Rectangle, Arc
+import numpy as np
 
-NAVY   = "#16243d"; NAVY2 = "#1f3455"; NAVY3 = "#2b4a73"
-GOLD   = "#c9a227"; GOLD_L = "#ffd95e"
-CREAM  = "#f7f5ef"; CARD = "#ffffff"; LT = "#e8edf7"
-GREEN  = "#1e7a46"; RED = "#b3372e"; AMBER = "#a05a00"; GREY = "#6b7280"
-
+NAVY = "#141f36"; NAVY2 = "#1b2b47"; NAVY3 = "#22355a"; PANEL = "#141c2e"
+GOLD = "#c9a227"; GOLD_L = "#ffd95e"; GOLD_D = "#241a02"
+CREAM = "#f6f5ef"; CARD = "#ffffff"; CARD2 = "#fbfaf6"; LT = "#e8edf7"
+GREEN = "#177a46"; RED = "#b3372e"; AMBER = "#96690a"; GREY = "#66707f"
+BLUE_BG = "#e9effc"; GREEN_BG = "#e6f6ec"; RED_BG = "#fdeaec"; AMBER_BG = "#fdf3d8"; GOLD_SOFT = "#f5e9c4"
 OUT = "/home/user/Yashwant-git392/shikayat-setu/report/images"
 DB = "/home/user/Yashwant-git392/shikayat-setu/app/shikayat_setu.db"
 
@@ -22,175 +27,240 @@ def q(sql, args=()):
 def one(sql, args=()):
     c = conn(); row = c.execute(sql, args).fetchone(); c.close(); return row
 
-def window(fig_w=16, fig_h=10):
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=150)
-    ax.set_xlim(0, 160); ax.set_ylim(0, 100); ax.axis("off")
-    fig.patch.set_facecolor("#d8d5cb")
-    ax.add_patch(FancyBboxPatch((1, 1), 158, 98, boxstyle="round,pad=0,rounding_size=2.6",
-                                fc="#efece3", ec="#b9b4a4", lw=2.2))
-    ax.add_patch(FancyBboxPatch((1, 90.2), 158, 8.8, boxstyle="round,pad=0,rounding_size=2.6",
-                                fc=NAVY, ec="none"))
-    ax.add_patch(Rectangle((1, 90.2), 158, 4.4, fc=NAVY, ec="none"))
-    for i, c in enumerate(["#ff5f57", "#febc2e", "#28c840"]):
-        ax.add_patch(mpatches.Circle((6.5 + i * 4.6, 94.6), 1.35, fc=c, ec="#00000022"))
-    ax.text(80, 94.6, "Campus Shikayat Setu — http://127.0.0.1:5001", ha="center", va="center",
-            fontsize=8.5, color="#cdd6e8", family="DejaVu Sans Mono")
+def canvas(w=160, h=100, bg="#0b1020"):
+    fig, ax = plt.subplots(figsize=(w / 8.6, h / 8.6), dpi=150)
+    ax.set_xlim(0, w); ax.set_ylim(0, h); ax.axis("off")
+    fig.patch.set_facecolor(bg)
     return fig, ax
 
+def rrect(ax, x, y, w, h, r, fc, ec="none", lw=0, z=2, alpha=1.0):
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}",
+                                fc=fc, ec=ec, lw=lw, zorder=z, alpha=alpha,
+                                mutation_scale=1))
+
 def sidebar(ax, active, admin=False):
-    ax.add_patch(Rectangle((1, 1), 27, 89.2, fc=NAVY2, ec="none"))
-    ax.add_patch(Rectangle((3.2, 82.2), 3.0, 4.2, fc=GOLD, ec="none"))
-    ax.add_patch(Rectangle((3.7, 82.2), 0.45, 4.2, fc=NAVY, ec="none"))
-    ax.text(8.0, 84.3, "Shikayat Setu", ha="left", va="center", fontsize=9.5, fontweight="bold", color="white")
-    ax.text(14.5, 78.6, "Dr. B.V. Hiray College of\nManagement & Research Centre",
-            ha="center", va="center", fontsize=5.2, color="#c9c7bd", linespacing=1.4)
+    # gradient-ish panel (two overlapping rects)
+    ax.add_patch(Rectangle((0, 0), 34, 100, fc=NAVY, ec="none", zorder=2))
+    ax.add_patch(Rectangle((0, 0), 34, 46, fc=NAVY2, ec="none", alpha=.55, zorder=2))
+    # gold house badge
+    rrect(ax, 4.5, 86.5, 9.5, 9.5, 2.1, ("#ffd95e"), z=3)
+    ax.add_patch(Rectangle((6.2, 89.5), 6, 4.4, fc=GOLD, ec="none", zorder=4))
+    ax.add_patch(Polygon([[6.2, 93.4], [9.2, 97.2], [12.2, 93.4]], closed=True, fc=GOLD, ec="none", zorder=4))
+    ax.text(16.3, 93.2, "Campus\nShikayat Setu", fontsize=6.6, fontweight="bold", color="#ffffff", va="center", zorder=4, linespacing=1.15)
+    ax.text(4.5, 79.5, "COLLEGE GRIEVANCE REDRESSAL", fontsize=3.4, color="#7f93b6", zorder=4)
     if admin:
-        items = [("Console", "console"), ("Complaints", "mine"), ("Departments", "depts"),
-                 ("Users", "users"), ("Reports", "reports")]
+        items = [("Dashboard", "dash"), ("Complaint Queue", "queue"), ("Admin Console", "console"),
+                 ("Users & Officers", "users"), ("Print Registers", "reports")]
     else:
-        items = [("Dashboard", "dash"), ("Lodge Complaint", "lodge"), ("My Complaints", "mine"),
-                 ("Track", "track"), ("Profile", "profile")]
-    y = 70
+        items = [("Dashboard", "dash"), ("Lodge Complaint", "lodge"), ("My Complaints", "mine")]
+    y = 71
     for label, key in items:
         if key == active:
-            ax.add_patch(FancyBboxPatch((2.6, y - 2.3), 24.3, 5.4, boxstyle="round,pad=0,rounding_size=1.6",
-                                        fc="#c9a22733", ec=GOLD, lw=1.6))
-            ax.text(6.2, y + 0.4, label, ha="left", va="center", fontsize=7.4, color=GOLD_L, fontweight="bold")
+            rrect(ax, 3, y - 2.6, 28, 6.2, 1.5, "#c9a2272e", ec="#c9a22766", lw=1.0, z=3)
+            ax.add_patch(Circle((6.6, y + 0.5), 1.05, fc=GOLD_L, ec="none", zorder=4))
+            ax.text(9.6, y + 0.5, label, fontsize=5.6, fontweight="bold", color=GOLD_L, va="center", zorder=4)
         else:
-            ax.text(6.2, y + 0.4, label, ha="left", va="center", fontsize=7.4, color="#dcd9ce")
-        y -= 10
+            ax.add_patch(Circle((6.6, y + 0.5), 1.05, fc="#33415e", ec="none", zorder=4))
+            ax.text(9.6, y + 0.5, label, fontsize=5.6, color="#cdd5e4", va="center", zorder=4)
+        y -= 8.6
+    # account foot
+    ax.add_patch(Circle((6.8, 13.5), 2.4, fc=GOLD, ec="none", zorder=4))
+    ax.text(6.8, 13.5, "YA" if not admin else "AD", fontsize=4.2, fontweight="bold", color=GOLD_D, ha="center", va="center", zorder=5)
+    ax.text(11.2, 15.4, "Yashwant Ahire" if not admin else "System Admin", fontsize=4.6, fontweight="bold", color="#fff", va="center", zorder=4)
+    ax.text(11.2, 11.8, ("MCA2026001 · STUDENT") if not admin else "ADMIN", fontsize=3.6, color="#8fa9d0", va="center", zorder=4)
 
-def stat_card(ax, x, y, w, h, label, value, hint):
-    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=1.8", fc=CARD, ec="#e3e0d2", lw=1.2))
-    ax.add_patch(Rectangle((x, y + h - 1.15), w, 1.15, fc=GOLD, ec="none"))
-    ax.text(x + w / 2, y + h - 3.6, label.upper(), ha="center", fontsize=4.4, color=GREY, fontweight="bold")
-    ax.text(x + w / 2, y + h / 2 - 0.3, str(value), ha="center", va="center", fontsize=14.5, fontweight="bold", color=NAVY)
-    ax.text(x + w / 2, y + 1.9, hint, ha="center", fontsize=4.2, color=GREY)
+def topbar(ax, crumb_right, x0=34):
+    ax.add_patch(Rectangle((x0, 92.5), 160 - x0, 7.5, fc=CREAM, ec="none", zorder=2))
+    ax.plot([x0, 160], [92.5, 92.5], color="#eceade", lw=1.4, zorder=3)
+    ax.text(x0 + 3, 96.25, "Shikayat Setu  ›  " + crumb_right, fontsize=5.6, color=GREY, va="center", zorder=4)
+    rrect(ax, 128.5, 94.6, 12.5, 3.6, 1.8, CARD, ec="#e5e3d8", lw=0.8, z=4)
+    ax.text(134.75, 96.4, "RBAC · role", fontsize=3.8, fontweight="bold", color=NAVY3, ha="center", va="center", zorder=5)
+    rrect(ax, 143, 94.4, 5.4, 4.2, 1.1, CARD, ec="#e5e3d8", lw=0.8, z=4)
+    ax.add_patch(Arc((145.7, 96.6), 2.6, 2.6, angle=0, theta1=35, theta2=325, color=NAVY, lw=1.4, zorder=5))
+    ax.plot([145.7], [96.6], marker="o", ms=1.6, color=NAVY, zorder=5)
 
-def table(ax, x, y_top, w, cols, rows, row_h=4.6, fs=6.3, max_rows=None):
+def stat_card(ax, x, y, w, h, label, value, hint, tone=GOLD):
+    rrect(ax, x, y, w, h, 2.0, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.add_patch(Rectangle((x + 1.2, y + 0.8), w - 2.4, 0.9, fc=tone, ec="none", zorder=4, alpha=.9))
+    ax.text(x + 2.2, y + h - 3.4, label.upper(), fontsize=3.9, fontweight="bold", color=GREY, zorder=4)
+    ax.text(x + 2.2, y + h / 2 - 1.2, str(value), fontsize=12.5, fontweight="bold", color=NAVY, zorder=4, family="serif")
+    ax.text(x + 2.2, y + 2.2, hint, fontsize=3.4, color=GREY, zorder=4)
+
+def table(ax, x, y_top, w, cols, rows, row_h=4.4, fs=5.0, header_fs=4.2, z=3):
     total = sum(c[1] for c in cols)
+    ax.add_patch(Rectangle((x, y_top - 3.6), w, 3.6, fc=NAVY2, ec="none", zorder=z))
     cx = x
-    ax.add_patch(Rectangle((x, y_top - 4.4), w, 4.4, fc=NAVY, ec="none"))
     for header, frac in cols:
         cw = w * frac / total
-        ax.text(cx + cw / 2, y_top - 2.2, header.upper(), ha="center", va="center",
-                fontsize=fs - 0.8, color=GOLD_L, fontweight="bold")
+        ax.text(cx + cw / 2, y_top - 1.8, header.upper(), fontsize=header_fs, fontweight="bold",
+                color="#f3ead2", ha="center", va="center", zorder=z + 1)
         cx += cw
-    yy = y_top - 4.4
-    for ridx, row in enumerate(rows if max_rows is None else rows[:max_rows]):
+    yy = y_top - 3.6
+    for ridx, row in enumerate(rows):
         yy -= row_h
-        bg = "#ffffff" if ridx % 2 == 0 else "#fbfaf5"
-        ax.add_patch(Rectangle((x, yy), w, row_h, fc=bg, ec="#efede4", lw=0.6))
+        bg = CARD if ridx % 2 == 0 else CARD2
+        ax.add_patch(Rectangle((x, yy), w, row_h, fc=bg, ec="#f0eee3", lw=0.5, zorder=z))
         cx = x
-        for (val, (_, frac)) in zip(row, cols):
+        for val, (_, frac) in zip(row, cols):
             cw = w * frac / total
-            color = RED if isinstance(val, str) and val.startswith("!") else "#202020"
-            txt = val[1:] if isinstance(val, str) and val.startswith("!") else str(val)
-            ax.text(cx + cw / 2, yy + row_h / 2, txt, ha="center", va="center", fontsize=fs, color=color)
+            ax.text(cx + cw / 2, yy + row_h / 2, str(val), fontsize=fs, color="#202020",
+                    ha="center", va="center", zorder=z + 1)
             cx += cw
     return yy
 
-# ================================================================ 1. LOGIN
+def pill(ax, x, y, w, text, fg, bg, fs=3.6, z=6):
+    rrect(ax, x, y, w, 2.6, 1.3, bg, ec="none", z=z)
+    ax.text(x + w / 2, y + 1.3, text.upper(), fontsize=fs, fontweight="bold", color=fg, ha="center", va="center", zorder=z + 1)
+
+def donut(ax, cx, cy, r, segments, total_label):
+    colors = [s[1] for s in segments]
+    fracs = [s[0] / max(1, sum(seg[0] for seg in segments)) for s in segments]
+    theta = 90.0
+    for frac, color in zip(fracs, colors):
+        sweep = 360 * frac
+        ax.add_patch(Arc((cx, cy), 2 * r, 2 * r, angle=0, theta1=theta - sweep, theta2=theta,
+                         lw=7.5, color=color, zorder=4))
+        theta -= sweep
+    ax.text(cx, cy + 0.8, str(total_label), fontsize=10, fontweight="bold", color=NAVY, ha="center", va="center", family="serif", zorder=5)
+    ax.text(cx, cy - 3.3, "TOTAL", fontsize=3.4, color=GREY, ha="center", zorder=5)
+
+# ================================================================ 1. LOGIN (v2 split)
 def screen_login():
-    fig, ax = plt.subplots(figsize=(14, 9), dpi=150)
-    ax.set_xlim(0, 160); ax.set_ylim(0, 100); ax.axis("off")
-    fig.patch.set_facecolor("#0d1526")
-    for i in range(40):
-        ax.add_patch(mpatches.Circle((20 + (i * 37) % 140, 10 + (i * 53) % 85), 0.8, color="#22395e", alpha=0.35))
-    ax.add_patch(FancyBboxPatch((44, 5), 72, 90, boxstyle="round,pad=0,rounding_size=3", fc="#fffdf6", ec="none"))
-    ax.add_patch(FancyBboxPatch((44, 64), 72, 31, boxstyle="round,pad=0,rounding_size=3", fc=NAVY, ec="none"))
-    ax.add_patch(Rectangle((44, 64), 72, 13, fc=NAVY, ec="none"))
-    ax.add_patch(Rectangle((76.6, 78.5), 6.8, 8.6, fc=GOLD, ec="none"))
-    ax.add_patch(Rectangle((83.3, 78.5), 1.15, 8.6, fc=NAVY, ec="none"))
-    ax.text(80, 73.5, "Campus Shikayat Setu", ha="center", fontsize=16.5, fontweight="bold", color="white")
-    ax.text(80, 67.8, "Dr. B.V. Hiray College of Management and Research Centre\nMalegaon Camp — SPPU · MCA-I (Sem-I)",
-            ha="center", va="center", fontsize=6.6, color="#c9c7bd", linespacing=1.5)
-    ax.text(80, 58.5, "Sign In", ha="center", fontsize=11, fontweight="bold", color=NAVY)
-    ax.text(55.5, 50.6, "USERNAME / ROLL NO.", fontsize=5.6, color=GREY, fontweight="bold")
-    ax.add_patch(FancyBboxPatch((54.5, 40.5), 51, 7, boxstyle="round,pad=0,rounding_size=1.4", fc="white", ec="#dcd9ce"))
-    ax.text(57, 44, "MCA2026001", va="center", fontsize=8.5, color="#202020")
-    ax.text(55.5, 35.6, "PASSWORD", fontsize=5.6, color=GREY, fontweight="bold")
-    ax.add_patch(FancyBboxPatch((54.5, 25.5), 51, 7, boxstyle="round,pad=0,rounding_size=1.4", fc="white", ec=GOLD, lw=1.6))
-    ax.text(57, 29, "••••••••••", va="center", fontsize=8.5, color="#202020")
-    ax.add_patch(FancyBboxPatch((54.5, 14.5), 51, 7.4, boxstyle="round,pad=0,rounding_size=1.4", fc=GOLD, ec="none"))
-    ax.text(80, 18.2, "Sign In  ›", ha="center", va="center", fontsize=10, fontweight="bold", color="#3d2e00")
-    ax.text(80, 9.5, "Demo: admin / admin123  ·  MCA2026001 / student123", ha="center", fontsize=6.0, color="#8a8578")
+    fig, ax = canvas(160, 100, bg="#0b1020")
+    # hero left
+    ax.add_patch(Rectangle((0, 0), 84, 100, fc="#0b1020", ec="none"))
+    for rr, aa in zip([26, 22, 18, 14, 10, 6], [0.05, 0.07, 0.09, 0.13, 0.18, 0.24]):
+        ax.add_patch(Circle((14, 106), rr, fc="#c9a227", alpha=aa, zorder=1))
+    for rr, aa in zip([25, 21, 17, 13, 9, 5], [0.05, 0.07, 0.10, 0.14, 0.19, 0.26]):
+        ax.add_patch(Circle((78, -4), rr, fc="#3d5a80", alpha=aa, zorder=1))
+    ax.text(7, 82, "DR. B.V. HIRAY COLLEGE  ·  MALEGAON", fontsize=4.6, color="#ffd95e", fontweight="bold")
+    ax.text(7, 66, "Every\ngrievance,\nheard &", fontsize=17.5, fontweight="bold", color="#ffffff", va="top", linespacing=1.12, family="serif")
+    ax.text(7, 36.5, "tracked.", fontsize=17.5, fontweight="bold", color=GOLD_L, va="top", family="serif", style="italic")
+    for i, t in enumerate(["( bolt )  Auto-routing — explainable keyword scoring",
+                            "( clock )  SLA on every complaint — 24h / 72h / 7d",
+                            "( eye )  Anonymous lodgement for sensitive matters"]):
+        ax.text(7, 22.5 - i * 4.6, t, fontsize=4.6, color="#cdd7ec")
+    ax.add_patch(Rectangle((7, 4), 34, 0.35, fc=GOLD, ec="none"))
+    # panel right
+    ax.add_patch(Rectangle((84, 0), 76, 100, fc="#0b1020", ec="none"))
+    rrect(ax, 96, 12, 52, 76, 3.2, "#141c2e", ec="#2b3a5f", lw=1.2, z=2)
+    ax.text(122, 76.5, "Welcome back", fontsize=9.5, fontweight="bold", color="#fff", ha="center", family="serif", zorder=4)
+    ax.text(122, 70.5, "Campus Shikayat Setu — Grievance Redressal", fontsize=3.9, color="#8fa9d0", ha="center", zorder=4)
+    for i, (lab, val) in enumerate([("ROLL NUMBER / USERNAME", "MCA2026001"), ("PASSWORD", "••••••••••")]):
+        ax.text(101.5, 60 - i * 13.5, lab, fontsize=3.6, fontweight="bold", color="#8fa9d0", zorder=4)
+        rrect(ax, 101.5, 48.6 - i * 13.5, 41, 7.6, 1.5, "#141c2e", ec="#2b3a5f", lw=1.3, z=3)
+        ax.text(104, 52.4 - i * 13.5, val, fontsize=6.4, color="#eef1f8", va="center", zorder=4)
+    rrect(ax, 101.5, 22.5, 41, 8.4, 1.7, GOLD, ec="none", z=3)
+    ax.text(122, 26.7, "Sign in  →", fontsize=7.6, fontweight="bold", color=GOLD_D, ha="center", va="center", zorder=4)
+    ax.text(122, 16.2, "admin / admin123  ·  MCA2026001 / student123", fontsize=4.2, color="#66707f", ha="center", zorder=4)
     fig.savefig(f"{OUT}/screen-login-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-login-mock.png")
 
-# ================================================================ 2. STUDENT DASHBOARD
+# ================================================================ 2. DASHBOARD (student, v2)
 def screen_dashboard():
     mine = one("SELECT COUNT(*) c FROM complaints WHERE student_id=(SELECT id FROM users WHERE username='MCA2026001')")["c"]
     closed = one("SELECT COUNT(*) c FROM complaints WHERE student_id=(SELECT id FROM users WHERE username='MCA2026001') AND status IN ('Resolved','Closed')")["c"]
-    open_ = mine - closed
-    recent = q("""SELECT c.code, c.title, c.priority, c.status FROM complaints c
+    recent = q("""SELECT c.code, substr(c.title,1,30) AS t, c.priority, c.status FROM complaints c
                   WHERE c.student_id=(SELECT id FROM users WHERE username='MCA2026001')
-                  ORDER BY c.submitted_at DESC LIMIT 6""")
-    fig, ax = window(16, 10)
-    sidebar(ax, "dash")
-    ax.text(32, 84.5, "Dashboard", fontsize=13, fontweight="bold", color=NAVY)
-    ax.text(32, 80.8, date.today().strftime("%d %B %Y") + "  ·  Signed in as Yashwant Ahire (MCA2026001)", fontsize=6.4, color=GREY)
-    stats = [("My Complaints", mine, "all time"), ("Open", open_, "awaiting action"),
-             ("Closed", closed, "resolved & rated"), ("Avg Close", "—", "hrs, this semester")]
-    x = 32
-    for label, value, hint in stats:
-        stat_card(ax, x, 62.5, 27.5, 14.5, label, value, hint); x += 30.3
-    ax.text(32, 56.5, "Latest complaints", fontsize=8.6, fontweight="bold", color=NAVY)
-    rows = [[r["code"], r["title"][:34], r["priority"], r["status"]] for r in recent]
-    table(ax, 32, 54.5, 124, [("Code", 1.15), ("Title", 2.9), ("Priority", 0.8), ("Status", 1.0)], rows,
-          row_h=4.6, fs=6.0)
-    ax.text(32, 20.5, "Tip: use the public tracker with the CMP code + roll no. — no login needed.", fontsize=5.8, color=GREY, style="italic")
+                  ORDER BY c.submitted_at DESC LIMIT 4""")
+    counts = {r["status"]: r["n"] for r in q("SELECT status, COUNT(*) n FROM complaints WHERE student_id=(SELECT id FROM users WHERE username='MCA2026001') GROUP BY status")}
+    fig, ax = canvas(160, 100, bg=CREAM)
+    sidebar(ax, "dash"); topbar(ax, "Dashboard")
+    ax.text(38, 84.5, "MY DASHBOARD", fontsize=3.9, fontweight="bold", color="#a8861b")
+    ax.text(38, 79.5, "My Dashboard", fontsize=10.5, fontweight="bold", color=NAVY, family="serif")
+    ax.text(38, 74.6, "Your complaints at a glance — SLA-tracked by the college.", fontsize=4.4, color=GREY)
+    rrect(ax, 138, 74, 17, 5.6, 1.4, GOLD, ec="none", z=3)
+    ax.text(146.5, 76.8, "+ Lodge new", fontsize=4.6, fontweight="bold", color=GOLD_D, ha="center", va="center", zorder=4)
+    stats = [("Total", mine, "lodged all time", GOLD), ("Open", mine - closed, "awaiting resolution", "#d97706"),
+             ("Resolved", counts.get("Resolved", 0), "awaiting your ★", GREEN), ("Closed", counts.get("Closed", 0), "confirmed by you", GREEN)]
+    x = 38
+    for label, value, hint, tone in stats:
+        stat_card(ax, x, 55.5, 28.6, 15.5, label, value, hint, tone); x += 30.4
+    # recent complaints card
+    rrect(ax, 38, 12, 74, 38, 2.4, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.text(41.5, 44.5, "Latest complaints", fontsize=6.4, fontweight="bold", color=NAVY, zorder=4)
+    rows = [[r["code"], r["t"], r["priority"], r["status"]] for r in recent]
+    table(ax, 41.5, 41.5, 67, [("Code", 1.15), ("Title", 2.6), ("Priority", 0.8), ("Status", 1.0)], rows, row_h=5.0, fs=3.7, header_fs=3.3)
+    # donut card
+    rrect(ax, 117, 12, 38, 38, 2.4, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.text(120.5, 44.5, "Status distribution", fontsize=6.4, fontweight="bold", color=NAVY, zorder=4)
+    segs = [(counts.get(s, 0), c) for s, c in [("Submitted", GOLD), ("Acknowledged", "#5b7bb4"), ("In Progress", "#d97706"), ("Resolved", GREEN), ("Closed", "#8a8f9d")]]
+    segs = [s for s in segs if s[0] > 0]
+    if segs:
+        donut(ax, 136, 29.5, 7.2, segs, mine)
     fig.savefig(f"{OUT}/screen-dashboard-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-dashboard-mock.png")
 
-# ================================================================ 3. ADMIN CONSOLE
+# ================================================================ 3. ADMIN CONSOLE (v2)
 def screen_console():
-    rows = q("""SELECT c.code, c.title, d.name AS dept, c.priority, c.status, c.submitted_at
+    rows = q("""SELECT c.code, substr(c.title,1,30) AS t, d.name AS dept, c.priority, c.status, c.sla_due_at
                FROM complaints c JOIN departments d ON d.id=c.department_id
-               ORDER BY c.submitted_at DESC LIMIT 9""")
-    total = one("SELECT COUNT(*) c FROM complaints")["c"]
-    high = one("SELECT COUNT(*) c FROM complaints WHERE priority='High'")["c"]
-    fig, ax = window(16, 10)
-    sidebar(ax, "console", admin=True)
-    ax.text(32, 84.5, "Admin Console", fontsize=13, fontweight="bold", color=NAVY)
-    ax.text(32, 80.8, f"{total} complaints on record  ·  {high} High priority  ·  filters: department / status / priority",
-            fontsize=6.4, color=GREY)
-    rows2 = [[r["code"], r["title"][:30], r["dept"][:20], r["priority"],
-              "!" + r["status"] if r["status"] == "Submitted" else r["status"]] for r in rows]
-    table(ax, 32, 78.5, 124, [("Code", 1.1), ("Title", 2.35), ("Department", 1.65), ("Priority", 0.75), ("Status", 1.0)],
-          rows2, row_h=6.6, fs=5.9)
-    ax.add_patch(FancyBboxPatch((32, 6.5), 30, 6.4, boxstyle="round,pad=0,rounding_size=1.4", fc=RED, ec="none"))
-    ax.text(47, 9.7, "Escalate → High", ha="center", va="center", fontsize=7.6, fontweight="bold", color="white")
-    ax.add_patch(FancyBboxPatch((66, 6.5), 34, 6.4, boxstyle="round,pad=0,rounding_size=1.4", fc="white", ec=NAVY, lw=1.3))
-    ax.text(83, 9.7, "Reassign dept…", ha="center", va="center", fontsize=7.6, fontweight="bold", color=NAVY)
-    ax.add_patch(FancyBboxPatch((104, 6.5), 26, 6.4, boxstyle="round,pad=0,rounding_size=1.4", fc="#fdf0d5", ec=GOLD, lw=1.3))
-    ax.text(117, 9.7, "Force-close", ha="center", va="center", fontsize=7.6, fontweight="bold", color="#6d5200")
+               ORDER BY c.submitted_at DESC LIMIT 7""")
+    fig, ax = canvas(160, 100, bg=CREAM)
+    sidebar(ax, "console", admin=True); topbar(ax, "Admin Console")
+    ax.text(38, 84.5, "ADMINISTRATION", fontsize=3.9, fontweight="bold", color="#a8861b")
+    ax.text(38, 79.5, "Admin Console", fontsize=10.5, fontweight="bold", color=NAVY, family="serif")
+    ax.text(38, 74.6, "Every complaint in the college — filter and act.", fontsize=4.4, color=GREY)
+    # filter toolbar
+    for i, (t, w) in enumerate([("All departments ▾", 24), ("All statuses ▾", 20), ("All priorities ▾", 20)]):
+        rrect(ax, 38 + i * 25.4, 63.5, w, 6.4, 1.6, CARD2, ec="#dcd9ce", lw=1.0, z=3)
+        ax.text(38 + i * 25.4 + w / 2, 66.7, t, fontsize=4.4, color=NAVY, ha="center", va="center", zorder=4)
+    rrect(ax, 113, 63.5, 15, 6.4, 1.6, NAVY2, ec="none", z=3)
+    ax.text(120.5, 66.7, "Apply", fontsize=4.8, fontweight="bold", color="#f6f5ef", ha="center", va="center", zorder=4)
+    rrect(ax, 130.5, 63.5, 24.5, 6.4, 1.6, CARD, ec="#dcd9ce", lw=1.0, z=3)
+    ax.text(132.6, 66.7, "Instant filter…", fontsize=4.4, color=GREY, va="center", zorder=4)
+    table_rows = []
+    for r in rows:
+        table_rows.append([r["code"], r["t"], r["dept"][:17], r["priority"], r["status"]])
+    table(ax, 38, 59.5, 117, [("Code", 1.05), ("Title", 2.35), ("Dept", 1.55), ("Priority", 0.75), ("Status", 0.95)],
+          table_rows, row_h=5.6, fs=3.6, header_fs=3.3)
     fig.savefig(f"{OUT}/screen-console-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-console-mock.png")
 
-# ================================================================ 4. COMPLAINT TIMELINE (detail)
+# ================================================================ 4. COMPLAINT DETAIL + AUDIT TIMELINE (v2)
 def screen_timeline():
-    c = q("SELECT c.*, cat.name AS cat, d.name AS dept FROM complaints c JOIN categories cat ON cat.id=c.category_id JOIN departments d ON d.id=c.department_id WHERE c.is_anonymous=0 ORDER BY c.id LIMIT 1")[0]
-    ev = q("SELECT e.event_type, e.note, e.created_at FROM complaint_events e WHERE e.complaint_id=? ORDER BY e.id", (c["id"],))
-    fig, ax = window(16, 10)
-    ax.text(8, 84.5, "Complaint " + c["code"], fontsize=13, fontweight="bold", color=NAVY)
-    ax.text(8, 80.3, f"{c['title']}", fontsize=8.5, color="#333")
-    ax.text(8, 75.6, f"Category: {c['cat']}    Department: {c['dept']}    Priority: {c['priority']}    Status: {c['status']}",
-            fontsize=6.6, color=GREY)
-    ax.add_patch(FancyBboxPatch((122, 76.5), 30, 8.5, boxstyle="round,pad=0,rounding_size=1.6", fc="#fbf3d9", ec=GOLD, lw=1.5))
-    ax.text(137, 81.8, "SLA", ha="center", fontsize=5.4, color="#8a6d1a", fontweight="bold")
-    ax.text(137, 77.8, (datetime.strptime(c["sla_due_at"], "%Y-%m-%d %H:%M:%S")).strftime("%d %b %H:%M"),
-            ha="center", fontsize=6.6, fontweight="bold", color="#6d5200")
-    ax.plot([10, 10], [10, 66], color=GOLD, lw=2.4, zorder=2)
-    yy = 62
-    for i, e in enumerate(ev[:7]):
-        ax.add_patch(mpatches.Circle((10, yy), 1.35, fc=(NAVY if i else GOLD), ec="white", lw=1.6, zorder=4))
-        ax.add_patch(FancyBboxPatch((14, yy - 4.4), 138, 7.6, boxstyle="round,pad=0,rounding_size=1.3",
-                                    fc=CARD, ec="#e3e0d2", lw=1.1, zorder=3))
-        ax.text(16.5, yy + 0.6, e["event_type"].upper() + "  ·  " + e["created_at"][5:16], fontsize=5.2, color=GREY, fontweight="bold", zorder=6)
-        ax.text(16.5, yy - 2.6, e["note"][:96], fontsize=6.0, color="#202020", zorder=6)
-        yy -= 8.35
+    c = q("SELECT c.*, cat.name AS cat, d.name AS dept FROM complaints c JOIN categories cat ON cat.id=c.category_id JOIN departments d ON d.id=c.department_id WHERE c.is_anonymous=0 AND c.status='Closed' ORDER BY c.id LIMIT 1")[0]
+    ev = q("SELECT event_type, note, created_at FROM complaint_events WHERE complaint_id=? ORDER BY id", (c["id"],))
+    fig, ax = canvas(160, 100, bg=CREAM)
+    sidebar(ax, "mine"); topbar(ax, c["code"])
+    ax.text(38, 84.5, "COMPLAINT", fontsize=3.9, fontweight="bold", color="#a8861b")
+    ax.text(38, 79.5, c["code"], fontsize=11, fontweight="bold", color=NAVY, family="monospace")
+    ax.text(38, 74.6, c["title"], fontsize=5.4, color="#333")
+    # stepper
+    steps = ["Submitted", "Acknowledged", "In Progress", "Resolved", "Closed"]
+    idx = steps.index(c["status"])
+    for i, s in enumerate(steps):
+        x = 38 + i * 24.6
+        ax.plot([x - 11 if i else x, x + 12.3], [66.5, 66.5], color=(GREEN if i <= idx else "#e5e3d8"), lw=2.4, zorder=2)
+        done = i <= idx
+        ax.add_patch(Circle((x, 66.5), 1.9, fc=(GREEN if done else CARD), ec=(GREEN if done else "#dcd9ce"), lw=1.6, zorder=4))
+        if done:
+            ax.text(x, 66.5, "✓", fontsize=4.6, color="#fff", ha="center", va="center", zorder=5, fontweight="bold")
+        ax.text(x, 61.6, s.upper(), fontsize=3.1, ha="center", color=(GREEN if done else GREY), fontweight="bold", zorder=4)
+    # timeline card
+    rrect(ax, 38, 6, 76, 48, 2.4, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.text(41.5, 49.5, "Timeline — full audit trail", fontsize=6.4, fontweight="bold", color=NAVY, zorder=4)
+    icon = {"created": "+", "routed": "R", "acknowledged": "✓", "status": "W", "closed": "x", "feedback": "*"}
+    yy = 44
+    for e in ev[:5]:
+        ax.add_patch(Circle((43.5, yy + 1.5), 1.55, fc=GOLD_SOFT, ec=GOLD, lw=1.1, zorder=4))
+        ax.text(43.5, yy + 1.5, icon.get(e["event_type"], "•"), fontsize=3.9, ha="center", va="center", zorder=5)
+        rrect(ax, 47.2, yy - 1.5, 63.5, 6.2, 1.4, CARD2, ec="#eceade", lw=0.9, z=3)
+        ax.text(49, yy + 2.6, f"{e['event_type'].upper()}  ·  {e['created_at'][5:16]}", fontsize=3.2, fontweight="bold", color="#a8861b", zorder=5)
+        ax.text(49, yy - 0.3, e["note"][:88], fontsize=3.5, color="#202020", va="center", zorder=5)
+        yy -= 7.9
+    # SLA card right
+    rrect(ax, 118, 30, 37, 24, 2.4, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.text(121.5, 49, "SLA clock", fontsize=6.0, fontweight="bold", color=NAVY, zorder=4)
+    ax.text(121.5, 42.5, "Resolved", fontsize=4.6, color=GREY, zorder=4)
+    ax.text(121.5, 37.5, "within deadline", fontsize=6.4, fontweight="bold", color=GREEN, family="serif", zorder=4)
+    ax.text(121.5, 32.5, "Routing: auto · score 14", fontsize=3.9, color=GREY, zorder=4)
+    rrect(ax, 118, 6, 37, 20, 2.4, CARD, ec="#eceade", lw=1.1, z=3)
+    ax.text(121.5, 21.3, "Student feedback", fontsize=6.0, fontweight="bold", color=NAVY, zorder=4)
+    ax.text(121.5, 13.5, "*****", fontsize=10.5, color=GOLD, zorder=4)
+    ax.text(121.5, 8.5, "\"Tap replaced the same day.\"", fontsize=3.8, color=GREY, style="italic", zorder=4)
     fig.savefig(f"{OUT}/screen-timeline-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-timeline-mock.png")
 
+from matplotlib.patches import Polygon
 screen_login(); screen_dashboard(); screen_console(); screen_timeline()

@@ -1,25 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Lodge Complaint{% endblock %}
 {% block body %}
-<div class="page-head"><div><h1>Lodge a Complaint</h1><p>Be specific — describe what broke, where, and since when. The system routes it to the right department automatically.</p></div></div>
+<div class="page-head"><div><div class="eyebrow">New Grievance</div><h1>Lodge a Complaint</h1><p>Be specific — describe what broke, where, and since when. The system routes it to the right department automatically.</p></div></div>
 <div class="card">
-  <form method="post">
+  <form method="post" id="lodge-form">
     <div class="form-grid">
-      <div class="field" style="grid-column:1/-1"><label>Title (min 8 characters)</label>
-        <input name="title" value="{{ form.get('title','') }}" placeholder="e.g. Leaking tap in washroom near Lab 3" required></div>
-      <div class="field" style="grid-column:1/-1"><label>Description (min 20 characters)</label>
-        <textarea name="description" rows="4" required placeholder="What exactly is wrong? Where? Since when? Who is affected?">{{ form.get('description','') }}</textarea></div>
-      <div class="field"><label>Category (the engine double-checks)</label>
-        <select name="category_id" required>
+      <div class="field" style="grid-column:1/-1"><label for="lodge-title">Title <span class="help">(min 8 characters)</span></label>
+        <input id="lodge-title" name="title" value="{{ form.get('title','') }}" placeholder="e.g. Leaking tap in washroom near Lab 3" required autocomplete="off">
+        <div class="counter" data-counter-for="#lodge-title" data-min="8">0 / min 8</div></div>
+      <div class="field" style="grid-column:1/-1"><label for="lodge-desc">Description <span class="help">(min 20 characters)</span></label>
+        <textarea id="lodge-desc" name="description" rows="4" required placeholder="What exactly is wrong? Where? Since when? Who is affected?">{{ form.get('description','') }}</textarea>
+        <div class="counter" data-counter-for="#lodge-desc" data-min="20">0 / min 20</div></div>
+      <div class="field"><label for="lodge-cat">Category <span class="help">(the engine double-checks)</span></label>
+        <select id="lodge-cat" name="category_id" required>
           <option value="">— choose —</option>
-          {% for c in cats %}<option value="{{ c['id'] }}" {{ 'selected' if form.get('category_id')|string == c['id']|string }}>{{ c['name'] }}</option>{% endfor %}
+          {% for c in cats %}<option value="{{ c['id'] }}" {{ 'selected' if form.get('category_id')|string == c['id']|string }}>{{ c['name'] }} → {{ c['dept'] }}</option>{% endfor %}
         </select></div>
-      <div class="field"><label>Location</label>
-        <input name="location" value="{{ form.get('location','') }}" placeholder="e.g. Washroom, 2nd Floor"></div>
+      <div class="field"><label for="lodge-loc">Location</label>
+        <input id="lodge-loc" name="location" value="{{ form.get('location','') }}" placeholder="e.g. Washroom, 2nd Floor"></div>
     </div>
-    <div style="margin:12px 0"><label style="display:flex;gap:8px;align-items:center;font-weight:600">
-      <input type="checkbox" name="is_anonymous" {{ 'checked' if form.get('is_anonymous') }}> Lodge anonymously <span class="help">(identity visible only to administrators)</span></label></div>
-    <button type="submit" class="btn btn-gold">Submit Complaint →</button>
+
+    <div class="route-preview" id="route-preview" aria-live="polite">
+      <div class="rp-head"><span class="pulse"></span> Live routing preview — as you type</div>
+      <div class="rp-grid">
+        <div class="rp-item"><div class="rp-k">Category</div><div class="rp-v" data-rp="cat">—</div></div>
+        <div class="rp-item"><div class="rp-k">Department</div><div class="rp-v" data-rp="dept">—</div></div>
+        <div class="rp-item"><div class="rp-k">Priority</div><div class="rp-v badge badge-gray" data-rp="prio">—</div></div>
+        <div class="rp-item"><div class="rp-k">SLA</div><div class="rp-v" data-rp="sla">—</div></div>
+        <div class="rp-item"><div class="rp-k">Engine score</div><div class="rp-v" data-rp="score">—</div></div>
+      </div>
+    </div>
+
+    <div style="margin:14px 0 16px">
+      <label class="switch" for="lodge-anon">
+        <input type="checkbox" id="lodge-anon" name="is_anonymous" {{ 'checked' if form.get('is_anonymous') }}>
+        <span class="track" aria-hidden="true"></span>
+        <span><b>Lodge anonymously</b><br><span class="help">identity withheld from departments — visible only to administrators (for ragging, harassment or similar).</span></span>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-gold">Submit Complaint&nbsp;→</button>
+      <a class="btn btn-ghost" href="{{ url_for('my_complaints') }}">My complaints</a>
+    </div>
   </form>
 </div>
 {% endblock %}

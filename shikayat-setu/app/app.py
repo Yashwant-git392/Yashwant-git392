@@ -11,7 +11,7 @@ from datetime import date, datetime, timedelta
 from functools import wraps
 
 from flask import (
-    Flask, flash, redirect, render_template, request, session, url_for, abort,
+    Flask, flash, redirect, render_template, request, session, url_for, abort, jsonify,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -102,6 +102,30 @@ def is_overdue(complaint):
         return datetime.strptime(complaint["sla_due_at"], "%Y-%m-%d %H:%M:%S") < datetime.now()
     except ValueError:
         return False
+
+
+@app.route("/api/route-preview")
+@login_required
+def route_preview():
+    """Read-only live routing hint for the lodge form (same engine as /lodge)."""
+    title = (request.args.get("title") or "").strip()
+    desc = (request.args.get("description") or "").strip()
+    conn = db.get_conn()
+    cats = conn.execute("SELECT * FROM categories").fetchall()
+    text = routing.route_text(title, desc)
+    routed_cat, score = routing.route(text, cats)
+    if routed_cat:
+        dept = conn.execute("SELECT name FROM departments WHERE id=?", (routed_cat["department_id"],)).fetchone()["name"]
+        priority = routing.assign_priority(routed_cat["default_priority"], title, desc)
+        payload = {"category": routed_cat["name"], "department": dept, "priority": priority,
+                   "score": score, "sla_hours": routing.SLA_HOURS[priority]}
+    else:
+        fallback_prio = routing.assign_priority("Low", title, desc)
+        payload = {"category": "General & Administration", "department": "General & Administration",
+                   "priority": fallback_prio, "score": 0,
+                   "sla_hours": routing.SLA_HOURS[fallback_prio]}
+    conn.close()
+    return jsonify(payload)
 
 
 def complaint_timeline(conn, complaint_id):
@@ -207,7 +231,9 @@ def dashboard():
         counts = {s: 0 for s in STATUS_ORDER}
         for m in mine: counts[m["status"]] += 1
         recent = mine[:3]
-        ctx = dict(counts=counts, total=len(mine), recent=recent, role="student")
+        open_count = sum(v for k, v in counts.items() if k not in ("Resolved", "Closed"))
+        ctx = dict(counts=counts, total=len(mine), recent=recent, role="student",
+                   donut=counts, open_count=open_count)
     elif user["role"] == "officer":
         rows = conn.execute(
             """SELECT c.*, cat.name AS category_name, u.full_name AS student_name
@@ -215,7 +241,12 @@ def dashboard():
                WHERE c.department_id=? AND c.status!='Closed' ORDER BY c.submitted_at DESC""", (user["department_id"],)).fetchall()
         overdue = sum(1 for r in rows if is_overdue(r))
         high = sum(1 for r in rows if r["priority"] == "High")
+        status_counts = {s: 0 for s in STATUS_ORDER}
+        for r in conn.execute("SELECT status, COUNT(*) c FROM complaints WHERE department_id=? GROUP BY status",
+                              (user["department_id"],)):
+            status_counts[r["status"]] = r["c"]
         ctx = dict(assigned=len(rows), overdue=overdue, high=high, queue=[dict(r, is_overdue=is_overdue(r)) for r in rows[:6]], role="officer",
+                   donut=status_counts, open_count=len(rows),
                    department=conn.execute("SELECT name FROM departments WHERE id=?", (user["department_id"],)).fetchone()["name"])
     else:  # admin
         by_status = {r["status"]: r["c"] for r in conn.execute("SELECT status, COUNT(*) c FROM complaints GROUP BY status")}
@@ -229,7 +260,18 @@ def dashboard():
             """SELECT c.*, cat.name AS category_name, d.name AS department_name
                FROM complaints c JOIN categories cat ON cat.id=c.category_id JOIN departments d ON d.id=c.department_id
                ORDER BY c.submitted_at DESC LIMIT 6""").fetchall()
-        ctx = dict(total=total, by_status=by_status, overdue=overdue, recent=recent, role="admin")
+        donut = {s: by_status.get(s, 0) for s in STATUS_ORDER}
+        dept_open = [dict(r) for r in conn.execute(
+            "SELECT d.name, COUNT(c.id) AS n FROM departments d JOIN complaints c ON c.department_id=d.id "
+            "WHERE c.status NOT IN ('Resolved','Closed') GROUP BY d.id ORDER BY n DESC")]
+        decided = conn.execute("SELECT COUNT(*) c FROM complaints WHERE status IN ('Resolved','Closed')").fetchone()["c"]
+        on_time = conn.execute("SELECT COUNT(*) c FROM complaints WHERE resolved_at IS NOT NULL AND resolved_at <= sla_due_at").fetchone()["c"]
+        on_time_pct = round(100.0 * on_time / decided, 1) if decided else 0
+        csat = conn.execute("SELECT AVG(rating) a FROM feedback").fetchone()["a"]
+        ctx = dict(total=total, by_status=by_status, overdue=overdue, recent=recent, role="admin",
+                   donut=donut, dept_open=dept_open, on_time_pct=on_time_pct,
+                   csat=round(csat, 1) if csat else None,
+                   open_count=sum(v for k, v in donut.items() if k not in ("Resolved", "Closed")))
     conn.close()
     return render_template("dashboard.html", **ctx)
 

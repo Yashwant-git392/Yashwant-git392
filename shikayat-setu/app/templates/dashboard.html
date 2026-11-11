@@ -1,73 +1,152 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block body %}
+{% set STATUS_COLORS = {'Submitted':'#c9a227','Acknowledged':'#5b7bb4','In Progress':'#d97706','Resolved':'#177a46','Closed':'#8a8f9d'} %}
+{% set donut_total = donut.values() | sum %}
+{% set C = 276.46 %}
 {% if role == 'student' %}
-<div class="page-head"><div><h1>My Dashboard</h1><p>Your complaints at a glance — SLA-tracked by the college.</p></div>
+<div class="page-head"><div><div class="eyebrow">Student Workspace</div><h1>My Dashboard</h1><p>Your complaints at a glance — SLA-tracked by the college.</p></div>
   <a class="btn btn-gold" href="{{ url_for('lodge') }}">✍️ Lodge a Complaint</a></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Total</div><div class="value">{{ total }}</div><div class="hint">complaints lodged</div></div>
-  <div class="stat"><div class="label">Submitted</div><div class="value">{{ counts['Submitted'] }}</div></div>
-  <div class="stat"><div class="label">Acknowledged</div><div class="value">{{ counts['Acknowledged'] }}</div></div>
-  <div class="stat"><div class="label">In Progress</div><div class="value">{{ counts['In Progress'] }}</div></div>
-  <div class="stat"><div class="label">Resolved</div><div class="value">{{ counts['Resolved'] }}</div></div>
-  <div class="stat"><div class="label">Closed</div><div class="value">{{ counts['Closed'] }}</div></div>
+  <div class="stat"><div class="label">Total</div><div class="value" data-count="{{ total }}">0</div><div class="hint">complaints lodged</div></div>
+  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">0</div><div class="hint">awaiting resolution</div></div>
+  <div class="stat tone-green"><div class="label">Resolved</div><div class="value" data-count="{{ counts['Resolved'] }}">0</div><div class="hint">awaiting your ★</div></div>
+  <div class="stat tone-green"><div class="label">Closed</div><div class="value" data-count="{{ counts['Closed'] }}">0</div><div class="hint">confirmed by you</div></div>
 </div>
-<div class="card">
-  <h2>🔎 Latest complaints</h2>
-  {% if recent %}
-  <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
-    <tbody>{% for r in recent %}
-      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
-          <td>{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
-          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
-          <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td></tr>
-    {% endfor %}</tbody>
-  </table></div>
-  {% else %}<div class="empty-state"><div class="big">🌱</div><p>No complaints yet. When something breaks, tell us.</p></div>{% endif %}
+<div class="two-col grid">
+  <div class="card">
+    <h2><span class="h-icon">🔎</span> Latest complaints</h2>
+    {% if recent %}
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>{% for r in recent %}
+        <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b class="mono">{{ r['code'] }}</b></a></td>
+            <td class="row-title">{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
+            <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
+            <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="empty-state"><div class="big">🌱</div><p>No complaints yet. When something breaks, tell us.</p><a class="btn btn-gold" style="margin-top:12px" href="{{ url_for('lodge') }}">Lodge your first complaint</a></div>{% endif %}
+  </div>
+  <div class="card">
+    <h2><span class="h-icon">📈</span> Status distribution</h2>
+    {% if donut_total %}
+    <div class="donut-wrap">
+      <svg class="donut" width="132" height="132" viewBox="0 0 108 108" role="img" aria-label="Status distribution donut chart">
+        <circle class="track" cx="54" cy="54" r="44"></circle>
+        {% set ns = namespace(offset=0.0) %}
+        {% for status, n in donut.items() %}{% if n > 0 %}
+        <circle cx="54" cy="54" r="44" stroke="{{ STATUS_COLORS[status] }}" stroke-dasharray="{{ (n / donut_total) * C }} {{ C }}" stroke-dashoffset="{{ -ns.offset }}"></circle>
+        {% set ns.offset = ns.offset + (n / donut_total) * C %}
+        {% endif %}{% endfor %}
+        <text x="54" y="50" text-anchor="middle" font-size="19" font-weight="800" fill="currentColor" class="serif">{{ donut_total }}</text>
+        <text x="54" y="67" text-anchor="middle" font-size="8.5" fill="currentColor" opacity=".65">TOTAL</text>
+      </svg>
+      <div class="legend">
+        {% for status, n in donut.items() %}
+        <div class="legend-item"><span class="sw" style="background:{{ STATUS_COLORS[status] }}"></span>{{ status }}<b>{{ n }}</b></div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}<div class="empty-state"><div class="big">🍃</div><p>Nothing to chart yet.</p></div>{% endif %}
+  </div>
 </div>
+
 {% elif role == 'officer' %}
-<div class="page-head"><div><h1>Department Queue — {{ department }}</h1><p>Complaints assigned to your department, hottest first.</p></div>
+<div class="page-head"><div><div class="eyebrow">Department Workspace</div><h1>{{ department }}</h1><p>Complaints assigned to your department, hottest first.</p></div>
   <a class="btn btn-primary" href="{{ url_for('queue') }}">📥 Open full queue</a></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Active assigned</div><div class="value">{{ assigned }}</div></div>
-  <div class="stat"><div class="label">High priority</div><div class="value">{{ high }}</div><div class="hint">24-hour SLA</div></div>
-  <div class="stat"><div class="label">Overdue</div><div class="value">{{ overdue }}</div><div class="hint">past SLA deadline</div></div>
+  <div class="stat"><div class="label">Active assigned</div><div class="value" data-count="{{ assigned }}">0</div><div class="hint">open in your department</div></div>
+  <div class="stat tone-red"><div class="label">High priority</div><div class="value" data-count="{{ high }}">0</div><div class="hint">24-hour SLA</div></div>
+  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">0</div><div class="hint">past SLA deadline</div></div>
 </div>
-<div class="card">
-  <h2>📥 Incoming complaints</h2>
-  {% if queue %}
-  <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Priority</th><th>Status</th><th>SLA</th></tr></thead>
-    <tbody>{% for r in queue %}
-      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
-          <td>{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ 'anonymous' if r['is_anonymous'] else r['student_name'] }}</span></td>
-          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
-          <td>{{ r['status'] }}</td>
-          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td></tr>
-    {% endfor %}</tbody></table></div>
-  {% else %}<div class="empty-state"><div class="big">✅</div><p>Queue clear. Nothing assigned right now.</p></div>{% endif %}
+<div class="two-col grid">
+  <div class="card">
+    <h2><span class="h-icon">📥</span> Incoming complaints</h2>
+    {% if queue %}
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Priority</th><th>Status</th><th>SLA</th></tr></thead>
+      <tbody>{% for r in queue %}
+        <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b class="mono">{{ r['code'] }}</b></a></td>
+            <td class="row-title">{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ '🕶️ anonymous' if r['is_anonymous'] else r['student_name'] }}</span></td>
+            <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
+            <td>{{ r['status'] }}</td>
+            <td class="{{ 'sla-late' if r['is_overdue'] else 'mono' }}">{{ r['sla_due_at'][:16] }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="empty-state"><div class="big">✅</div><p>Queue clear. Nothing assigned right now.</p></div>{% endif %}
+  </div>
+  <div class="card">
+    <h2><span class="h-icon">📈</span> Department load</h2>
+    <div class="donut-wrap">
+      <svg class="donut" width="132" height="132" viewBox="0 0 108 108" role="img" aria-label="Department complaint status distribution">
+        <circle class="track" cx="54" cy="54" r="44"></circle>
+        {% set ns = namespace(offset=0.0) %}
+        {% for status, n in donut.items() %}{% if n > 0 %}
+        <circle cx="54" cy="54" r="44" stroke="{{ STATUS_COLORS[status] }}" stroke-dasharray="{{ (n / donut_total) * C }} {{ C }}" stroke-dashoffset="{{ -ns.offset }}"></circle>
+        {% set ns.offset = ns.offset + (n / donut_total) * C %}
+        {% endif %}{% endfor %}
+        <text x="54" y="50" text-anchor="middle" font-size="19" font-weight="800" fill="currentColor" class="serif">{{ donut_total }}</text>
+        <text x="54" y="67" text-anchor="middle" font-size="8" fill="currentColor" opacity=".65">ALL-TIME</text>
+      </svg>
+      <div class="legend">
+        {% for status, n in donut.items() %}
+        <div class="legend-item"><span class="sw" style="background:{{ STATUS_COLORS[status] }}"></span>{{ status }}<b>{{ n }}</b></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 </div>
+
 {% else %}
-<div class="page-head"><div><h1>Administration Overview</h1><p>Every complaint in the college, one screen.</p></div>
-  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('console') }}">🗂️ Console</a><a class="btn btn-gold" href="{{ url_for('reports') }}">🖨️ Reports</a></div></div>
+<div class="page-head"><div><div class="eyebrow">Administration</div><h1>Administration Overview</h1><p>Every complaint in the college, one screen.</p></div>
+  <div class="actions"><a class="btn btn-ghost" href="{{ url_for('console') }}">🗂️ Console</a><a class="btn btn-gold" href="{{ url_for('reports') }}">🖨️ Print registers</a></div></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Total complaints</div><div class="value">{{ total }}</div></div>
-  <div class="stat"><div class="label">Submitted</div><div class="value">{{ by_status.get('Submitted', 0) }}</div></div>
-  <div class="stat"><div class="label">Acknowledged</div><div class="value">{{ by_status.get('Acknowledged', 0) }}</div></div>
-  <div class="stat"><div class="label">In Progress</div><div class="value">{{ by_status.get('In Progress', 0) }}</div></div>
-  <div class="stat"><div class="label">Resolved</div><div class="value">{{ by_status.get('Resolved', 0) }}</div></div>
-  <div class="stat"><div class="label">Closed</div><div class="value">{{ by_status.get('Closed', 0) }}</div></div>
-  <div class="stat"><div class="label">Overdue</div><div class="value">{{ overdue }}</div><div class="hint">breaching SLA right now</div></div>
+  <div class="stat"><div class="label">Total complaints</div><div class="value" data-count="{{ total }}">0</div></div>
+  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">0</div><div class="hint">not yet resolved/closed</div></div>
+  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">0</div><div class="hint">breaching SLA now</div></div>
+  <div class="stat tone-green"><div class="label">Within SLA</div><div class="value">{{ on_time_pct }}%</div><div class="hint">of resolved complaints</div></div>
+  <div class="stat tone-green"><div class="label">Avg ★ rating</div><div class="value">{{ csat if csat is not none else '—' }}</div><div class="hint">from student feedback</div></div>
 </div>
-<div class="card">
-  <h2>🕑 Latest activity</h2>
-  <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
-    <tbody>{% for r in recent %}
-      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b>{{ r['code'] }}</b></a></td>
-          <td>{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
-          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
-          <td>{{ r['status'] }}</td></tr>
-    {% endfor %}</tbody></table></div>
+<div class="two-col grid">
+  <div class="card">
+    <h2><span class="h-icon">🕑</span> Latest activity</h2>
+    <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>{% for r in recent %}
+        <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b class="mono">{{ r['code'] }}</b></a></td>
+            <td class="row-title">{{ r['title'] }}</td><td>{{ r['department_name'] }}</td>
+            <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
+            <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+  <div>
+    <div class="card">
+      <h2><span class="h-icon">📈</span> Status distribution</h2>
+      <div class="donut-wrap">
+        <svg class="donut" width="118" height="118" viewBox="0 0 108 108" role="img" aria-label="Status distribution donut chart">
+          <circle class="track" cx="54" cy="54" r="44"></circle>
+          {% set ns = namespace(offset=0.0) %}
+          {% for status, n in donut.items() %}{% if n > 0 %}
+          <circle cx="54" cy="54" r="44" stroke="{{ STATUS_COLORS[status] }}" stroke-dasharray="{{ (n / donut_total) * C }} {{ C }}" stroke-dashoffset="{{ -ns.offset }}"></circle>
+          {% set ns.offset = ns.offset + (n / donut_total) * C %}
+          {% endif %}{% endfor %}
+          <text x="54" y="50" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor" class="serif">{{ donut_total }}</text>
+          <text x="54" y="67" text-anchor="middle" font-size="8" fill="currentColor" opacity=".65">TOTAL</text>
+        </svg>
+        <div class="legend">
+          {% for status, n in donut.items() %}
+          <div class="legend-item"><span class="sw" style="background:{{ STATUS_COLORS[status] }}"></span>{{ status }}<b>{{ n }}</b></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="h-icon">🏛️</span> Open workload by department</h2>
+      {% set max_n = dept_open | map(attribute='n') | max | default(1) %}
+      {% for d in dept_open %}
+      <div class="bar-row"><span class="bar-name" title="{{ d['name'] }}">{{ d['name'] }}</span>
+        <div class="bar-track"><div class="bar-fill" data-bar="{{ (100 * d['n'] / max_n) | round(1) if max_n else 0 }}"></div></div>
+        <span class="bar-num">{{ d['n'] }}</span></div>
+      {% else %}<div class="empty-state"><p>No open complaints. 🎉</p></div>{% endfor %}
+    </div>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

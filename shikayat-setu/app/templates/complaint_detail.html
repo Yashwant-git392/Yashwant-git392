@@ -1,52 +1,71 @@
 {% extends "base.html" %}
 {% block title %}{{ c['code'] }}{% endblock %}
 {% block body %}
+{% set STEPS = ['Submitted', 'Acknowledged', 'In Progress', 'Resolved', 'Closed'] %}
+{% set EV = {'created':'📝','routed':'🧭','acknowledged':'✓','status':'🔧','remark':'💬','reassign':'🔀','escalated':'🔺','feedback':'⭐','reopened':'↩️','closed':'🔒'} %}
+{% set EVCLASS = {'created':'gold','routed':'gold','acknowledged':'','status':'','remark':'','reassign':'','escalated':'red','feedback':'green','reopened':'red','closed':'green'} %}
+{% set current_idx = STEPS.index(c['status']) if c['status'] in STEPS else 0 %}
 <div class="page-head">
-  <div><h1>{{ c['code'] }} <span style="font-weight:400;color:var(--muted);font-size:.8em">· {{ c['status'] }}</span></h1>
-    <p>{{ c['title'] }}</p></div>
+  <div><div class="eyebrow">Complaint</div><h1 class="mono">{{ c['code'] }}</h1><p>{{ c['title'] }}</p></div>
   <div class="actions">
-    <span class="badge {{ 'badge-red' if c['priority']=='High' else ('badge-amber' if c['priority']=='Medium' else 'badge-gray') }}" style="font-size:.8rem">{{ c['priority'] }} priority</span>
-    {% if c['is_overdue'] %}<span class="badge badge-red">⚠ SLA breach</span>{% endif %}
+    <span class="badge {{ 'badge-red' if c['priority']=='High' else ('badge-amber' if c['priority']=='Medium' else 'badge-gray') }}" style="font-size:.78rem"><span class="b-dot"></span>{{ c['priority'] }} priority</span>
+    {% if c['status'] not in ['Resolved','Closed'] %}
+    <span class="sla-live {{ 'late' if c['is_overdue'] else 'ok' }}" data-sla-due="{{ c['sla_due_at'] }}">⏳ …</span>
+    {% endif %}
   </div>
 </div>
 
 {% if session.get('role') == 'admin' %}
-<div class="notice-bar">Admin view — complainant identity: <b>{{ c['identity'] or 'hidden (anonymous complaint)' }}{% if c['roll'] %} · {{ c['roll'] }}{% endif %}</b></div>
+<div class="notice-bar">🛡️ Admin view — complainant identity: <b>{{ c['identity'] or 'hidden (anonymous complaint)' }}{% if c['roll'] %} · {{ c['roll'] }}{% endif %}</b></div>
 {% elif session.get('role') == 'officer' %}
-<div class="notice-bar">Identity: <b>{{ c['identity'] or 'Anonymous — identity withheld from departments' }}</b></div>
+<div class="notice-bar">🔒 Identity: <b>{{ c['identity'] or 'Anonymous — identity withheld from departments' }}</b></div>
 {% endif %}
+
+<div class="card" style="padding-top:16px">
+  <div class="status-stepper" role="list" aria-label="Complaint lifecycle">
+    {% for s in STEPS %}
+    <div class="step {{ 'done' if loop.index0 < current_idx or (loop.index0 <= current_idx and c['status'] == 'Closed') else ('current' if loop.index0 == current_idx else '') }} {{ 'closed-won' if s == 'Closed' and c['status'] == 'Closed' else '' }}" role="listitem" aria-current="{{ 'step' if loop.index0 == current_idx else 'false' }}">
+      <div class="step-dot">✓</div><div class="step-label">{{ s }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
 
 <div class="grid two-col">
   <div>
     <div class="card">
-      <h2>📄 Complaint</h2>
+      <h2><span class="h-icon">📄</span> Complaint details</h2>
       <table class="kv"><tbody>
-        <tr><td>Code</td><td><b>{{ c['code'] }}</b></td></tr>
+        <tr><td>Code</td><td><b class="mono">{{ c['code'] }}</b></td></tr>
         <tr><td>Category</td><td>{{ c['category_name'] }}</td></tr>
         <tr><td>Department</td><td>{{ c['department_name'] }}</td></tr>
         <tr><td>Location</td><td>{{ c['location'] or '—' }}</td></tr>
         <tr><td>Submitted</td><td>{{ c['submitted_at'] }}</td></tr>
         <tr><td>SLA due</td><td class="{{ 'sla-late' if c['is_overdue'] else 'sla-ok' }}">{{ c['sla_due_at'] }} {% if c['is_overdue'] %}(overdue){% endif %}</td></tr>
-        <tr><td>Routing</td><td>{{ 'Automatic (score ' + c['routing_score']|string + ')' if c['routing']=='auto' else 'Manually reassigned by admin' }}</td></tr>
+        <tr><td>Routing</td><td>{{ 'Automatic (engine score ' + c['routing_score']|string + ')' if c['routing']=='auto' else 'Manually reassigned by admin' }}</td></tr>
       </tbody></table>
       <div style="margin-top:12px"><b>Description</b>
-        <p style="margin-top:6px;line-height:1.55">{{ c['description'] }}</p></div>
+        <p style="margin-top:6px;line-height:1.6">{{ c['description'] }}</p></div>
     </div>
 
     <div class="card">
-      <h2>🕓 Timeline</h2>
-      <ul class="timeline">
+      <h2><span class="h-icon">🕓</span> Timeline — full audit trail</h2>
+      <ol class="timeline">
         {% for s in c['steps'] %}
-        <li><span class="t-time">{{ s['created_at'] }}</span><br>
-            <span class="t-type">{{ s['event_type'] }}</span>
-            <span class="t-actor">{{ s['actor_name'] or 'system' }}</span> — {{ s['note'] }}</li>
+        <li class="tl-item {{ EVCLASS.get(s['event_type'], '') }}">
+          <div class="tl-ic" aria-hidden="true">{{ EV.get(s['event_type'], '•') }}</div>
+          <div class="tl-body">
+            <div class="tl-meta"><span class="tl-type">{{ s['event_type'] }}</span><span>{{ s['created_at'] }}</span><span class="tl-actor">{{ s['actor_name'] or 'system' }}</span></div>
+            <div class="tl-note">{{ s['note'] }}</div>
+          </div>
+        </li>
         {% endfor %}
-      </ul>
+      </ol>
     </div>
 
     {% if c['feedback'] %}
     <div class="card">
-      <h2>⭐ Student feedback</h2>
+      <h2><span class="h-icon">⭐</span> Student feedback</h2>
       <div class="stars">{{ '★' * c['feedback']['rating'] }}{{ '☆' * (5 - c['feedback']['rating']) }}</div>
       <p style="margin-top:6px">{{ c['feedback']['comment'] or '—' }}</p>
     </div>
@@ -56,7 +75,7 @@
   <div>
     {% if session.get('role') in ['officer','admin'] %}
     <div class="card">
-      <h2>🏛️ Department actions</h2>
+      <h2><span class="h-icon">🏛️</span> Department actions</h2>
       <div class="actions" style="flex-direction:column;align-items:stretch">
         {% if c['status'] == 'Submitted' %}
         <form method="post" action="{{ url_for('acknowledge', code=c['code']) }}">
@@ -68,14 +87,14 @@
         {% endif %}
         {% if c['status'] not in ['Resolved','Closed'] %}
         <form method="post" action="{{ url_for('resolve', code=c['code']) }}">
-          <div class="field"><label>Resolution remark (min 10 chars)</label>
-            <textarea name="remark" rows="3" required minlength="10" placeholder="What was done to fix it?"></textarea></div>
+          <div class="field"><label for="resolve-remark">Resolution remark <span class="help">(min 10 chars)</span></label>
+            <textarea id="resolve-remark" name="remark" rows="3" required minlength="10" placeholder="What was done to fix it?"></textarea></div>
           <button class="btn btn-green full" type="submit" style="margin-top:8px">✅ Mark Resolved</button>
         </form>
         {% endif %}
         <form method="post" action="{{ url_for('add_remark', code=c['code']) }}">
-          <div class="field"><label>Add remark (visible on timeline)</label>
-            <input name="note" required minlength="5" placeholder="e.g. Plumber scheduled for tomorrow 10:00"></div>
+          <div class="field"><label for="remark-note">Add remark <span class="help">(visible on timeline)</span></label>
+            <input id="remark-note" name="note" required minlength="5" placeholder="e.g. Plumber scheduled for tomorrow 10:00"></div>
           <button class="btn btn-ghost full" type="submit" style="margin-top:8px">💬 Add Remark</button>
         </form>
       </div>
@@ -84,10 +103,10 @@
 
     {% if session.get('role') == 'admin' %}
     <div class="card">
-      <h2>🛡️ Admin actions</h2>
+      <h2><span class="h-icon">🛡️</span> Admin actions</h2>
       <form method="post" action="{{ url_for('reassign', code=c['code']) }}">
-        <div class="field"><label>Reassign to department</label>
-          <select name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="reassign-dept">Reassign to department</label>
+          <select id="reassign-dept" name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
         <button class="btn btn-ghost full" type="submit" style="margin-top:8px">🔀 Reassign</button>
       </form>
       <form method="post" action="{{ url_for('escalate', code=c['code']) }}" style="margin-top:10px">
@@ -104,17 +123,24 @@
 
     {% if session.get('role') == 'student' and c['status'] == 'Resolved' %}
     <div class="card">
-      <h2>✅ Confirm resolution</h2>
+      <h2><span class="h-icon">✅</span> Confirm resolution</h2>
       <form method="post" action="{{ url_for('feedback', code=c['code']) }}">
         <div class="field"><label>How satisfied are you?</label>
-          <select name="rating" required>{% for i in [5,4,3,2,1] %}<option value="{{ i }}">{{ '★' * i }}{{ '☆' * (5 - i) }} ({{ i }}/5)</option>{% endfor %}</select></div>
-        <div class="field"><label>Comment (optional)</label>
-          <input name="comment" placeholder="What went well / what didn’t"></div>
-        <button class="btn btn-green full" type="submit" style="margin-top:8px">✅ Confirm &amp; Close</button>
+          <div class="star-rate" role="radiogroup" aria-label="Rating from 1 to 5 stars">
+            {% for i in [5,4,3,2,1] %}
+            <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" {{ 'checked' if i == 5 }}>
+            <label for="star{{ i }}" title="{{ i }} star{{ 's' if i > 1 }}" aria-label="{{ i }} star{{ 's' if i > 1 }}">★</label>
+            {% endfor %}
+          </div>
+          <div class="star-rate-hint">Tap a star — 5 is service you’d brag about.</div>
+        </div>
+        <div class="field" style="margin-top:12px"><label for="fb-comment">Comment <span class="help">(optional)</span></label>
+          <input id="fb-comment" name="comment" placeholder="What went well / what didn’t"></div>
+        <button class="btn btn-green full" type="submit" style="margin-top:10px">✅ Confirm &amp; Close</button>
       </form>
-      <form method="post" action="{{ url_for('reopen', code=c['code']) }}" style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">
-        <div class="field"><label>Not satisfied? Reopen (min 10 chars)</label>
-          <input name="reason" required minlength="10" placeholder="The issue persists because…"></div>
+      <form method="post" action="{{ url_for('reopen', code=c['code']) }}" style="margin-top:12px;border-top:1px solid var(--line-2);padding-top:12px">
+        <div class="field"><label for="reopen-reason">Not satisfied? Reopen <span class="help">(min 10 chars)</span></label>
+          <input id="reopen-reason" name="reason" required minlength="10" placeholder="The issue persists because…"></div>
         <button class="btn btn-red full" type="submit" style="margin-top:8px">↩️ Reopen Complaint</button>
       </form>
     </div>

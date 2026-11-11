@@ -1,30 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Admin Console{% endblock %}
 {% block body %}
-<div class="page-head"><div><h1>Admin Console</h1><p>Every complaint, filterable — reassign, escalate, or close stale ones.</p></div></div>
+<div class="page-head"><div><div class="eyebrow">Administration</div><h1>Admin Console</h1><p>Every complaint, filterable — reassign, escalate, or close stale ones.</p></div></div>
 <form class="toolbar" method="get">
-  <select name="department_id"><option value="">All departments</option>
+  <select name="department_id" aria-label="Department"><option value="">All departments</option>
     {% for d in depts %}<option value="{{ d['id'] }}" {{ 'selected' if sel_dept|string == d['id']|string }}>{{ d['name'] }}</option>{% endfor %}
   </select>
-  <select name="status"><option value="">All statuses</option>
+  <select name="status" aria-label="Status"><option value="">All statuses</option>
     {% for s in ['Submitted','Acknowledged','In Progress','Resolved','Closed'] %}<option {{ 'selected' if sel_status==s }}>{{ s }}</option>{% endfor %}
   </select>
-  <select name="priority"><option value="">All priorities</option>
+  <select name="priority" aria-label="Priority"><option value="">All priorities</option>
     {% for p in ['High','Medium','Low'] %}<option {{ 'selected' if sel_prio==p }}>{{ p }}</option>{% endfor %}
   </select>
-  <button class="btn btn-ghost" type="submit">Filter</button>
+  <button class="btn btn-primary" type="submit">Apply filters</button>
+  {% if sel_dept or sel_status or sel_prio %}<a class="btn btn-ghost" href="{{ url_for('console') }}">Clear</a>{% endif %}
 </form>
 <div class="card">
-  <p class="help" style="margin-bottom:10px">{{ rows|length }} complaint(s) match.</p>
-  <div class="table-wrap"><table class="tbl">
+  <div class="toolbar" style="margin-bottom:12px">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" placeholder="Instant filter within these {{ rows|length }}…" data-filter-table="#console-table" data-filter-count="#console-count" aria-label="Filter results">
+    </div>
+    <span class="help" id="console-count">{{ rows|length }} complaint(s) match</span>
+  </div>
+  <div class="table-wrap"><table class="tbl" id="console-table">
     <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
     <tbody>{% for r in rows %}
-      <tr><td><b>{{ r['code'] }}</b></td>
-          <td>{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ r['student_name'] }}</span></td>
+      <tr><td><b class="mono">{{ r['code'] }}</b></td>
+          <td class="row-title">{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ r['student_name'] }}</span></td>
           <td>{{ r['department_name'] }}</td>
-          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}">{{ r['priority'] }}</span></td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
           <td>{{ r['status'] }}</td>
-          <td class="{{ 'sla-late' if r['is_overdue'] else '' }}">{{ r['sla_due_at'][:16] }}</td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else 'mono' }}">{{ r['sla_due_at'][:16] }}</td>
           <td><a class="btn btn-sm btn-primary" href="{{ url_for('complaint_detail', code=r['code']) }}">Open →</a></td></tr>
     {% endfor %}</tbody></table></div>
 </div>

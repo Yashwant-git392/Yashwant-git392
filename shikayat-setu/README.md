@@ -18,6 +18,7 @@ Students report broken benches, leaking taps, dead projectors and missing marks 
 - **Three roles** — Student (lodge / track / feedback / reopen), Department Officer (queue, acknowledge, progress, resolve), Admin (console, reassign, escalate, reports, user management).
 - **Anonymous mode** — identity withheld from departments; visible only to administrators.
 - **Reopen & feedback** — a student can reject a resolution within 7 days; ratings feed the department scorecard.
+- **v2 UI** — dark collapsible sidebar with SVG icons, light/dark theme toggle (persisted), topbar with RBAC pill, animated KPI counters, status donut (inline SVG), admin workload bars, instant client-side table filtering, live routing preview while typing (`/api/route-preview`), second-by-second SLA countdown on complaint pages, CSS-only star-rating widget, toast notifications — vanilla JS, works offline.
 - **6 print-ready registers** — Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.
 - **Public tracker** — code + roll number, no login required.
 
@@ -61,7 +62,8 @@ shikayat-setu/
     ├── routing.py         # keyword router + SLA matrix
     ├── schema.sql
     ├── static/css/style.css
-    └── templates/         # Jinja2, navy/gold theme
+    ├── static/js/app.js  # UI dynamics: theme, sidebar, toasts, counters, live preview
+    └── templates/         # Jinja2, navy/gold design system v2 (light/dark)
 ├── report/            # report PDF + generators + images/
 ├── presentation/      # review deck (.pptx) + build_pptx.py
 └── tests/test_app.py
