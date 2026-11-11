@@ -74,4 +74,4 @@ report; the report itself lives at [`../report/SmartLibrary_MCA-Mini-Project_Rep
 | Review 3 | 21 Nov 2026 | Working app + automated/manual test evidence (report, Ch. 5) |
 | Review 4 / Final | 19 Dec 2026 | Presentation + hard-bound report |
 
-*Yashwant Shelke · Guide: Mrs. Priyanka M. Jagtap · A.Y. 2026-27*
+*Yashwant Santosh Ahire · Guide: Mrs. Priyanka M. Jagtap · A.Y. 2026-27*

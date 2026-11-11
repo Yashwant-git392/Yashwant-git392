@@ -61,7 +61,7 @@ def seed_if_empty():
     ]
 
     members = [
-        ("MCA2026001", "Yashwant Shelke", "yashwant@bvhmc.edu.in", "9876543201", "MCA-I", "1", "Student", "Active"),
+        ("MCA2026001", "Yashwant Santosh Ahire", "yashwant@bvhmc.edu.in", "9876543201", "MCA-I", "1", "Student", "Active"),
         ("MCA2026002", "Priya Patil", "priya.patil@bvhmc.edu.in", "9823456701", "MCA-I", "1", "Student", "Active"),
         ("MCA2026003", "Rohit Deshmukh", "rohit.d@bvhmc.edu.in", "9912345602", "MCA-I", "1", "Student", "Active"),
         ("MCA2026004", "Snehal Jadhav", "snehal.j@bvhmc.edu.in", "9765432103", "MCA-I", "1", "Student", "Active"),

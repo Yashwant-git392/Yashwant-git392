@@ -274,12 +274,11 @@ def cover(pdf: Report):
     line(174, 6.2, "Academic Year:  2026–27", "DVS", 9.2, (255, 255, 255))
 
     line(186.5, 6.0, "Submitted by", "DVS", 10, GOLD_L, "B")
-    line(193, 6.0, "Yashwant Shelke   ·   Roll No.: ____________________", "DVS", 9.6, (255, 255, 255))
+    line(193, 6.0, "Yashwant Santosh Ahire   ·   Roll No.: ____________________", "DVS", 9.6, (255, 255, 255))
     line(203.5, 6.0, "Under the guidance of", "DVS", 10, GOLD_L, "B")
-    line(210, 6.0, "Mrs. Priyanka M. Jagtap  (Roll No. 1–34)", "DVS", 9.6, (255, 255, 255))
-    line(216.5, 6.0, "Mrs. Yogita A. Shirsath  (Roll No. 35 onwards)", "DVS", 9.6, (255, 255, 255))
+    line(210, 6.0, "Mrs. Priyanka M. Jagtap  —  Project Guide", "DVS", 9.6, (255, 255, 255))
 
-    line(268.5, 5.4, "Project Review Schedule dated 30-09-2026  ·  MCA-I (SEM-I) Guidelines  ·  December 2026", "DVS", 6.8, (160, 164, 178))
+    line(268.5, 5.4, "SPPU MCA-I (SEM-I)  ·  Application Development  ·  AY 2026–27  ·  December 2026", "DVS", 6.8, (160, 164, 178))
 
 
 def certificate(pdf: Report):
@@ -301,14 +300,14 @@ def certificate(pdf: Report):
     pdf.set_text_color(30, 30, 30)
     pdf.multi_cell(0, 6.2,
         "This is to certify that the Mini Project entitled “SMARTLIBRARY — College Library Management System” "
-        "is a bona fide work carried out by Mr. Yashwant Shelke, student of MCA-I (Semester-I), "
+        "is a bona fide work carried out by Mr. Yashwant Santosh Ahire, student of MCA-I (Semester-I), "
         "Dr. B.V. Hiray College of Management and Research Centre, Malegaon, under the SPPU MCA curriculum "
         "(Course: Application Development), during the academic year 2026–27.")
     pdf.ln(2)
     pdf.multi_cell(0, 6.2,
         "The project has been completed satisfactorily and is submitted in partial fulfilment of the requirements "
-        "of the Mini Project Review schedule issued by the Department of MCA on 30-09-2026 (Reviews on "
-        "10-10-2026, 24-10-2026, 21-11-2026, 05-12-2026 and the Final Internal Viva on 19-12-2026).")
+        "of the Mini Project Review schedule issued by the Department of MCA "
+        "(Review 3 on 21-11-2026 and the Final Internal Viva on 19-12-2026).")
     pdf.ln(2)
     pdf.multi_cell(0, 6.2,
         "To the best of our knowledge, the matter embodied in this report is original and has not been submitted "
@@ -339,10 +338,10 @@ def certificate(pdf: Report):
         pdf.set_xy(118, y + 11.5)
         pdf.cell(74, 6, role_r)
 
-    sig_block(188, "Ms. Priyanka M. Jagtap", "Mrs. Yogita A. Shirsath",
-              "Project Guide (Roll No. 1–34)", "Project Guide (Roll No. 35 +)")
-    sig_block(226, "Ms. Priyanka M. Jagtap", "Dr. Dayanand Surwade",
-              "Head of Department (MCA)", "Dy. Director")
+    sig_block(188, "Mrs. Priyanka M. Jagtap", "________________________",
+              "Project Guide", "Head of Department (MCA)")
+    sig_block(226, "________________________", "________________________",
+              "Principal / Dy. Director", "External Examiner")
     pdf.ln(6)
 
 
@@ -1067,7 +1066,7 @@ def ch9(pdf: Report):
     pdf.h1("ch9", "Bibliography", "Chapter 9")
     pdf.p("References follow IEEE style. [Online] sources accessed 09-11-2026.")
     refs = [
-        "Savitribai Phule Pune University. (2026). <i>MCA Semester-I — Project Review Schedule 2026-27 (Application Development), dated 30-09-2026.</i> Dr. B.V. Hiray College of Management and Research Centre, Malegaon. [Internal document]",
+        "Savitribai Phule Pune University. (2026). <i>MCA Semester-I — Project Review Schedule 2026-27 (Application Development).</i> Dr. B.V. Hiray College of Management and Research Centre, Malegaon. [Internal document]",
         "Silberschatz, A., Korth, H. F., &amp; Sudarshan, S. (2019). <i>Database System Concepts</i> (7th ed.). McGraw-Hill Education.",
         "Bloch, J. (2018). <i>Effective Java</i> (3rd ed.). Addison-Wesley.",
         "Sommerville, I. (2016). <i>Software Engineering</i> (10th ed.). Pearson.",
@@ -1274,7 +1273,7 @@ def appc(pdf: Report):
 def build(toc, recorder):
     pdf = Report(toc=toc, recorder=recorder)
     pdf.set_title("SmartLibrary — College Library Management System (MCA-I Sem-I Mini Project Report)")
-    pdf.set_author("Yashwant Shelke — Dr. B.V. Hiray College of Management and Research Centre, Malegaon (SPPU)")
+    pdf.set_author("Yashwant Santosh Ahire — Dr. B.V. Hiray College of Management and Research Centre, Malegaon (SPPU)")
     pdf.set_creator("SmartLibrary report generator (build_report.py)")
     cover(pdf)
     certificate(pdf)

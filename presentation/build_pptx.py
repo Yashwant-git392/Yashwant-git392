@@ -183,7 +183,7 @@ txt(s, 0.75, 3.62, 9.2, 0.75,
                  dict(size=14.5, italic=True, color=CREAM))], line_spacing=1.15),
      dict(runs=[("catalogue · circulation · fines · print-ready registers.", dict(size=14.5, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
 txt(s, 0.75, 5.05, 8.6, 1.6,
-    [dict(runs=[("Yashwant Shelke", dict(size=17.5, bold=True, color=WHITE))], space_after=2),
+    [dict(runs=[("Yashwant Santosh Ahire", dict(size=17.5, bold=True, color=WHITE))], space_after=2),
      dict(runs=[("Guide: Mrs. Priyanka M. Jagtap", dict(size=11.5, color=CREAM))], space_after=2),
      dict(runs=[("Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik)", dict(size=10.5, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 10.35, 5.28, 2.45, 1.35,
@@ -563,7 +563,7 @@ txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin  /  admin123", dict(font=MONO, s
 txt(s, 8.62, 4.35, 3.7, 1.3,
     [dict(runs=[("Report — 33 pages, Ch. 1–10 + Appendices A–C", dict(size=9, color=CREAM))], space_after=3),
      dict(runs=[("Branch — arena/aafd53cc-yashwant-git392", dict(size=9, color=CREAM))], space_after=3),
-     dict(runs=[("Yashwant Shelke · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
+     dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 0.85, 6.35, 12.0, 0.35,
     [dict(runs=[("SmartLibrary — because the register deserved a better afterlife.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
 
