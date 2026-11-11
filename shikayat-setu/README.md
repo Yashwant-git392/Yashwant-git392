@@ -65,3 +65,25 @@ shikayat-setu/
 
 ## Roadmap
 SMS/e-mail alerts · photo evidence upload · WhatsApp deep-links · multi-branch rollout · grievance analytics public dashboard.
+
+---
+
+## Design: deliberately simple, and the right database
+
+**Why this is intentionally low-complexity** — the SPPU Sem-I bar is *working software a reviewer can understand*, not architecture theatre.
+- **No ORM, no frameworks beyond Flask.** Plain `sqlite3` + SQL you can show in the viva. ~1,750 lines total including templates and tests; single `app.py` (~450 lines of routes), one small `routing.py` (~60 lines) for the keyword/SLA logic.
+- **No background jobs, no message queues, no cache.** SLA and overdue state are computed at render time — deterministic, always demo-able.
+- **No microservices, no API layer, no JS build step.** Server-rendered Jinja; progressive-enhancement-free; works with JS disabled.
+- **Seeded demo** covers every screen — no live internet dependency during review.
+
+**Use cases → database fit**
+| Requirement (real use case) | Choice | Why |
+|---|---|---|
+| Single college campus, ≤ ~2,000 students, ~35 complaints/day peak | **SQLite** (file-based) | Zero server, zero config, zero admin; backup = copy one file; handles this load trivially in WAL-free mode |
+| Structured relational data (complaints ↔ users ↔ departments ↔ feedback) with real FK constraints & CHECK rules | **Relational** (SQL) | Wrong shape for MongoDB — you need joins, transactions and referential integrity, not documents |
+| Read-mostly workload with tiny write bursts (a lodge every few minutes) | **SQLite** | No concurrent-writer contention worth worrying about; pragma `foreign_keys=ON` gives ACID |
+| Demo must run on the library PC with no DBA | **SQLite** | `python run.py` is the whole deployment |
+| Production (multi-department, 10k+ users, HA) | **MySQL 8** | Schema ports 1:1 (only `AUTOINCREMENT`→`AUTO_INCREMENT`, `datetime('now','localtime')`→`CURRENT_TIMESTAMP`), same routing.py, connection string swap in `database.py` |
+| Not chosen: MongoDB / PostgreSQL / Firebase | — | Document DB fits unstructured logs, not FK-rich grievance data; Postgres/Firebase add ops cost with zero benefit at this scale; "modern stack" adds no marks in a Sem-I viva |
+
+**Verdict for this project: SQLite now (correct for the use case), MySQL 8 as the documented 1:1 production path — the schema was written to be portable.**
