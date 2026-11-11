@@ -36,6 +36,14 @@ First run auto-creates and seeds `app/shikayat_setu.db`.
 | Officer (any dept) | `hostel.officer` / `it.officer` / `maint.officer` / `exam.officer` / `welfare.officer` / `admin.officer` — all `officer123` |
 | Student | `MCA2026001` … `MCA2026008` — all `student123` |
 
+## Deliverables (this folder)
+| Artefact | Path |
+|---|---|
+| Mini project report (27 pp, PDF) | `report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf` |
+| Report generator (build twice for TOC page map) | `report/build_report.py` |
+| Diagram + screen generators | `report/gen_diagrams.py` · `report/gen_screens.py` |
+| Review deck (16 slides) | `presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx` |
+
 ## Tests
 ```bash
 python -m pytest tests/ -q     # 12 passed
@@ -54,6 +62,8 @@ shikayat-setu/
     ├── schema.sql
     ├── static/css/style.css
     └── templates/         # Jinja2, navy/gold theme
+├── report/            # report PDF + generators + images/
+├── presentation/      # review deck (.pptx) + build_pptx.py
 └── tests/test_app.py
 ```
 
