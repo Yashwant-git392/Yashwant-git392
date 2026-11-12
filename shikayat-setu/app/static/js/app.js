@@ -70,7 +70,8 @@
     var table = document.querySelector(input.getAttribute("data-filter-table"));
     if (!table) return;
     var rows = Array.prototype.slice.call(table.querySelectorAll("tbody tr"));
-    var counter = document.querySelector(input.getAttribute("data-filter-count") || "");
+    var counterSelector = input.getAttribute("data-filter-count");
+    var counter = counterSelector ? document.querySelector(counterSelector) : null;
     var emptyRow = table.querySelector("[data-filter-empty]");
     input.addEventListener("input", function () {
       var q = input.value.trim().toLowerCase(), shown = 0;
@@ -124,38 +125,38 @@
     if (!form) return;
     var title = form.querySelector('[name="title"]');
     var desc = form.querySelector('[name="description"]');
+    var category = form.querySelector('[name="category_id"]');
     var panel = document.getElementById("route-preview");
-    if (!title || !desc || !panel) return;
+    if (!title || !desc || !category || !panel) return;
     var rpDept = panel.querySelector("[data-rp=dept]"), rpPrio = panel.querySelector("[data-rp=prio]"),
         rpSla = panel.querySelector("[data-rp=sla]"), rpScore = panel.querySelector("[data-rp=score]"),
         rpCat = panel.querySelector("[data-rp=cat]");
-    var timer = null, lastKey = "";
-    function hide() { panel.classList.remove("show"); }
-    function fetchPreview() {
-      var t = title.value.trim(), d = desc.value.trim();
-      if (t.length < 8 || d.length < 20) { hide(); return; }
-      var key = t + "||" + d;
-      if (key === lastKey) return;
-      lastKey = key;
-      fetch("/api/route-preview?title=" + encodeURIComponent(t) + "&description=" + encodeURIComponent(d), {
-        credentials: "same-origin", headers: { "Accept": "application/json" }
-      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
-        if (!data) return hide();
-        rpDept.textContent = data.department || "General & Administration";
-        rpCat.textContent = data.category || "—";
-        rpPrio.textContent = data.priority;
-        rpPrio.className = "rp-v badge badge-" + (data.priority === "High" ? "red" : data.priority === "Medium" ? "amber" : "gray");
-        rpSla.textContent = data.sla_hours + " h";
-        rpScore.textContent = data.score > 0 ? data.score + " pts" : "fallback";
-        panel.classList.add("show");
-      }).catch(hide);
+    var timer = null, requestNumber = 0;
+    function updatePreview() {
+      clearTimeout(timer);
+      var sequence = ++requestNumber;
+      panel.classList.remove("show");
+      var t = title.value.trim(), d = desc.value.trim(), c = category.value;
+      if (t.length < 8 || d.length < 20 || !c) return;
+      timer = setTimeout(function () {
+        var params = new URLSearchParams({title: t, description: d, category_id: c});
+        fetch("/api/route-preview?" + params.toString(), {
+          credentials: "same-origin", headers: { "Accept": "application/json" }
+        }).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+          if (sequence !== requestNumber || !data) return;
+          rpDept.textContent = data.department;
+          rpCat.textContent = data.category;
+          rpPrio.textContent = data.priority;
+          rpPrio.className = "rp-v badge badge-" + (data.priority === "High" ? "red" : data.priority === "Medium" ? "amber" : "gray");
+          rpSla.textContent = data.sla_hours + " h";
+          rpScore.textContent = data.score > 0 ? data.score + " pts" : "Selected category";
+          panel.classList.add("show");
+        }).catch(function () { if (sequence === requestNumber) panel.classList.remove("show"); });
+      }, 350);
     }
-    [title, desc].forEach(function (el) {
-      el.addEventListener("input", function () {
-        clearTimeout(timer);
-        timer = setTimeout(fetchPreview, 350);
-      });
-    });
+    [title, desc].forEach(function (el) { el.addEventListener("input", updatePreview); });
+    category.addEventListener("change", updatePreview);
+    updatePreview();
   })();
 
   /* ---------- SLA live countdown ---------- */

@@ -46,7 +46,7 @@ These credentials and the development secret key are for the local demo only. Do
 python -m pytest tests/ -q
 ```
 
-The tests use temporary databases and cover login, registration, routing, access control, the complaint lifecycle and reports.
+The tests use temporary databases and cover login, registration, routing and its preview, access control, the complaint lifecycle and reports.
 
 ## Project files
 
@@ -59,7 +59,7 @@ The tests use temporary databases and cover login, registration, routing, access
 - `report/` — PDF report, diagrams, illustrative screen mock-ups and generators.
 - `presentation/` — review slides and their generator.
 
-The app uses Flask, SQLite, Jinja templates and vanilla JavaScript. The report's screen images are illustrations, not screenshots of the running application. The report and slide generators require additional libraries (`fpdf2`, `matplotlib`, `numpy`, `Pillow` and `python-pptx`); the PDF generator also uses DejaVu fonts from `/usr/share/fonts/truetype/dejavu/`. Initialize the demo database before rebuilding the report or screen mock-ups.
+The app uses Flask, SQLite, Jinja templates and vanilla JavaScript. The report and presentation contain illustrative screen mock-ups of an earlier interface, not screenshots of the current application. The report and slide generators require additional libraries (`fpdf2`, `matplotlib`, `numpy`, `Pillow` and `python-pptx`); the PDF generator also uses DejaVu fonts from `/usr/share/fonts/truetype/dejavu/`. Initialize the demo database before rebuilding the report or screen mock-ups.
 
 ## Possible extensions
 

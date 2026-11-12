@@ -104,28 +104,34 @@ def is_overdue(complaint):
         return False
 
 
+def select_category(title, description, chosen, categories):
+    """Use the keyword match when it scores higher than the chosen category."""
+    text = routing.route_text(title, description)
+    matched, score = routing.route(text, categories)
+    if matched and (matched["id"] == chosen["id"] or
+                    score > routing.score_category(text, chosen["keywords"])):
+        return matched, "auto", score
+    return chosen, "manual", 0
+
+
 @app.route("/api/route-preview")
 @login_required
 def route_preview():
-    """Read-only live routing hint for the lodge form (same engine as /lodge)."""
     title = (request.args.get("title") or "").strip()
     desc = (request.args.get("description") or "").strip()
+    category_id = request.args.get("category_id", "")
     conn = db.get_conn()
-    cats = conn.execute("SELECT * FROM categories").fetchall()
-    text = routing.route_text(title, desc)
-    routed_cat, score = routing.route(text, cats)
-    if routed_cat:
-        dept = conn.execute("SELECT name FROM departments WHERE id=?", (routed_cat["department_id"],)).fetchone()["name"]
-        priority = routing.assign_priority(routed_cat["default_priority"], title, desc)
-        payload = {"category": routed_cat["name"], "department": dept, "priority": priority,
-                   "score": score, "sla_hours": routing.SLA_HOURS[priority]}
-    else:
-        fallback_prio = routing.assign_priority("Low", title, desc)
-        payload = {"category": "General & Administration", "department": "General & Administration",
-                   "priority": fallback_prio, "score": 0,
-                   "sla_hours": routing.SLA_HOURS[fallback_prio]}
+    categories = conn.execute("SELECT * FROM categories").fetchall()
+    chosen = next((cat for cat in categories if str(cat["id"]) == category_id), None)
+    if not chosen:
+        conn.close()
+        return jsonify(error="Choose a valid category."), 400
+    category, _, score = select_category(title, desc, chosen, categories)
+    dept = conn.execute("SELECT name FROM departments WHERE id=?", (category["department_id"],)).fetchone()["name"]
+    priority = routing.assign_priority(category["default_priority"], title, desc)
     conn.close()
-    return jsonify(payload)
+    return jsonify(category=category["name"], department=dept, priority=priority,
+                   score=score, sla_hours=routing.SLA_HOURS[priority])
 
 
 def complaint_timeline(conn, complaint_id):
@@ -299,15 +305,8 @@ def lodge():
             conn.close()
             return render_template("lodge.html", cats=cats, form=request.form), 400
         chosen = conn.execute("SELECT * FROM categories WHERE id=?", (cat_id,)).fetchone()
-        # routing engine double-check (student picked a category, engine confirms/overrides?)
-        text = routing.route_text(title, desc)
-        routed_cat, score = routing.route(text, conn.execute("SELECT * FROM categories").fetchall())
-        if routed_cat and routed_cat["id"] == int(cat_id):
-            final_cat, routing_kind, rscore = chosen, "auto", score
-        elif routed_cat and score > routing.score_category(text, chosen["keywords"]):
-            final_cat, routing_kind, rscore = routed_cat, "auto", score
-        else:
-            final_cat, routing_kind, rscore = chosen, "manual", 0
+        final_cat, routing_kind, rscore = select_category(
+            title, desc, chosen, conn.execute("SELECT * FROM categories").fetchall())
         priority = routing.assign_priority(final_cat["default_priority"], title, desc)
         now = datetime.now()
         due = now + timedelta(hours=routing.SLA_HOURS[priority])

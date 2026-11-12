@@ -206,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "15 automated tests + 8 manual scenarios"),
+    ("08", "Testing evidence", "18 automated tests + 8 manual scenarios"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("15/15", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("18/18", "tests passing")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -397,7 +397,7 @@ txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Swimlane — lodge → route → res
 # ================================================================ SLIDE 10 — Demo: student view
 s = add_slide(); header(s, "06 · LIVE DEMO (1/2)", "Student view — lodge, track, confirm"); footer(s, 10)
 pic_fit(s, f"{IMG}/screen-dashboard-mock.png", 5.3, 1.5, 7.5, 4.55)
-txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Illustrative mock-up of the student dashboard",
+txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Illustrative mock-up of an earlier student dashboard",
                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 txt(s, 0.55, 1.55, 4.4, 0.3, [dict(runs=[("WHAT TO NOTICE", dict(size=10, bold=True, color=GOLD))])])
 bullets(s, 0.55, 2.0, 4.6, 3.9, [
@@ -410,10 +410,10 @@ bullets(s, 0.55, 2.0, 4.6, 3.9, [
 # ================================================================ SLIDE 11 — Demo: admin/console + audit timeline
 s = add_slide(); header(s, "06 · LIVE DEMO (2/2)", "Admin view — console & audit trail"); footer(s, 11)
 pic_fit(s, f"{IMG}/screen-console-mock.png", 0.55, 1.5, 6.05, 3.6)
-txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Illustrative admin console — filters, reassign and escalate",
+txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Earlier interface mock-up — admin console",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 pic_fit(s, f"{IMG}/screen-timeline-mock.png", 6.9, 1.5, 5.9, 3.6)
-txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Illustrative complaint detail — event timeline",
+txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Earlier interface mock-up — complaint timeline",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 card(s, 0.55, 5.55, 12.23, 0.85, fill=NAVY, line=None)
 txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("EVERY DEMO IS DETERMINISTIC", dict(size=9, bold=True, color=GOLD))])])
@@ -458,7 +458,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("15 / 15 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("18 / 18 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -556,7 +556,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "15 automated checks; 8 manual scenarios recorded earlier."),
+    ("Tests — ", "18 automated checks; 8 manual scenarios recorded earlier."),
     ("Every complaint gets a trail — ", "lodge to close, one timeline, zero lost grievances."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)

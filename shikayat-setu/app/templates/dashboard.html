@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block body %}
-{% set STATUS_COLORS = {'Submitted':'#c9a227','Acknowledged':'#5b7bb4','In Progress':'#d97706','Resolved':'#177a46','Closed':'#8a8f9d'} %}
+{% set STATUS_COLORS = {'Submitted':'#087e78','Acknowledged':'#5b7bb4','In Progress':'#d97706','Resolved':'#177a46','Closed':'#8a8f9d'} %}
 {% set donut_total = donut.values() | sum %}
 {% set C = 276.46 %}
 {% if role == 'student' %}
 <div class="page-head"><div><div class="eyebrow">Student Workspace</div><h1>My Dashboard</h1><p>Your complaints at a glance — SLA-tracked by the college.</p></div>
   <a class="btn btn-gold" href="{{ url_for('lodge') }}">✍️ Lodge a Complaint</a></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Total</div><div class="value" data-count="{{ total }}">0</div><div class="hint">complaints lodged</div></div>
-  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">0</div><div class="hint">awaiting resolution</div></div>
-  <div class="stat tone-green"><div class="label">Resolved</div><div class="value" data-count="{{ counts['Resolved'] }}">0</div><div class="hint">awaiting your ★</div></div>
-  <div class="stat tone-green"><div class="label">Closed</div><div class="value" data-count="{{ counts['Closed'] }}">0</div><div class="hint">confirmed by you</div></div>
+  <div class="stat"><div class="label">Total</div><div class="value" data-count="{{ total }}">{{ total }}</div><div class="hint">complaints lodged</div></div>
+  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">{{ open_count }}</div><div class="hint">awaiting resolution</div></div>
+  <div class="stat tone-green"><div class="label">Resolved</div><div class="value" data-count="{{ counts['Resolved'] }}">{{ counts['Resolved'] }}</div><div class="hint">awaiting your ★</div></div>
+  <div class="stat tone-green"><div class="label">Closed</div><div class="value" data-count="{{ counts['Closed'] }}">{{ counts['Closed'] }}</div><div class="hint">confirmed by you</div></div>
 </div>
 <div class="two-col grid">
   <div class="card">
@@ -52,12 +52,12 @@
 </div>
 
 {% elif role == 'officer' %}
-<div class="page-head"><div><div class="eyebrow">Department Workspace</div><h1>{{ department }}</h1><p>Complaints assigned to your department, hottest first.</p></div>
+<div class="page-head"><div><div class="eyebrow">Department Workspace</div><h1>{{ department }}</h1><p>Complaints assigned to your department, ordered by priority.</p></div>
   <a class="btn btn-primary" href="{{ url_for('queue') }}">📥 Open full queue</a></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Active assigned</div><div class="value" data-count="{{ assigned }}">0</div><div class="hint">open in your department</div></div>
-  <div class="stat tone-red"><div class="label">High priority</div><div class="value" data-count="{{ high }}">0</div><div class="hint">24-hour SLA</div></div>
-  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">0</div><div class="hint">past SLA deadline</div></div>
+  <div class="stat"><div class="label">Active assigned</div><div class="value" data-count="{{ assigned }}">{{ assigned }}</div><div class="hint">open in your department</div></div>
+  <div class="stat tone-red"><div class="label">High priority</div><div class="value" data-count="{{ high }}">{{ high }}</div><div class="hint">24-hour SLA</div></div>
+  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">{{ overdue }}</div><div class="hint">past SLA deadline</div></div>
 </div>
 <div class="two-col grid">
   <div class="card">
@@ -99,9 +99,9 @@
 <div class="page-head"><div><div class="eyebrow">Administration</div><h1>Administration Overview</h1><p>Every complaint in the college, one screen.</p></div>
   <div class="actions"><a class="btn btn-ghost" href="{{ url_for('console') }}">🗂️ Console</a><a class="btn btn-gold" href="{{ url_for('reports') }}">🖨️ Print registers</a></div></div>
 <div class="grid stats">
-  <div class="stat"><div class="label">Total complaints</div><div class="value" data-count="{{ total }}">0</div></div>
-  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">0</div><div class="hint">not yet resolved/closed</div></div>
-  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">0</div><div class="hint">breaching SLA now</div></div>
+  <div class="stat"><div class="label">Total complaints</div><div class="value" data-count="{{ total }}">{{ total }}</div></div>
+  <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">{{ open_count }}</div><div class="hint">not yet resolved/closed</div></div>
+  <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">{{ overdue }}</div><div class="hint">breaching SLA now</div></div>
   <div class="stat tone-green"><div class="label">Within SLA</div><div class="value">{{ on_time_pct }}%</div><div class="hint">of resolved complaints</div></div>
   <div class="stat tone-green"><div class="label">Avg ★ rating</div><div class="value">{{ csat if csat is not none else '—' }}</div><div class="hint">from student feedback</div></div>
 </div>

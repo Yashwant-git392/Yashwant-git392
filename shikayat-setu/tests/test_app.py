@@ -169,3 +169,50 @@ def test_seeded_officers_are_assigned_to_departments(client):
     officer_names = ["hostel.officer", "it.officer", "maint.officer", "exam.officer", "welfare.officer", "admin.officer"]
     expected = {username: department[0] for username, department in zip(officer_names, db.DEPARTMENTS)}
     assert {row["username"]: row["name"] for row in rows} == expected
+
+
+def test_routing_preview_matches_submitted_complaint(client):
+    login(client, "MCA2026002", "student123")
+    data = {"title": "Tap leaking heavily in hostel washroom",
+            "description": "The tap near the hostel washroom is leaking continuously for three days; floor is wet.",
+            "category_id": "3", "location": "Hostel 2F"}
+    preview = client.get("/api/route-preview", query_string=data)
+    assert preview.status_code == 200
+    expected = preview.get_json()
+    assert client.post("/lodge", data=data).status_code == 302
+    conn = db.get_conn()
+    actual = conn.execute("""SELECT cat.name AS category, d.name AS department, c.priority, c.routing_score
+                             FROM complaints c JOIN categories cat ON cat.id=c.category_id
+                             JOIN departments d ON d.id=c.department_id
+                             ORDER BY c.id DESC LIMIT 1""").fetchone()
+    conn.close()
+    assert all(expected[key] == actual[key] for key in ("category", "department", "priority"))
+    assert expected["score"] == actual["routing_score"]
+
+
+def test_routing_preview_uses_selected_category_when_no_keywords_match(client):
+    login(client, "MCA2026002", "student123")
+    data = {"title": "A puzzling matter", "description": "Nothing specific can be identified here.", "category_id": "1"}
+    preview = client.get("/api/route-preview", query_string=data)
+    assert preview.status_code == 200
+    expected = preview.get_json()
+    assert expected["score"] == 0
+    assert client.post("/lodge", data=data).status_code == 302
+    conn = db.get_conn()
+    actual = conn.execute("""SELECT cat.name AS category, d.name AS department, c.priority
+                             FROM complaints c JOIN categories cat ON cat.id=c.category_id
+                             JOIN departments d ON d.id=c.department_id
+                             ORDER BY c.id DESC LIMIT 1""").fetchone()
+    conn.close()
+    assert all(expected[key] == actual[key] for key in ("category", "department", "priority"))
+    assert client.get("/api/route-preview", query_string={"category_id": "999999"}).status_code == 400
+
+
+def test_ui_uses_local_assets_and_marks_current_page(client):
+    login(client, "MCA2026002", "student123")
+    response = client.get("/lodge")
+    assert response.status_code == 200
+    assert b'fonts.googleapis.com' not in response.data
+    assert b'aria-current="page"' in response.data
+    assert b'Your identity is hidden from department officers' in response.data
+    assert b'aria-describedby="title-hint title-count"' in response.data

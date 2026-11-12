@@ -3,8 +3,8 @@
 {% block body %}
 {% if not session.get('user_id') %}
 <div class="topbar" style="margin:-6px -4px 14px">
-  <span style="display:flex;align-items:center;gap:9px;font-family:Georgia,serif;font-weight:700;color:var(--navy)">
-    <span class="brand-badge" style="width:32px;height:32px;flex-basis:32px;border-radius:9px"><svg viewBox="0 0 24 24" width="18" height="18" style="stroke:#241a02;stroke-width:1.9;fill:none"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/></svg></span>
+  <span style="display:flex;align-items:center;gap:9px;font-family:inherit;font-weight:700;color:var(--navy)">
+    <span class="brand-badge" style="width:32px;height:32px;flex-basis:32px;border-radius:9px"><svg viewBox="0 0 24 24" width="18" height="18" style="stroke:#123c3a;stroke-width:1.9;fill:none"><path d="M4 10.5 12 4l8 6.5"/><path d="M6.5 9.5V20h11V9.5"/></svg></span>
     Campus Shikayat Setu
   </span>
   <div class="topbar-right"><a class="btn btn-primary btn-sm" href="{{ url_for('login') }}">Sign in →</a></div>
@@ -13,8 +13,8 @@
 <div class="page-head"><div><div class="eyebrow">Public Tracker</div><h1>Track a Complaint</h1><p>No login needed — your complaint code and roll number are enough.</p></div></div>
 <div class="grid two-col track-hero">
   <div class="card" style="background:linear-gradient(160deg,var(--navy-2),#141f36);border:none;color:#eef1f8">
-    <h2 style="color:#ffd95e"><span class="h-icon" style="background:rgba(255,217,94,.15)">🔎</span> Find your grievance</h2>
-    <p style="color:#b9c5dd;font-size:.86rem;margin-bottom:14px">The code was shown to you the moment you lodged (format <code class="kbd" style="color:#ffd95e;background:rgba(255,255,255,.08);border-color:transparent">CMP-2026-0007</code>).</p>
+    <h2 style="color:#a0e8da"><span class="h-icon" style="background:rgba(160,232,218,.15)">🔎</span> Find your grievance</h2>
+    <p style="color:#b9c5dd;font-size:.86rem;margin-bottom:14px">The code was shown to you the moment you lodged (format <code class="kbd" style="color:#a0e8da;background:rgba(255,255,255,.08);border-color:transparent">CMP-2026-0007</code>).</p>
     <form method="post" style="display:flex;flex-direction:column;gap:12px">
       <div class="auth-field" style="margin:0"><label for="track-code" style="color:#8fa9d0">Complaint code</label>
         <input id="track-code" name="code" placeholder="CMP-2026-0007" required autocomplete="off" spellcheck="false"></div>

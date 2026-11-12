@@ -332,7 +332,7 @@ def index(pdf: Report):
         pdf.ln(6.4)
     pdf.ln(3)
     pdf.set_font("DVS", "I", 7.6); pdf.set_text_color(*GREY)
-    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. The screen images in this report are illustrative mock-ups, not screenshots captured from the running application.")
+    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. The screen images are illustrative mock-ups of an earlier interface, not screenshots of the current application.")
 # =====================================================================
 def ch1(pdf: Report):
     pdf.h1("ch1", "Introduction", "Chapter 1")
@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (schema maps to MySQL 8)"],
         ["Werkzeug", "3.x", "WSGI stack + PBKDF2 password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (15 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (18 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -700,7 +700,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 15 tests, including keyword scoring, priority and seeded officer assignments.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 18 tests, including routing preview, officer assignments and UI checks.")
 
     pdf.h2("5.3  Track B — Manual scenarios (live, 09-11-2026)")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
