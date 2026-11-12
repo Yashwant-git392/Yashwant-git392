@@ -251,28 +251,40 @@ def fig_modules():
     print("fig-modules.png")
 
 def fig_gantt():
-    import matplotlib.patches as mpatches
-    weeks = ["Wk 1\n21–27 Sep", "Wk 2\n28 Sep–04 Oct", "Wk 3\n05–11 Oct", "Wk 4\n12–18 Oct",
-             "Wk 5\n19–25 Oct", "Wk 6\n26 Oct–01 Nov", "Wk 7\n02–08 Nov", "Dec\n19 Dec"]
+    import matplotlib.dates as mdates
+    from datetime import date as _date
     tasks = [
-        ("Requirement study & reference audit", 0, 1, GOLD),
-        ("Schema + seed + design docs", 1, 1, NAVY2),
-        ("Routing / SLA engine", 2, 1, NAVY2),
-        ("Core flows (lodge→resolve→close)", 2, 2, NAVY),
-        ("Admin console + reports", 3, 2, NAVY),
-        ("Testing (12 pytest + 8 manual)", 4, 2, GREEN),
-        ("Report & deck (this document)", 5, 2, "#8a6d1a"),
-        ("Review 3 — 21 Nov 2026", 6.6, 0.18, RED),
-        ("Final Viva — 19 Dec 2026", 7.0, 0.18, RED),
+        ("Reference audit & requirements", _date(2026, 9, 21), _date(2026, 10, 2), GOLD),
+        ("Schema + seed + design docs",    _date(2026, 10, 1), _date(2026, 10, 9), NAVY2),
+        ("Routing / SLA engine",           _date(2026, 10, 6), _date(2026, 10, 12), NAVY2),
+        ("Core flows (lodge→close)",       _date(2026, 10, 8), _date(2026, 10, 22), NAVY),
+        ("Admin console + reports",        _date(2026, 10, 15), _date(2026, 10, 28), NAVY),
+        ("Testing (12 pytest + 8 manual)", _date(2026, 10, 20), _date(2026, 11, 8), GREEN),
+        ("Report & deck (this document)",  _date(2026, 10, 26), _date(2026, 11, 14), "#8a6d1a"),
     ]
-    fig, ax = plt.subplots(figsize=(13.5, 5.4), dpi=160)
-    for i, (name, start, dur, color) in enumerate(tasks):
-        ax.barh(len(tasks) - 1 - i, dur, left=start, height=0.62, color=color, zorder=3)
-        ax.text(start + dur + 0.07, len(tasks) - 1 - i, name, va="center", fontsize=7.2, color="#222")
-    ax.set_yticks([]); ax.set_xticks(range(8)); ax.set_xticklabels(weeks, fontsize=7)
-    ax.set_xlim(-0.2, 8.6); ax.grid(axis="x", ls=":", lw=0.6, color="#c9c7bd", zorder=0)
-    for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
-    ax.set_title("Project Timeline — 21 Sep 2026 → 19 Dec 2026", fontsize=11, fontweight="bold", color=NAVY, pad=10)
+    milestones = [("R1\n10-Oct", _date(2026, 10, 10)), ("R2\n24-Oct", _date(2026, 10, 24)),
+                  ("R3\n21-Nov", _date(2026, 11, 21)), ("R4\n05-Dec", _date(2026, 12, 5)),
+                  ("FINAL\n19-Dec", _date(2026, 12, 19))]
+    fig, ax = plt.subplots(figsize=(13.2, 5.8), dpi=160)
+    ypos = list(range(len(tasks)))[::-1]
+    for (name, s, e, color), y in zip(tasks, ypos):
+        ax.barh(y, (e - s).days, left=mdates.date2num(s), height=0.6, color=color, zorder=3)
+    ax.set_yticks(ypos)
+    ax.set_yticklabels([t[0] for t in tasks], fontsize=7.6, color="#222")
+    ax.set_ylim(-0.55, len(tasks) - 0.45)
+    for lab, d in milestones:
+        x = mdates.date2num(d)
+        ax.axvline(x, color=RED, lw=1.3, ls="--", alpha=0.8, zorder=2)
+        ax.annotate(lab, xy=(x, len(tasks) - 0.45), xytext=(0, 4), textcoords="offset points",
+                    ha="center", va="bottom", fontsize=6.6, fontweight="bold", color=RED, linespacing=1.1)
+    ax.set_xlim(mdates.date2num(_date(2026, 9, 20)), mdates.date2num(_date(2026, 12, 23)))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%d %b"))
+    ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
+    ax.grid(axis="x", ls=":", lw=0.6, color="#c9c7bd", zorder=0)
+    for s in ("top", "right", "left"):
+        ax.spines[s].set_visible(False)
+    ax.set_title("Project timeline & review milestones (notified 30-09-2026)",
+                 fontsize=10.5, fontweight="bold", color=NAVY, pad=30)
     fig.savefig(f"{OUT}/fig-gantt.png", bbox_inches="tight"); plt.close(fig)
     print("fig-gantt.png")
 

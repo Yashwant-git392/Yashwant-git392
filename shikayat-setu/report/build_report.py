@@ -20,7 +20,7 @@ D = "/usr/share/fonts/truetype/dejavu/"
 NAVY, NAVY2, GOLD, GOLD_L = (22, 36, 61), (31, 52, 85), (201, 162, 39), (255, 217, 94)
 CREAM, GREY, LT = (247, 245, 239), (107, 114, 128), (232, 237, 247)
 CONTENT_W = 210 - 32
-TODAY = "9 November 2026"
+TODAY = date.today().strftime("%d %B %Y")
 
 SECTIONS = [
     ("Certificate", "certificate"),
@@ -37,6 +37,7 @@ SECTIONS = [
     ("Appendix A — Database Schema (schema.sql)", "appa"),
     ("Appendix B — Seed Data (actual records, ≥ 5 per table)", "appb"),
     ("Appendix C — Glossary and Acronyms", "appc"),
+    ("Appendix D — Project Review Schedule 2026-27 (notified 30-09-2026)", "appd"),
 ]
 
 
@@ -121,8 +122,8 @@ class Report(FPDF):
         self.recorder[key] = self.page_no()
         self.start_section(text, level=0)
 
-    def h2(self, text):
-        if self.get_y() > 258:
+    def h2(self, text, reserve=20):
+        if self.get_y() > 280 - reserve:
             self.add_page()
         self.ln(1.5)
         self.set_font("DVS", "B", 12)
@@ -131,8 +132,8 @@ class Report(FPDF):
         self.ln(1.2)
         self.set_text_color(30, 30, 30)
 
-    def h3(self, text):
-        if self.get_y() > 264:
+    def h3(self, text, reserve=16):
+        if self.get_y() > 280 - reserve:
             self.add_page()
         self.set_font("DVS", "B", 10.5)
         self.set_text_color(*NAVY2)
@@ -290,8 +291,9 @@ def certificate(pdf: Report):
     pdf.ln(2)
     pdf.multi_cell(0, 6.2,
         "The project has been completed satisfactorily and is submitted in partial fulfilment of the requirements "
-        "of the Mini Project Review schedule issued by the Department of MCA "
-        "(Review 3 on 21-11-2026 and the Final Internal Viva on 19-12-2026).")
+        "of the Mini Project Review schedule issued by the Department of MCA on 30-09-2026 — First Review "
+        "(10-10-2026), Second Review (24-10-2026), Third Review (21-11-2026), Fourth Review (05-12-2026) and the "
+        "Final Internal Demo with project submission (19-12-2026).")
     pdf.ln(2)
     pdf.multi_cell(0, 6.2,
         "To the best of our knowledge, the matter embodied in this report is original and has not been submitted "
@@ -388,6 +390,7 @@ def ch1(pdf: Report):
         "Six print-ready registers: Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.",
         "Public tracker (complaint code + roll no., no login) and seeded deterministic demo (32 complaints across 6 departments).",
     ])
+    pdf.figure(f"{IMG}/fig-gantt.png", 172, "Figure 1.1  Project timeline — milestones notified 30-09-2026: Review 1 (10 Oct) → Review 2 (24 Oct) → Review 3 (21 Nov) → Review 4 (05 Dec) → Final Internal Demo (19 Dec).")
     pdf.h3("Out of scope (deferred — see Chapter 7)")
     pdf.bullets([
         "E-mail / SMS / WhatsApp notifications; push mobile app; multi-college tenancy.",
@@ -439,7 +442,9 @@ def ch2(pdf: Report):
     pdf.h2("2.1  Study of Similar Systems")
     pdf.p("Similar grievance tooling was studied before design: CPGRAMS (Government of India public-grievance portal), the "
           "academic complaint web apps found on GitHub (e.g. the “Smart Complaint Management System” concept), and the "
-          "college’s own manual box. The design goal was to keep the idea but make the engineering real.")
+          "college’s own manual box. The design goal was to keep the idea but make the engineering real. A research paper "
+          "is optional per the 30-09-2026 schedule (“If required research paper can be included”); the four-system audit "
+          "below was sufficient reference material, so no external paper is cited.")
     pdf.table(["System", "Type / Cost", "Strengths", "Limitations vs need"], [
         ["Manual complaint box (as-is)", "Paper · Rs. 0", "Zero cost, anonymous by accident",
          "No routing, no status, no SLA, no reports"],
@@ -452,19 +457,16 @@ def ch2(pdf: Report):
          "Vendor lock-in, ₹-scale cost, slow change cycle, no SLA ownership model"],
     ], [38, 26, 52, 60])
 
-    pdf.h2("2.2  Proposed System Overview")
-    pdf.p("Campus Shikayat Setu keeps the proven workflow of the reference concept — lodge → auto-route → track — and "
-          "replaces every placeholder with production-grade engineering: a real relational schema with foreign-key "
-          "enforcement, PBKDF2 authentication with three roles, a transparent router whose scoring is printed on the "
-          "complaint timeline, an SLA engine, a 7-day student reopen window, full audit events and six print registers.")
-    pdf.bullets([
-        "<b>Student layer:</b> register → lodge (category, location, anonymous flag) → track (code or roll no.) → confirm or reopen with feedback.",
-        "<b>Officer layer:</b> department queue ordered by priority then recency; acknowledge → start work → resolve with mandatory remark.",
-        "<b>Admin layer:</b> college-wide console — filter, reassign, escalate (priority→High), force-close stale resolved complaints, manage officer accounts.",
-        "<b>Report layer:</b> six Ctrl+P print-ready registers, each with ≥ 5 live records from the seed.",
-    ])
+    pdf.h2("2.2  Feasibility Study")
+    pdf.table(["Dimension", "Assessment"], [
+        ["Technical", "Flask + SQLite requires only Python 3.11; no drivers, no services, no network. All libraries are pip-installable offline from PyPI."],
+        ["Operational", "Officers already acknowledge grievances informally; this formalises the same gesture with buttons. Training = one page (Chapter 10)."],
+        ["Economic", "Rs. 0 licence cost; runs on any existing college PC; replacement of a register with a file backup."],
+        ["Schedule", "Design, build, seed, tests and documentation completed inside the Sem-I window. Milestones as notified 30-09-2026 — Review 1 (SRS) 10-10-2026 (10 marks) · Review 2 24-10-2026 (15) · Review 3 21-11-2026 (15) · Review 4 (1st PPT) 05-12-2026 (10) · Final Internal Demo 19-12-2026 (50)."],
+        ["Legal / Ethical", "Anonymous complaints handled with admin-only identity access; all actions audit-logged; student data minimised to roll no., phone, e-mail."],
+    ], [30, 148])
 
-    pdf.h2("2.3  Objectives")
+    pdf.h2("2.3  Objectives of Proposed System")
     pdf.bullets([
         "O1 — Digitise grievance lodging with validation and a permanent, coded identity (CMP-YYYY-NNNN).",
         "O2 — Route every complaint automatically with an explainable keyword-weighted engine.",
@@ -476,16 +478,31 @@ def ch2(pdf: Report):
         "O8 — Deliver a deterministic, self-seeding demo runnable with one command on any lab PC.",
     ])
 
-    pdf.h2("2.4  Feasibility Study")
-    pdf.table(["Dimension", "Assessment"], [
-        ["Technical", "Flask + SQLite requires only Python 3.11; no drivers, no services, no network. All libraries are pip-installable offline from PyPI."],
-        ["Operational", "Officers already acknowledge grievances informally; this formalises the same gesture with buttons. Training = one page (Chapter 10)."],
-        ["Economic", "Rs. 0 licence cost; runs on any existing college PC; replacement of a register with a file backup."],
-        ["Schedule", "Design, build, seed, tests and documentation completed inside the Sem-I window; Review 3 demo on 21-11-2026."],
-        ["Legal / Ethical", "Anonymous complaints handled with admin-only identity access; all actions audit-logged; student data minimised to roll no., phone, e-mail."],
-    ], [30, 148])
+    pdf.h2("2.4  Users of System")
+    pdf.table(["User", "Access scope", "Capabilities"], [
+        ["Student (seeded MCA2026001–008)", "Own complaints only",
+         "Self-register (name / roll / e-mail / mobile / password) · lodge (category, location, anonymous option) · track (code or roll no.) · submit 1–5 ★ feedback to close · reopen within 7 days · change password"],
+        ["Department Officer (×6 departments)", "Assigned department only",
+         "Priority-ordered queue · acknowledge → in-progress → resolve (remark ≥ 10 chars) · every action written to the audit timeline"],
+        ["Administrator", "College-wide",
+         "Filter (dept / status / priority) · reassign with reason · escalate → High · force-close (7-day no-response) · create / activate / deactivate officer accounts · 6 registers + anonymous identity visibility"],
+        ["Public visitor (no login — /track)", "Read-only · code + roll no.",
+         "View current status and timeline of one complaint; no names, e-mails or other records exposed"],
+    ], [36, 32, 110])
 
-    pdf.h2("2.5  Modules Identified")
+    pdf.h2("2.5  Proposed System Overview")
+    pdf.p("Campus Shikayat Setu keeps the proven workflow of the reference concept — lodge → auto-route → track — and "
+          "replaces every placeholder with production-grade engineering: a real relational schema with foreign-key "
+          "enforcement, PBKDF2 authentication with three roles, a transparent router whose scoring is printed on the "
+          "complaint timeline, an SLA engine, a 7-day student reopen window, full audit events and six print registers.")
+    pdf.bullets([
+        "<b>Student layer:</b> register → lodge (category, location, anonymous flag) → track (code or roll no.) → confirm or reopen with feedback.",
+        "<b>Officer layer:</b> department queue ordered by priority then recency; acknowledge → start work → resolve with mandatory remark.",
+        "<b>Admin layer:</b> college-wide console — filter, reassign, escalate (priority→High), force-close stale resolved complaints, manage officer accounts.",
+        "<b>Report layer:</b> six Ctrl+P print-ready registers, each with ≥ 5 live records from the seed.",
+    ])
+
+    pdf.h2("2.6  Modules Identified")
     pdf.table(["Module", "Responsibility"], [
         ["Auth & Profile", "Login (username or roll no.), logout, student self-registration, change password, account activation/deactivation."],
         ["Lodging", "Category picker, validation (title ≥ 8 chars, description ≥ 20), anonymous flag, preview of routing score."],
@@ -496,14 +513,15 @@ def ch2(pdf: Report):
         ["Admin Console", "Filters (department/status/priority), reassign with reason, force-close after 7-day no-response, officer creation & activation."],
         ["Reports", "Six print registers incl. SLA compliance % and per-category average resolution hours."],
     ], [42, 136])
+
 # =====================================================================
 def ch3(pdf: Report):
     pdf.h1("ch3", "System Analysis and Design", "Chapter 3")
 
-    pdf.h2("3.1  Requirement Specification (summary)")
+    pdf.h2("3.1  System Requirements (Functional and Non-Functional)")
     pdf.h3("3.1.1  Functional requirements")
     pdf.table(["ID", "Requirement", "Priority"], [
-        ["FR-1", "Student shall register with roll no., e-mail, mobile (Indian format) and password; duplicate roll nos. are rejected.", "Must"],
+        ["FR-1", "Student shall register with roll no. (MCA2026NNN), e-mail, mobile (Indian format) and password; duplicate roll nos. are rejected.", "Must"],
         ["FR-2", "Any user shall be able to lodge a complaint (students), with title ≥ 8 chars and description ≥ 20 chars.", "Must"],
         ["FR-3", "System shall auto-route on submit with weighted keyword scoring; unmatched → General & Administration.", "Must"],
         ["FR-4", "System shall compute SLA due time at submission: High 24 h, Medium 72 h, Low 168 h.", "Must"],
@@ -526,9 +544,11 @@ def ch3(pdf: Report):
         ["NFR-6", "Code style: PEP 8, bound parameters only, no string-concatenated SQL."],
     ], [18, 160])
 
-    pdf.h2("3.2  Entity–Relationship Diagram (ERD)")
-    pdf.figure(f"{IMG}/fig-erd.png", 150, "Figure 3.1  ERD — six tables with PK/FK crow's-foot cardinalities.")
-    pdf.h3("3.2.1  Data dictionary (summary)")
+    pdf.h2("3.2  Entity Relationship Diagram (ERD)", reserve=115)
+    pdf.figure(f"{IMG}/fig-erd.png", 142, "Figure 3.1  ERD — six tables with PK/FK crow's-foot cardinalities.")
+
+    pdf.h2("3.3  Table Structure")
+    pdf.p("Physical schema (verbatim from <b>schema.sql</b>, Appendix A) — every column, key and CHECK constraint in force:")
     pdf.table(["Table", "Key columns & constraints"], [
         ["departments", "id PK · name UNIQUE · head_name · email · location"],
         ["categories", "id PK · name UNIQUE · department_id FK→departments · default_priority CHECK(High,Medium,Low) · keywords TEXT"],
@@ -538,44 +558,52 @@ def ch3(pdf: Report):
         ["feedback", "id PK · complaint_id FK UNIQUE · rating CHECK(1..5) · comment · created_at"],
     ], [30, 148])
 
-    pdf.h2("3.3  Use-Case Model")
-    pdf.figure(f"{IMG}/fig-usecase.png", 165, "Figure 3.2  Use-case diagram — Student / Officer / Admin swimlanes with shared use cases.")
-    pdf.h3("3.3.1  Use-case descriptions (selection)")
+    pdf.h2("3.4  Use-Case Diagrams", reserve=106)
+    pdf.figure(f"{IMG}/fig-usecase.png", 152, "Figure 3.2  Use-case diagram — Student / Officer / Admin swimlanes with shared use cases.")
+    pdf.h3("3.4.1  Use-case descriptions (selection)")
     pdf.table(["Use case", "Actor", "Flow"], [
         ["Lodge complaint", "Student", "Fill title+description+location+category → submit → router assigns dept & SLA → code shown on timeline."],
         ["Resolve complaint", "Officer", "Open queue → acknowledge → in-progress → resolve with remark → status Resolved; resolved_at = now."],
         ["Confirm & close", "Student", "Resolved list → star rating + comment → status Closed; feedback row inserted (UNIQUE per complaint)."],
         ["Reopen (≤7 days)", "Student", "Resolved list → reason → status back to In Progress; event reopened logged."],
         ["Reassign", "Admin", "Console → pick new department → routing=manual → audit event with old→new."],
-        ["Escalate to High", "Admin", "Console → escalate → priority=High → audit event; SLA recomputed? (kept original deadline; escalation visibility only)."],
+        ["Escalate to High", "Admin", "Console → escalate → priority=High → audit event; SLA kept at original deadline; escalation surfaces on all views."],
         ["Track without login", "Public", "Enter code + roll no. → timeline & current status rendered."],
     ], [32, 18, 128])
 
-    pdf.h2("3.4  Activity Model — Lifecycle")
-    pdf.figure(f"{IMG}/fig-activity.png", 165, "Figure 3.3  Activity diagram — lodging, routing, SLA stamping, officer workflow, closure path.")
-    pdf.note("Overdue is never stored — it is derived: now &gt; sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
+    pdf.h2("3.5  Class Diagram", reserve=104)
+    pdf.figure(f"{IMG}/fig-class.png", 152, "Figure 3.3  Class view — RouteEngine, Complaint, ComplaintEvent, Feedback, User hierarchy.")
 
-    pdf.h2("3.5  Class Diagram")
-    pdf.figure(f"{IMG}/fig-class.png", 165, "Figure 3.4  Class view — RouteEngine, Complaint, ComplaintEvent, Feedback, User hierarchy.")
+    pdf.h2("3.6  Activity Diagram", reserve=103)
+    pdf.figure(f"{IMG}/fig-activity.png", 152, "Figure 3.4  Activity diagram — lodging, routing, SLA stamping, officer workflow, closure path.")
+    pdf.note("Overdue is never stored — it is derived: now > sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
 
-    pdf.h2("3.6  Deployment View")
-    pdf.figure(f"{IMG}/fig-deployment.png", 165, "Figure 3.5  Deployment — single node lab PC; browsers on same PC or LAN peers.")
+    pdf.h2("3.7  Deployment Diagram", reserve=90)
+    pdf.figure(f"{IMG}/fig-deployment.png", 150, "Figure 3.5  Deployment — single node lab PC; browsers on same PC or LAN peers.")
 
-    pdf.h2("3.7  Module Hierarchy")
+    pdf.h2("3.8  Module Hierarchy Diagram", reserve=108)
     pdf.figure(f"{IMG}/fig-modules.png", 150, "Figure 3.6  Module hierarchy — three role layers over the shared routing/SLA core.")
 
-    pdf.h2("3.8  Constraints and Assumptions")
+    pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
+    pdf.p("All sample screens carry valid seeded data (Appendix B — e.g. complaint CMP-2026-0001, roll MCA2026001). Every "
+          "register prints ≥ 5 valid records, as item 3.9 of the schedule requires. Full annotated screen catalogue with "
+          "validation notes is given in Chapter 10 (User Manual, §10.3 and §10.5).")
+    pdf.figure(f"{IMG}/screen-login-mock.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
+    pdf.figure(f"{IMG}/screen-dashboard-mock.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).")
+    pdf.figure(f"{IMG}/screen-console-mock.png", 148, "Figure 3.9  Sample output — Admin console (32-record filterable register).")
+    pdf.figure(f"{IMG}/screen-timeline-mock.png", 148, "Figure 3.10  Sample output — Complaint detail: SLA clock, stepper and full audit timeline.")
+
+    pdf.h2("3.10  Constraints and Assumptions")
     pdf.bullets([
         "One campus, one server process, SQLite file in the app directory; no concurrent-write contention in the lab.",
         "Keyword lists are curated per domain; sarcasm/vindication requires admin reassignment (Chapter 6, L-2).",
         "Complaint codes are sequential per calendar year; no deletion of complaints (audit-preserving design).",
-        "Anonymous complaints are visible in full only to administrators; evening demo uses seeded admin account.",
+        "Anonymous complaints are visible in full only to administrators; evening demo uses the seeded admin account.",
     ])
-
 
 def ch4(pdf: Report):
     pdf.h1("ch4", "Coding", "Chapter 4")
-    pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. Key excerpts below are verbatim from the running build (commit <b>527670a</b>).")
+    pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. Key excerpts below are verbatim from the running build (see the git history of <b>shikayat-setu/</b>).")
 
     pdf.h2("4.1  Routing engine — scoring and SLA")
     pdf.code('''def score_category(text: str, keywords: str) -> int:
@@ -673,7 +701,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("<b>Command:</b> cd shikayat-setu &amp;&amp; python3 -m pytest tests/ -q<br/><b>Output:</b> 12 passed in ~16 s (isolated $TMPDIR database, seeded deterministically).")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Output: 12 passed in ~16 s (isolated $TMPDIR database, seeded deterministically).")
 
     pdf.h2("5.3  Track B — Manual scenarios (live, 09-11-2026)")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -749,8 +777,8 @@ def ch8(pdf: Report):
           "is one file deep, and the demo is deterministic. The craft is in the rules on the timeline: routing score, SLA "
           "stamp, escalation, reopen window — small, explainable algorithms that turn anger about a broken tap into a "
           "closed-loop service.")
-    pdf.p("The system is ready for Review 3 (21-11-2026) and for continued hardening toward the Final Internal Viva "
-          "(19-12-2026), with the Chapter 7 roadmap as the post-viva backlog.")
+    pdf.p("The system is ready for Review 3 (21-11-2026) and for the Fourth Review (05-12-2026); the Final Internal Demo "
+          "(19-12-2026) follows, with the Chapter 7 roadmap as the post-viva backlog.")
 
 
 def ch9(pdf: Report):
@@ -761,7 +789,7 @@ def ch9(pdf: Report):
         "The SQLite Consortium. (2024). <i>SQLite documentation — file format, transactions, WAL.</i> https://www.sqlite.org/docs.html",
         "FPDF2 contributors. (2025). <i>fpdf2 — Simple and fast PDF document generation in Python.</i> https://pyfpdf.github.io/fpdf2/",
         "Matplotlib developers. (2024). <i>Matplotlib — Visualisation with Python.</i> https://matplotlib.org/",
-        "Savitribai Phule Pune University. (2026). <i>MCA Semester-I — Project Review Schedule 2026-27 (Application Development).</i> Dr. B.V. Hiray College of Management and Research Centre, Malegaon. [Internal document]",
+        "K.B.H.S.S.T’s Dr. B.V. Hiray College of Management and Research Centre, Department of MCA. (2026, 30 September). <i>Project Review Schedule 2026-27 — MCA-I (SEM-I).</i> Malegaon. [College circular — internal document]",
         "INFLIBNET Centre. (2020). <i>SOUL — Software for University Libraries (context study).</i> https://www.inflibnet.ac.in/soul/",
         "Harney-Jenifar-R-S. (2026). <i>Smart Complaint Management System — reference concept repository.</i> GitHub. https://github.com/Harney-Jenifar-R-S/Smart_Complaint_System",
         "Kumar, A. (2023). <i>Complaint Redressal Mechanisms in Indian Higher Education Institutions.</i> Journal of Education and Practice, 14(7), 44–52.",
@@ -795,17 +823,17 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
 
     pdf.h2("10.3  The five screens you will touch most")
 
-    pdf.h3("10.3.1  Sign in")
-    pdf.figure(f"{IMG}/screen-login-mock.png", 150, "Figure 10.1  Sign-in — roll no. or username; demo credentials shown below the form.")
+    pdf.h3("10.3.1  Sign in", reserve=112)
+    pdf.figure(f"{IMG}/screen-login-mock.png", 140, "Figure 10.1  Sign-in — roll no. or username; demo credentials shown below the form.")
 
-    pdf.h3("10.3.2  Student dashboard — my complaints at a glance")
-    pdf.figure(f"{IMG}/screen-dashboard-mock.png", 150, "Figure 10.2  Student dashboard — KPI tiles (total, submitted…closed) and latest complaints.")
+    pdf.h3("10.3.2  Student dashboard — my complaints at a glance", reserve=112)
+    pdf.figure(f"{IMG}/screen-dashboard-mock.png", 140, "Figure 10.2  Student dashboard — KPI tiles (total, submitted…closed) and latest complaints.")
 
-    pdf.h3("10.3.3  Admin console — every complaint, filterable")
-    pdf.figure(f"{IMG}/screen-console-mock.png", 150, "Figure 10.3  Admin console — department/status/priority filters; escalate, reassign.")
+    pdf.h3("10.3.3  Admin console — every complaint, filterable", reserve=112)
+    pdf.figure(f"{IMG}/screen-console-mock.png", 140, "Figure 10.3  Admin console — department/status/priority filters; escalate, reassign.")
 
-    pdf.h3("10.3.4  Complaint detail — the timeline is the audit trail")
-    pdf.figure(f"{IMG}/screen-timeline-mock.png", 150, "Figure 10.4  Complaint detail — SLA badge, routing score, full event timeline.")
+    pdf.h3("10.3.4  Complaint detail — the timeline is the audit trail", reserve=112)
+    pdf.figure(f"{IMG}/screen-timeline-mock.png", 140, "Figure 10.4  Complaint detail — SLA badge, routing score, full event timeline.")
 
     pdf.h2("10.4  Frequently asked questions")
     pdf.bullets([
@@ -816,6 +844,23 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
         "<b>“Where is the data file?”</b> — app/shikayat_setu.db. Delete it and restart to re-seed the demo.",
         "<b>“Can it run on Windows?”</b> — Yes. Python 3.11 + two pip packages; no services.",
     ])
+
+    pdf.h2("10.5  Validation catalogue — what each input enforces")
+    pdf.table(["Screen / field", "Rule enforced server-side"], [
+        ["Register — Name", "≥ 3 characters; trimmed; required."],
+        ["Register — Roll no.", "Format MCA2026NNN (regex ^MCA2026\d{3}$, case-insensitive); UNIQUE — duplicates rejected with an error flash."],
+        ["Register — E-mail", "RFC-ish check ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$; stored lower-cased."],
+        ["Register — Mobile", "10-digit Indian mobile, first digit 6–9 (^[6-9]\d{9}$)."],
+        ["Register / Lodge — Password", "≥ 6 characters; confirmation must match; stored PBKDF2-hashed (Werkzeug) — never plaintext."],
+        ["Login", "Username OR roll no. + password; deactivated accounts rejected at session creation; wrong credentials return a generic error."],
+        ["Lodge — Title / Description", "Title ≥ 8 characters; description ≥ 20 characters (“help the department”); category must reference an existing categories.id."],
+        ["Lodge — Anonymous", "Optional tick; identity withheld from every officer view; admin-only visibility, enforced server-side (never rendered for role=officer)."],
+        ["Officer resolve — Remark", "Mandatory, ≥ 10 characters; resolution is blocked otherwise."],
+        ["Student confirm — Rating", "1–5 stars mandatory for Close; comment optional; feedback UNIQUE per complaint (FK constraint)."],
+        ["Student reopen — Reason", "Mandatory, ≥ 10 characters; accepted only within 7 days of resolution; status returns to In Progress."],
+        ["Admin — Reassign / Force-close", "Reassign requires a target department + reason; force-close only on Resolved complaints past the 7-day no-response window; both audit-logged."],
+        ["Public tracker (/track)", "Requires BOTH code and roll no.; mismatched pairs render nothing (no enumeration)."],
+    ], [54, 124], size=7.6)
 
 
 def appa(pdf: Report):
@@ -885,6 +930,32 @@ def appc(pdf: Report):
     pdf.table(["Term", "Meaning"], words, [34, 144], size=8.0)
 
 
+def appd(pdf: Report):
+    pdf.h1("appd", "Appendix D — Project Review Schedule 2026-27 (notified 30-09-2026)", "Appendix D")
+    pdf.p("Reproduced (in tabular form) from the K.B.H.S.S.T’s Dr. B.V. Hiray College of Management and Research Centre "
+          "circular “Project Review Schedule 2026-27 MCA-I (SEM-I)” dated 30th September 2026, countersigned by the Head "
+          "of Department (MCA) and the Dy. Director, for cross-check against this report. Roll No. 1–34 → Project Guide "
+          "Mrs. Priyanka M. Jagtap; Roll No. 35 &amp; onwards → Mrs. Yogita A. Shirsath.")
+    pdf.table(["#", "Review (activity)", "Date", "Marks", "Notified content"], [
+        ["1", "Synopsis (SRS) Submission & First Review", "10-10-2026", "10",
+         "Ch-1 Introduction — 1.1 Abstract · 1.2 Existing System and Need for System · 1.3 Scope of System · 1.4 Operating Environment — Hardware and Software · 1.5 Brief Description of Technology Used · 1.5.1 Operating systems used (Windows or Unix)"],
+        ["2", "Second Review", "24-10-2026", "15",
+         "Ch-2 Proposed System — 2.1 Study of Similar Systems (research paper optional) · 2.2 Feasibility Study · 2.3 Objectives of Proposed System · 2.4 Users of System  +  Ch-3 System Analysis and Design — 3.1 System Requirements (Functional and Non-Functional) · 3.2 Entity Relationship Diagram (ERD) · 3.3 Table Structure · 3.4 Use Case Diagrams · 3.5 Class Diagram · 3.6 Activity Diagram · 3.7 Deployment Diagram · 3.8 Module Hierarchy Diagram · 3.9 Sample Input and Output Screens (valid data; ≥ 5 valid records per report)"],
+        ["3", "Third Review", "21-11-2026", "15",
+         "Ch-4 Coding — 4.1 Code snippets · Ch-5 Testing — 5.1 Test Strategy · 5.2 Unit Test Plan · 5.3 Acceptance Test Plan · 5.4 Test Case / Test Script · Ch-6 Limitations of Proposed System · Ch-7 Proposed Enhancements · Ch-8 Conclusion · Ch-9 Bibliography · Ch-10 User Manual (all screens with description/purpose; details about validations of entered data)"],
+        ["4", "Fourth Review", "05-12-2026", "10",
+         "1st PPT Presentation"],
+        ["5", "Internal Viva and Final Submission", "19-12-2026 (tentative)", "50",
+         "2nd Final PPT Presentation and project submission with Hard Binding"],
+    ], [7, 33, 22, 12, 104], size=6.9)
+    pdf.ln(2)
+    pdf.p("<b>Total marks: 100.</b> Guideline 1 — mini project in the first Semester based on the courses learnt; "
+          "2 — may be taken individually or in a group based on the scope of the project; 3 — all students shall report "
+          "project details to their respective guides on the above schedule dates. Students with Roll No. 1–34 are under "
+          "Mrs. Priyanka M. Jagtap; Roll No. 35 & onwards under Mrs. Yogita A. Shirsath.")
+    pdf.note("Coverage map — Chapters in this report follow the circular’s item numbers one-to-one: Ch-2 §2.1–2.4 = items for Review 2; Ch-3 §3.1–3.9 = items for Review 2; Ch-4…Ch-10 = items for Review 3. Chapter 10 (User Manual) lists every screen with purpose and a full validation catalogue (§10.5).")
+
+
 def build(toc, recorder):
     pdf = Report(toc=toc, recorder=recorder)
     pdf.set_title("Campus Shikayat Setu — College Grievance Redressal System (MCA-I Sem-I Mini Project Report)")
@@ -895,7 +966,7 @@ def build(toc, recorder):
     index(pdf)
     for key, fn in [("ch1", ch1), ("ch2", ch2), ("ch3", ch3), ("ch4", ch4), ("ch5", ch5),
                     ("ch6", ch6), ("ch7", ch7), ("ch8", ch8), ("ch9", ch9), ("ch10", ch10),
-                    ("appa", appa), ("appb", appb), ("appc", appc)]:
+                    ("appa", appa), ("appb", appb), ("appc", appc), ("appd", appd)]:
         fn(pdf)
     return pdf
 

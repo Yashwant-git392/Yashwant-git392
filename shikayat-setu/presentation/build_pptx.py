@@ -484,22 +484,25 @@ bullets(s, 0.55, 5.4, 12.3, 0.95, [
 ], size=9.5, gap=3)
 
 # ================================================================ SLIDE 14 — Timeline & deliverables
-s = add_slide(); header(s, "09 · TIMELINE", "Seven weeks, two verified gates"); footer(s, 14)
-pic_fit(s, f"{IMG}/fig-gantt.png", 0.55, 1.5, 12.23, 2.6)
+s = add_slide(); header(s, "09 · TIMELINE", "Five notified milestones — Review 3 is nine days away"); footer(s, 14)
+pic_fit(s, f"{IMG}/fig-gantt.png", 0.55, 1.42, 12.23, 2.5)
 milestones = [
-    ("BUILD", "21 Sep → 08 Nov — schema, engine, console, reports, tests", "done"),
-    ("REVIEW 3", "21-11-2026 — working build + this demo + report", "today"),
-    ("HARDEN", "Nov–Dec — E-3 / E-4 / E-6 from the roadmap", "next"),
-    ("FINAL VIVA", "19-12-2026 — viva + hard-bound report", "next"),
+    ("BUILD\n21 Sep → 08 Nov", "schema · engine · console · reports · tests (12/12)", "done"),
+    ("REVIEW 1 ✓\n10-10-2026", "SRS + Ch-1 · 10 marks", "done"),
+    ("REVIEW 2 ✓\n24-10-2026", "Ch-2 Proposed System + Ch-3 design · 15 marks", "done"),
+    ("REVIEW 3 — NEXT UP\n21-11-2026", "working build + this demo + report · 15 marks", "today"),
+    ("REVIEW 4\n05-12-2026", "1st PPT presentation · 10 marks", "next"),
+    ("FINAL VIVA\n19-12-2026", "2nd PPT + hard-bound report · 50 marks", "next"),
 ]
-mw = 2.98
+mw = 1.93
+gap = (12.23 - 6 * mw) / 5
 for i, (r, d, st) in enumerate(milestones):
-    x = 0.55 + i * (mw + 0.13)
-    card(s, x, 4.6, mw, 1.05, fill=(NAVY if st == "today" else WHITE), line=GOLD)
-    txt(s, x + 0.16, 4.72, mw - 0.3, 0.26, [dict(runs=[(r, dict(size=9.5, bold=True, color=(GOLD_L if st == "today" else GOLD)))])])
-    txt(s, x + 0.16, 4.98, mw - 0.3, 0.55, [dict(runs=[(d, dict(size=8.5, color=(CREAM if st == "today" else INK)))], line_spacing=1.12)])
-rect(s, 0.55, 5.95, 12.23, 0.48, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.05, 12, 0.28, [dict(runs=[("Artefacts: report (27 pp) · this deck · app + tests · README — all on branch arena/aafd53cc-yashwant-git392",
+    x = 0.55 + i * (mw + gap)
+    card(s, x, 4.08, mw, 1.78, fill=(NAVY if st == "today" else WHITE), line=GOLD)
+    txt(s, x + 0.12, 4.2, mw - 0.24, 0.52, [dict(runs=[(r, dict(size=7.3, bold=True, color=(GOLD_L if st == "today" else GOLD)))], line_spacing=1.12)])
+    txt(s, x + 0.12, 4.8, mw - 0.24, 1.0, [dict(runs=[(d, dict(size=6.4, color=(CREAM if st == "today" else INK)))], line_spacing=1.15)])
+rect(s, 0.55, 6.05, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
+txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (30 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
                                            dict(size=9, color=NAVY3))])])
 
 # ================================================================ SLIDE 15 — Future work
