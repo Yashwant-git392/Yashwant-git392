@@ -332,7 +332,7 @@ def index(pdf: Report):
         pdf.ln(6.4)
     pdf.ln(3)
     pdf.set_font("DVS", "I", 7.6); pdf.set_text_color(*GREY)
-    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. The screen images are illustrative mock-ups of an earlier interface, not screenshots of the current application.")
+    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. Screen images are screenshots of the current application using seeded demo data; counts and dates may change when the database is reset.")
 # =====================================================================
 def ch1(pdf: Report):
     pdf.h1("ch1", "Introduction", "Chapter 1")
@@ -348,7 +348,7 @@ def ch1(pdf: Report):
           "complaints, and six print-ready administrative registers.")
     pdf.p("The system is built with <b>Python + Flask</b>, <b>Jinja2</b> templates, <b>vanilla JavaScript</b> and a "
           "<b>SQLite 3</b> database chosen deliberately for the use case (single campus, single PC, ≤ ~2,000 users; one-file "
-          "backup; schema maps 1:1 to MySQL 8 for production). Three roles are supported — <b>student</b>, "
+          "backup; a future MySQL migration would require application and schema changes). Three roles are supported — <b>student</b>, "
           "<b>department officer</b> and <b>administrator</b> — with strict server-side authorisation on every route.")
     pdf.p("<b>Keywords:</b> Grievance Redressal, Web Application, Flask, SQLite, SLA, Keyword Routing, SPPU MCA, "
           "Application Development.")
@@ -374,7 +374,7 @@ def ch1(pdf: Report):
         "Remove manual routing with a transparent, keyword-weighted router (score printed on the complaint timeline).",
         "Close the loop with student feedback and a controlled reopen window.",
         "Produce print-ready registers for review meetings — pendency, SLA compliance, resolution time, trend, feedback, routing audit.",
-        "Protect sensitive complainants with anonymous lodging (identity visible only to administrators).",
+        "Protect sensitive complainants with anonymous lodging (identity fields hidden from officers; administrators can see them).",
     ])
 
     pdf.h2("1.3  Scope of the System")
@@ -385,7 +385,7 @@ def ch1(pdf: Report):
         "Automatic department routing with weighted keyword scoring + audit event; admin reassign with full trace.",
         "SLA matrix (High 24 h / Medium 72 h / Low 7 days) with live overdue computation and escalation-to-High.",
         "Officer workflow: acknowledge → in-progress → resolve (remark mandatory) · student confirmation with 1–5 star rating or reopen (≤ 7 days).",
-        "Admin console: filter by department/status/priority, reassign, escalate, force-close stale resolved complaints, manage officer accounts.",
+        "Admin console: filter by department/status/priority, reassign, escalate, force-close resolved complaints, manage officer accounts.",
         "Six print-ready registers: Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.",
         "Public tracker (complaint code + roll no., no login) and seeded deterministic demo (32 complaints across 6 departments).",
     ])
@@ -412,9 +412,9 @@ def ch1(pdf: Report):
         ["Python", "3.11.2", "Application runtime"],
         ["Flask", "3.x", "Web framework (routing, sessions, flash)"],
         ["Jinja2", "3.x", "Server-side templating"],
-        ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (schema maps to MySQL 8)"],
-        ["Werkzeug", "3.x", "WSGI stack + PBKDF2 password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (18 tests)"],
+        ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
+        ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
+        ["pytest", "9.x", "Unit / integration test runner (19 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -423,13 +423,13 @@ def ch1(pdf: Report):
     pdf.p("<b>Python 3</b> is the implementation language — readable, rapid to build with, and immediately familiar to the "
           "review panel. <b>Flask</b> provides routing, sessions and Jinja2 rendering without imposing an ORM; all SQL is "
           "explicit, bound-parameterised and visible in the source for examination. <b>Jinja2</b> templates keep presentation "
-          "out of logic; the front end uses semantic HTML5, a hand-written navy/gold CSS theme and zero build tooling.")
+          "out of logic; the front end uses semantic HTML5, a navy, off-white and teal CSS theme and zero build tooling.")
     pdf.p("<b>SQLite 3</b> was selected after matching databases to the use case: single-campus, low-write, read-mostly, "
           "one-machine demo with zero DBA. It enforces integrity with UNIQUE, CHECK and FOREIGN KEY constraints. The schema "
-          "is intentionally portable — the production path is MySQL 8 with a one-file connection swap (see Chapter 7).")
-    pdf.p("<b>Security:</b> passwords are PBKDF2-hashed (Werkzeug); every authenticated route checks the session role "
-          "server-side (students cannot open the admin console — covered by test_11); SQL uses bound parameters; anonymous "
-          "complaints hide identity from officers (admin-only visibility); status changes write immutable audit events.")
+          "works without a separate server. A move to MySQL would require changes to queries, connection handling and deployment (see Chapter 7).")
+    pdf.p("<b>Security:</b> passwords are hashed with Werkzeug; every authenticated route checks the session role "
+          "server-side (students cannot open the admin console — covered by test_11); SQL uses bound parameters; "
+          "anonymous identity fields and student event actors are hidden from officers, but free text may reveal identity; status changes write immutable audit events.")
     pdf.h3("1.5.1  Operating systems used")
     pdf.p("Development, seeding and the original 12 automated tests were executed on GNU/Linux (Python 3.11.2). No OS-specific APIs "
           "are used; the app is runnable unchanged on Windows 10/11 lab machines via <i>python run.py</i>.")
@@ -458,11 +458,11 @@ def ch2(pdf: Report):
 
     pdf.h2("2.2  Feasibility Study")
     pdf.table(["Dimension", "Assessment"], [
-        ["Technical", "Flask + SQLite requires only Python 3.11; no drivers, no services, no network. All libraries are pip-installable offline from PyPI."],
+        ["Technical", "Flask + SQLite requires only Python 3.11; no drivers, no services, no network. Dependencies require a network connection or locally available installation packages."],
         ["Operational", "Officers already acknowledge grievances informally; this formalises the same gesture with buttons. Training = one page (Chapter 10)."],
         ["Economic", "Rs. 0 licence cost; runs on any existing college PC; replacement of a register with a file backup."],
         ["Schedule", "Design, build, seed, tests and documentation completed inside the Sem-I window. Milestones as notified 30-09-2026 — Review 1 (SRS) 10-10-2026 (10 marks) · Review 2 24-10-2026 (15) · Review 3 21-11-2026 (15) · Review 4 (1st PPT) 05-12-2026 (10) · Final Internal Demo 19-12-2026 (50)."],
-        ["Legal / Ethical", "Anonymous complaints handled with admin-only identity access; all actions audit-logged; student data minimised to roll no., phone, e-mail."],
+        ["Legal / Ethical", "Anonymous complaints handled with admin-only identity access; all actions audit-logged; roll number and phone are stored; email is validated but not stored."],
     ], [30, 148])
 
     pdf.h2("2.3  Objectives of Proposed System")
@@ -480,11 +480,11 @@ def ch2(pdf: Report):
     pdf.h2("2.4  Users of System")
     pdf.table(["User", "Access scope", "Capabilities"], [
         ["Student (seeded MCA2026001–008)", "Own complaints only",
-         "Self-register (name / roll / e-mail / mobile / password) · lodge (category, location, anonymous option) · track (code or roll no.) · submit 1–5 ★ feedback to close · reopen within 7 days · change password"],
+         "Self-register (name / roll / e-mail / mobile / password) · lodge (category, location, anonymous option) · track (code and roll no.) · submit 1–5 ★ feedback to close · reopen within 7 days · change password"],
         ["Department Officer (×6 departments)", "Assigned department only",
          "Priority-ordered queue · acknowledge → in-progress → resolve (remark ≥ 10 chars) · every action written to the audit timeline"],
         ["Administrator", "College-wide",
-         "Filter (dept / status / priority) · reassign with reason · escalate → High · force-close (7-day no-response) · create / activate / deactivate officer accounts · 6 registers + anonymous identity visibility"],
+         "Filter (dept / status / priority) · reassign to a department · escalate → High · force-close resolved complaints · create / activate / deactivate officer accounts · 6 registers + anonymous identity visibility"],
         ["Public visitor (no login — /track)", "Read-only · code + roll no.",
          "View current status and timeline of one complaint; no names, e-mails or other records exposed"],
     ], [36, 32, 110])
@@ -492,12 +492,12 @@ def ch2(pdf: Report):
     pdf.h2("2.5  Proposed System Overview")
     pdf.p("Campus Shikayat Setu keeps the proven workflow of the reference concept — lodge → auto-route → track — and "
           "replaces every placeholder with production-grade engineering: a real relational schema with foreign-key "
-          "enforcement, PBKDF2 authentication with three roles, a transparent router whose scoring is printed on the "
+          "enforcement, Werkzeug password hashing with three roles, a transparent router whose scoring is printed on the "
           "complaint timeline, an SLA engine, a 7-day student reopen window, full audit events and six print registers.")
     pdf.bullets([
-        "<b>Student layer:</b> register → lodge (category, location, anonymous flag) → track (code or roll no.) → confirm or reopen with feedback.",
+        "<b>Student layer:</b> register → lodge (category, location, anonymous flag) → track (code and roll no.) → confirm or reopen with feedback.",
         "<b>Officer layer:</b> department queue ordered by priority then recency; acknowledge → start work → resolve with mandatory remark.",
-        "<b>Admin layer:</b> college-wide console — filter, reassign, escalate (priority→High), force-close stale resolved complaints, manage officer accounts.",
+        "<b>Admin layer:</b> college-wide console — filter, reassign, escalate (priority→High), force-close resolved complaints, manage officer accounts.",
         "<b>Report layer:</b> six Ctrl+P print-ready registers, each with ≥ 5 live records from the seed.",
     ])
 
@@ -509,7 +509,7 @@ def ch2(pdf: Report):
         ["SLA & Escalation", "Deadline = submission + SLA(priority); overdue computed at render time; admin escalation raises priority to High with an audit event."],
         ["Officer Workflow", "Department-scoped queue (priority, then recency); acknowledge / start work / resolve with mandatory ≥ 10-char remark; timeline remarks."],
         ["Student Closure", "Feedback (1–5 + comment) closes; or reopen (≤ 7 days, reason mandatory) returns to In Progress."],
-        ["Admin Console", "Filters (department/status/priority), reassign with reason, force-close after 7-day no-response, officer creation & activation."],
+        ["Admin Console", "Filters (department/status/priority), reassign to a department, force-close resolved complaints, officer creation & activation."],
         ["Reports", "Six print registers incl. SLA compliance % and per-category average resolution hours."],
     ], [42, 136])
 
@@ -527,7 +527,7 @@ def ch3(pdf: Report):
         ["FR-5", "Officers shall acknowledge / mark in-progress / resolve; resolution requires a ≥ 10-char remark.", "Must"],
         ["FR-6", "Students shall close via feedback (1–5 stars) or reopen within 7 days of resolution.", "Must"],
         ["FR-7", "Anonymous complaints shall hide complainant identity from all officers; visible to admins only.", "Must"],
-        ["FR-8", "Admin shall filter, reassign, escalate (→High) and force-close (7-day no-response).", "Must"],
+        ["FR-8", "Admin shall filter, reassign, escalate (→High) and force-close resolved complaints.", "Must"],
         ["FR-9", "Every state change shall append an immutable timeline event.", "Must"],
         ["FR-10", "Officer queue shall show only the officer's department; students see only their own complaints.", "Must"],
         ["FR-11", "System shall render six print registers with live SQL totals.", "Should"],
@@ -537,7 +537,7 @@ def ch3(pdf: Report):
     pdf.table(["ID", "Requirement"], [
         ["NFR-1", "Login response < 300 ms on a lab PC; page render < 500 ms; no JS framework dependency."],
         ["NFR-2", "Zero data loss on crash: SQLite ACID with foreign_keys ON; backup = file copy."],
-        ["NFR-3", "Passwords PBKDF2-hashed; no plaintext anywhere; sessions are signed cookies."],
+        ["NFR-3", "Passwords hashed with Werkzeug; no plaintext anywhere; sessions are signed cookies."],
         ["NFR-4", "Print CSS hides chrome; registers fit A4 portrait without truncation."],
         ["NFR-5", "Deterministic seed: fresh clone reproduces the exact demo dataset (< 200 ms)."],
         ["NFR-6", "Code style: PEP 8, bound parameters only, no string-concatenated SQL."],
@@ -584,25 +584,26 @@ def ch3(pdf: Report):
     pdf.figure(f"{IMG}/fig-modules.png", 150, "Figure 3.6  Module hierarchy — three role layers over the shared routing/SLA core.")
 
     pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
-    pdf.p("The screen illustrations use example data; see Appendix B for seeded records. Every "
+    pdf.p("These screenshots use seeded demo data; see Appendix B for sample records. Every "
           "register prints ≥ 5 valid records, as item 3.9 of the schedule requires. Full annotated screen catalogue with "
           "validation notes is given in Chapter 10 (User Manual, §10.3 and §10.5).")
-    pdf.figure(f"{IMG}/screen-login-mock.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
-    pdf.figure(f"{IMG}/screen-dashboard-mock.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).")
-    pdf.figure(f"{IMG}/screen-console-mock.png", 148, "Figure 3.9  Sample output — Admin console (32-record filterable register).")
-    pdf.figure(f"{IMG}/screen-timeline-mock.png", 148, "Figure 3.10  Sample output — Complaint detail: SLA clock, stepper and full audit timeline.")
+    pdf.figure(f"{IMG}/screen-login.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
+    pdf.figure(f"{IMG}/screen-dashboard.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).")
+    pdf.figure(f"{IMG}/screen-lodge.png", 148, "Figure 3.9  Sample input — Complaint form with estimated routing.")
+    pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (32-record filterable register).")
+    pdf.figure(f"{IMG}/screen-timeline.png", 148, "Figure 3.11  Sample output — Complaint detail: SLA clock, stepper and timeline.")
 
     pdf.h2("3.10  Constraints and Assumptions")
     pdf.bullets([
         "One campus, one server process, SQLite file in the app directory; no concurrent-write contention in the lab.",
         "Keyword lists are curated per domain; sarcasm/vindication requires admin reassignment (Chapter 6, L-2).",
         "Complaint codes are sequential per calendar year; no deletion of complaints (audit-preserving design).",
-        "Anonymous complaints are visible in full only to administrators; evening demo uses the seeded admin account.",
+        "Anonymous identity fields are visible to administrators; free text can still identify a complainant.",
     ])
 
 def ch4(pdf: Report):
     pdf.h1("ch4", "Coding", "Chapter 4")
-    pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. Key excerpts below are verbatim from the running build (see the git history of <b>shikayat-setu/</b>).")
+    pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. The following examples show the main routing, workflow and database logic. Ellipses indicate omitted lines.")
 
     pdf.h2("4.1  Routing engine — scoring and SLA")
     pdf.code('''def score_category(text: str, keywords: str) -> int:
@@ -612,7 +613,7 @@ def ch4(pdf: Report):
         pattern = r"(?<![a-z0-9])" + re.escape(kw) + r"(?![a-z0-9])"
         hits = len(re.findall(pattern, low))
         if hits:
-            weight = max(1, len(kw.split()) * 2)   # multi-word kws weigh more
+            weight = len(kw.split()) * 2  # Multi-word keywords carry more weight.
             score += weight * hits
     return score
 
@@ -626,22 +627,14 @@ def assign_priority(default_priority, title, description):
     return p''', title="routing.py — keyword scorer & priority resolver")
 
     pdf.h2("4.2  Lodging a complaint — validation, routing, SLA stamping")
-    pdf.code('''title = (request.form.get("title") or "").strip()
-desc  = (request.form.get("description") or "").strip()
-if len(title) < 8:  errors.append("Title must be at least 8 characters.")
-if len(desc)  < 20: errors.append("Description must be at least 20 characters.")
-
-text = routing.route_text(title, desc)
-routed_cat, score = routing.route(text, cats)
-final_cat = routed_cat if (routed_cat and score > routing.score_category(text, chosen["keywords"])) else chosen
-priority  = routing.assign_priority(final_cat["default_priority"], title, desc)
-due       = now + timedelta(hours=routing.SLA_HOURS[priority])
-
-cur = conn.execute("INSERT INTO complaints (code, student_id, ...) "
-                   "VALUES ('TMP',?,?,?,?,?,?,?,?,?,'Submitted',?,?,?)", ...)
-conn.execute("UPDATE complaints SET code=? WHERE id=?",
-             (f"CMP-{now.year}-{cur.lastrowid:04d}", cur.lastrowid))''',
-        title="app.py — lodge() excerpt (issue: placeholder-then-update to satisfy NOT NULL code)")
+    pdf.code('''def select_category(title, description, chosen, categories):
+    text = routing.route_text(title, description)
+    matched, score = routing.route(text, categories)
+    if matched and (matched["id"] == chosen["id"] or
+                    score > routing.score_category(text, chosen["keywords"])):
+        return matched, "auto", score
+    return chosen, "manual", 0''',
+        title="app.py — category selection shared by submission and preview")
 
     pdf.h2("4.3  Resolution workflow — status transitions")
     pdf.code('''@app.route("/complaint/<code>/resolve", methods=["POST"])
@@ -680,12 +673,12 @@ rating   INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5)  -- feedback''', title=
 def ch5(pdf: Report):
     pdf.h1("ch5", "Testing", "Chapter 5")
 
-    pdf.h2("5.1  Testing Strategy")
+    pdf.h2("5.1  Test Strategy")
     pdf.p("Two tracks were run: (A) automated tests via pytest (isolated temp database, seeded fresh per test), and "
           "(B) manual end-to-end scenarios on the live seeded app at http://127.0.0.1:5001. Both are reproducible from "
           "a clean clone.")
 
-    pdf.h2("5.2  Track A — Original automated tests (12/12 passing)")
+    pdf.h2("5.2  Unit Test Plan — original automated tests")
     pdf.table(["ID", "Scenario", "Result"], [
         ["TC-01", "Login page renders (200, brand present)", "PASS"],
         ["TC-02", "Wrong password → HTTP 401", "PASS"],
@@ -700,9 +693,9 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 18 tests, including routing preview, officer assignments and UI checks.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 19 tests, including routing preview, anonymous identity masking and UI checks.")
 
-    pdf.h2("5.3  Track B — Manual scenarios (live, 09-11-2026)")
+    pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
         ["TC-13", "Login page in browser", "Brand + demo credentials visible", "PASS"],
         ["TC-14", "Admin login → dashboard KPIs (32 complaints)", "Counts match seed", "PASS"],
@@ -714,7 +707,8 @@ def ch5(pdf: Report):
         ["TC-20", "Ctrl+P on /reports?report=sla", "Chrome hidden; table fits A4 portrait", "PASS"],
     ], [14, 52, 58, 24])
 
-    pdf.h2("5.4  Defect log (all found & fixed during the build)")
+    pdf.h2("5.4  Test Case / Test Script")
+    pdf.p("The tables above list the original automated and manual test cases and their recorded results. Run pytest to check the current suite. The following defects were recorded during development.")
     pdf.table(["ID", "Defect", "Fix", "Verified"], [
         ["DEF-01", "Seed crashed: complaints.code NOT NULL constraint on insert",
          "Insert placeholder TMP-<hex>, then UPDATE to CMP-YYYY-NNNN using lastrowid", "Re-seeded clean 32/32"],
@@ -739,8 +733,9 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen window fixed at 7 days:</b> not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 12 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 19 tests, not on a live semester of usage.",
     ])
+    pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
           "feedback → closed is executable and audit-trailed end to end; (ii) routing, SLA and escalation are deterministic "
           "and explainable on the timeline; (iii) the six registers reconcile to the seeded database row-for-row. Every "
@@ -754,15 +749,14 @@ def ch7(pdf: Report):
         ["E-2", "WhatsApp deep-link tracker: share CMP code as wa.me link with prefilled text", "3 days", "L-3"],
         ["E-3", "Photo evidence upload (trap: validate MIME + size ≤ 2 MB; store under instance/)", "1 wk", "L-1"],
         ["E-4", "Admin category management UI (add/retire keywords, re-map departments)", "1 wk", "L-5"],
-        ["E-5", "MySQL 8 migration; schema ports 1:1 (AUTOINCREMENT→AUTO_INCREMENT)", "3 days", "L-4"],
+        ["E-5", "MySQL migration; adapt schema, queries and connections", "3 days", "L-4"],
         ["E-6", "Nightly SLA-breach cron: auto-escalate to admin at 50%/100% of deadline", "2 days", "L-1, SLA"],
         ["E-7", "Charts dashboard (matplotlib PNGs or Chart.js): pendency, trend, SLA %", "2 wks", "L-7"],
         ["E-8", "Public board in the admin corridor: live counts, longest-pending grievances", "1 wk", "visibility"],
         ["E-9", "Marathi / Hindi UI toggle (Jinja-gettext patterns; 120 keys)", "2 wks", "accessibility"],
         ["E-10", "ERP bridge: sync roll no. ↔ ERP student master; auto e-mail to parents on High", "3 wks", "reach"],
     ], [12, 108, 16, 24])
-    pdf.p("<b>Sequencing:</b> E-3, E-4, E-6 are drop-in (no schema change). E-5 is the only migration and is deliberately "
-          "trivial — the schema was written for it. E-8 gives the college an immediate visible win; E-10 is a research "
+    pdf.p("<b>Sequencing:</b> E-3, E-4, E-6 are drop-in (no schema change). E-5 requires migration and testing; its effort depends on the target environment. E-8 gives the college an immediate visible win; E-10 is a research "
           "track, scoped but not promised.")
 
 
@@ -791,7 +785,6 @@ def ch9(pdf: Report):
         "K.B.H.S.S.T’s Dr. B.V. Hiray College of Management and Research Centre, Department of MCA. (2026, 30 September). <i>Project Review Schedule 2026-27 — MCA-I (SEM-I).</i> Malegaon. [College circular — internal document]",
         "INFLIBNET Centre. (2020). <i>SOUL — Software for University Libraries (context study).</i> https://www.inflibnet.ac.in/soul/",
         "Harney-Jenifar-R-S. (2026). <i>Smart Complaint Management System — reference concept repository.</i> GitHub. https://github.com/Harney-Jenifar-R-S/Smart_Complaint_System",
-        "Kumar, A. (2023). <i>Complaint Redressal Mechanisms in Indian Higher Education Institutions.</i> Journal of Education and Practice, 14(7), 44–52.",
         "Press Information Bureau. (2024). <i>Centralized Public Grievance Redress and Monitoring System (CPGRAMS).</i> Government of India.",
         "OWASP Foundation. (2023). <i>OWASP Top 10 — A03: Injection, A07: Identification and Authentication Failures.</i> https://owasp.org/www-project-top-ten/",
         "Savitribai Phule Pune University, Department of MCA. (2024). <i>MCA (Semester-I) — Application Development course syllabus (2024 Pattern).</i> SPPU, Pune.",
@@ -823,23 +816,26 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
     pdf.h2("10.3  The five screens you will touch most")
 
     pdf.h3("10.3.1  Sign in", reserve=112)
-    pdf.figure(f"{IMG}/screen-login-mock.png", 140, "Figure 10.1  Sign-in — roll no. or username; demo credentials shown below the form.")
+    pdf.figure(f"{IMG}/screen-login.png", 140, "Figure 10.1  Sign-in — roll no. or username; demo credentials shown below the form.")
 
     pdf.h3("10.3.2  Student dashboard — my complaints at a glance", reserve=112)
-    pdf.figure(f"{IMG}/screen-dashboard-mock.png", 140, "Figure 10.2  Student dashboard — KPI tiles (total, submitted…closed) and latest complaints.")
+    pdf.figure(f"{IMG}/screen-dashboard.png", 140, "Figure 10.2  Student dashboard — KPI tiles (total, open, resolved, closed) and latest complaints.")
 
-    pdf.h3("10.3.3  Admin console — every complaint, filterable", reserve=112)
-    pdf.figure(f"{IMG}/screen-console-mock.png", 140, "Figure 10.3  Admin console — department/status/priority filters; escalate, reassign.")
+    pdf.h3("10.3.3  Lodge a complaint", reserve=112)
+    pdf.figure(f"{IMG}/screen-lodge.png", 140, "Figure 10.3  Complaint form — details and estimated routing.")
 
-    pdf.h3("10.3.4  Complaint detail — the timeline is the audit trail", reserve=112)
-    pdf.figure(f"{IMG}/screen-timeline-mock.png", 140, "Figure 10.4  Complaint detail — SLA badge, routing score, full event timeline.")
+    pdf.h3("10.3.4  Admin console — every complaint, filterable", reserve=112)
+    pdf.figure(f"{IMG}/screen-console.png", 140, "Figure 10.4  Admin console — department/status/priority filters; escalate, reassign.")
+
+    pdf.h3("10.3.5  Complaint detail — the timeline is the audit trail", reserve=112)
+    pdf.figure(f"{IMG}/screen-timeline.png", 140, "Figure 10.5  Complaint detail — SLA badge, routing score and timeline.")
 
     pdf.h2("10.4  Frequently asked questions")
     pdf.bullets([
         "<b>“The complaint is routed wrong!”</b> — Admins reassign in one click; the timeline records old → new department.",
         "<b>“How do I see overdue complaints?”</b> — the reports tab “Department Pendency” has an Overdue column; officer queue sorts High priority first.",
         "<b>“Can I edit a complaint after lodging?”</b> — Not yet; add a remark as officer, or reopen as student. Deliberate: audit integrity.",
-        "<b>“Anonymous complaint — who sees who I am?”</b> — Only the administrator. Officers see “anonymous”.",
+        "<b>“Anonymous complaint — who sees who I am?”</b> — Officers see “anonymous” in identity fields and student event actors. Free text may still identify you; administrators can see your identity.",
         "<b>“Where is the data file?”</b> — app/shikayat_setu.db. Delete it and restart to re-seed the demo.",
         "<b>“Can it run on Windows?”</b> — Yes. Python 3.11 + two pip packages; no services.",
     ])
@@ -848,16 +844,16 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
     pdf.table(["Screen / field", "Rule enforced server-side"], [
         ["Register — Name", "≥ 3 characters; trimmed; required."],
         ["Register — Roll no.", "Format MCA2026NNN (regex ^MCA2026\d{3}$, case-insensitive); UNIQUE — duplicates rejected with an error flash."],
-        ["Register — E-mail", "RFC-ish check ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$; stored lower-cased."],
+        ["Register — E-mail", "RFC-ish check ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$; validated but not stored."],
         ["Register — Mobile", "10-digit Indian mobile, first digit 6–9 (^[6-9]\d{9}$)."],
-        ["Register / Lodge — Password", "≥ 6 characters; confirmation must match; stored PBKDF2-hashed (Werkzeug) — never plaintext."],
+        ["Registration — Password", "≥ 6 characters; confirmation must match; hashed with Werkzeug — never plaintext."],
         ["Login", "Username OR roll no. + password; deactivated accounts rejected at session creation; wrong credentials return a generic error."],
         ["Lodge — Title / Description", "Title ≥ 8 characters; description ≥ 20 characters (“help the department”); category must reference an existing categories.id."],
-        ["Lodge — Anonymous", "Optional tick; identity withheld from every officer view; admin-only visibility, enforced server-side (never rendered for role=officer)."],
+        ["Lodge — Anonymous", "Optional tick; the student identity and student event actor are hidden from officers. Free-text descriptions or notes can still identify the student."],
         ["Officer resolve — Remark", "Mandatory, ≥ 10 characters; resolution is blocked otherwise."],
         ["Student confirm — Rating", "1–5 stars mandatory for Close; comment optional; feedback UNIQUE per complaint (FK constraint)."],
         ["Student reopen — Reason", "Mandatory, ≥ 10 characters; accepted only within 7 days of resolution; status returns to In Progress."],
-        ["Admin — Reassign / Force-close", "Reassign requires a target department + reason; force-close only on Resolved complaints past the 7-day no-response window; both audit-logged."],
+        ["Admin — Reassign / Force-close", "Reassign requires a valid department. Force-close requires Resolved status; the seven-day wait is not enforced. Both actions are logged."],
         ["Public tracker (/track)", "Requires BOTH code and roll no.; mismatched pairs render nothing (no enumeration)."],
     ], [54, 124], size=7.6)
 
@@ -915,7 +911,7 @@ def appc(pdf: Report):
         ("Audit event", "Immutable row in complaint_events recording every state change with actor and timestamp."),
         ("Auto-routing", "Keyword-weighted assignment of a complaint to a department; scored and printed on the timeline."),
         ("CMP code", "Human-readable complaint identifier: CMP-<year>-<4-digit sequence>."),
-        ("Force-close", "Admin-only closure of a Resolved complaint after a 7-day no-response window."),
+        ("Force-close", "Admin-only closure of a Resolved complaint; the seven-day wait is not enforced."),
         ("Grievance", "Any student-raised deficiency in college services — facility, academic, security, food."),
         ("Keyword weight", "Routing score = Σ(weight × hits); multi-word keywords weigh double per word."),
         ("Mass impact", "Phrase class (“entire”, “all students”) that bumps priority one level."),
@@ -952,7 +948,7 @@ def appd(pdf: Report):
           "2 — may be taken individually or in a group based on the scope of the project; 3 — all students shall report "
           "project details to their respective guides on the above schedule dates. Students with Roll No. 1–34 are under "
           "Mrs. Priyanka M. Jagtap; Roll No. 35 & onwards under Mrs. Yogita A. Shirsath.")
-    pdf.note("Coverage map — Chapters in this report follow the circular’s item numbers one-to-one: Ch-2 §2.1–2.4 = items for Review 2; Ch-3 §3.1–3.9 = items for Review 2; Ch-4…Ch-10 = items for Review 3. Chapter 10 (User Manual) lists every screen with purpose and a full validation catalogue (§10.5).")
+    pdf.note("Coverage map — Chapters in this report follow the circular’s item numbers as follows: Ch-2 §2.1–2.4 = items for Review 2; Ch-3 §3.1–3.9 = items for Review 2; Ch-4…Ch-10 = items for Review 3. Chapter 10 (User Manual) lists every screen with purpose and a full validation catalogue (§10.5).")
 
 
 def build(toc, recorder):

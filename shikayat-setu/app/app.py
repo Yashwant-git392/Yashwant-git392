@@ -145,7 +145,12 @@ def complaint_timeline(conn, complaint_id):
 def render_complaint(conn, c, user):
     d = dict(c)
     d["is_overdue"] = is_overdue(c)
-    d["steps"] = complaint_timeline(conn, c["id"])
+    d["steps"] = [dict(event) for event in complaint_timeline(conn, c["id"])]
+    if c["is_anonymous"] and user["role"] not in ("admin", "student"):
+        for event in d["steps"]:
+            if event["actor_id"] == c["student_id"]:
+                event["actor_name"] = "Anonymous"
+                event["actor_id"] = None
     d["feedback"] = conn.execute("SELECT * FROM feedback WHERE complaint_id=?", (c["id"],)).fetchone()
     d["identity"] = None if (c["is_anonymous"] and user["role"] != "admin") else c["student_name"]
     d["roll"]     = None if (c["is_anonymous"] and user["role"] != "admin") else c["student_roll"]
@@ -546,7 +551,7 @@ def force_close(code):
         flash("Only Resolved complaints can be force-closed.", "warning")
     else:
         conn.execute("UPDATE complaints SET status='Closed' WHERE id=?", (c["id"],))
-        log_event(conn, c["id"], "closed", "Closed by admin after 7-day no-response window.", user["id"])
+        log_event(conn, c["id"], "closed", "Closed by admin.", user["id"])
         conn.commit(); flash("Complaint force-closed.", "success")
     conn.close()
     return redirect(url_for("complaint_detail", code=code))

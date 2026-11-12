@@ -1,4 +1,4 @@
-"""Campus Shikayat Setu — automated test suite (12 tests)."""
+"""Campus Shikayat Setu — automated test suite."""
 import os
 import sys
 import tempfile
@@ -216,3 +216,25 @@ def test_ui_uses_local_assets_and_marks_current_page(client):
     assert b'aria-current="page"' in response.data
     assert b'Your identity is hidden from department officers' in response.data
     assert b'aria-describedby="title-hint title-count"' in response.data
+
+
+def test_anonymous_student_event_actor_hidden_from_officer(client):
+    login(client, "MCA2026002", "student123")
+    data = {"title": "Leaking tap near washroom",
+            "description": "The hostel washroom tap is leaking and the floor is wet.",
+            "category_id": "3", "is_anonymous": "on"}
+    assert client.post("/lodge", data=data).status_code == 302
+    conn = db.get_conn()
+    row = conn.execute("SELECT code, student_id FROM complaints ORDER BY id DESC LIMIT 1").fetchone()
+    student_name = conn.execute("SELECT full_name FROM users WHERE id=?", (row["student_id"],)).fetchone()["full_name"]
+    code = row["code"]
+    conn.close()
+    client.get("/logout")
+    login(client, "maint.officer", "officer123")
+    response = client.get(f"/complaint/{code}")
+    assert response.status_code == 200
+    assert student_name.encode() not in response.data
+    assert b"Anonymous" in response.data
+    client.get("/logout")
+    login(client, "admin", "admin123")
+    assert student_name.encode() in client.get(f"/complaint/{code}").data

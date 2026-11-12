@@ -206,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "18 automated tests + 8 manual scenarios"),
+    ("08", "Testing evidence", "19 automated tests + 8 historical manual scenarios"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("18/18", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("19/19", "tests passing")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -246,7 +246,7 @@ bullets(s, 8.45, 2.25, 4.15, 3.5, [
 ], size=10, gap=7, color=CREAM, mcolor=GOLD_L)
 txt(s, 8.45, 4.72, 4.1, 1.1,
     [dict(runs=[("Right-sized answer: ", dict(size=10.5, bold=True, color=GOLD_L)),
-                ("a focused, self-hosted web app that runs on the college PC — SLA-bound, audit-trailed, anonymous-safe.", dict(size=10.5, color=CREAM))], line_spacing=1.22)])
+                ("a focused, self-hosted web app that runs on the college PC — SLA-bound, with event history and optional anonymity.", dict(size=10.5, color=CREAM))], line_spacing=1.22)])
 rect(s, 0.55, 6.12, 12.23, 0.5, fill=GREY_L, round_=True, radius=0.5)
 txt(s, 0.85, 6.24, 11.7, 0.3, [dict(runs=[("Scope fixed for Sem-I: student · officer · admin roles, feedback & reopen loop — nothing more, nothing hidden.",
                                            dict(size=9.5, italic=True, color=NAVY3))])])
@@ -259,7 +259,7 @@ objectives = [
     "Keyword-scored auto-routing to the right department on submit",
     "SLA engine: High 24 h · Medium 72 h · Low 7 days, stamped at lodge time",
     "Full audit timeline per complaint — every action, every actor, forever",
-    "Anonymous lodgement for sensitive grievances (admin-only identity)",
+    "Anonymous lodging hides identity fields from officers",
     "Six print-ready registers + public tracker (code + roll no.)",
 ]
 for i, o in enumerate(objectives):
@@ -270,7 +270,7 @@ for i, o in enumerate(objectives):
 card(s, 6.15, 1.5, 6.6, 2.32)
 txt(s, 6.4, 1.66, 3.0, 0.3, [dict(runs=[("IN SCOPE — v1.0", dict(size=9.5, bold=True, color=GREEN))])])
 bullets(s, 6.4, 2.05, 6.15, 1.7, [
-    "Register & login; PBKDF2 hashing; signed sessions",
+    "Register & login; Werkzeug hashing; signed sessions",
     "Keyword routing with explainable scores (title weighted ×2)",
     "Acknowledge → in-progress → resolve; feedback ★1–5 closes; reopen ≤ 7 days",
     "Officer department queue; admin console (reassign/escalate/force-close)",
@@ -301,7 +301,7 @@ txt(s, 0.78, 3.90, 3.95, 0.72, [dict(runs=[("Sees only own-department queue; ack
 card(s, 0.55, 4.78, 4.35, 1.5)
 txt(s, 0.78, 4.90, 3.9, 0.3, [dict(runs=[("ACTOR 3 — ADMINISTRATOR", dict(size=9, bold=True, color=GOLD))])])
 txt(s, 0.78, 5.22, 3.9, 0.26, [dict(runs=[("The backstop", dict(size=11, bold=True, color=NAVY))])])
-txt(s, 0.78, 5.54, 3.95, 0.72, [dict(runs=[("Console over everything; reassign, escalate to High, force-close after 7 quiet days; identity of anonymous complainants.",
+txt(s, 0.78, 5.54, 3.95, 0.72, [dict(runs=[("Console over everything; reassign, escalate to High, force-close resolved complaints; view anonymous identity fields.",
                                              dict(size=9.5, color=INK))], line_spacing=1.12)])
 pic_fit(s, f"{IMG}/fig-usecase.png", 5.25, 1.52, 7.55, 4.9)
 txt(s, 5.6, 6.5, 7.0, 0.3, [dict(runs=[("Use-case diagram — report §3.3; roles swimlane-separated, public tracker outside login",
@@ -326,7 +326,7 @@ chip(s, 4.11, 5.32, 1.15, "SQLite 3", fill=NAVY, tc=GOLD_L)
 chip(s, 0.55, 5.72, 1.5, "vanilla JS", fill=NAVY2, tc=WHITE)
 chip(s, 2.17, 5.72, 1.05, "pytest", fill=NAVY2, tc=WHITE)
 chip(s, 3.34, 5.72, 1.6, "print CSS", fill=NAVY2, tc=WHITE)
-chip(s, 5.06, 5.72, 1.15, "PBKDF2", fill=NAVY2, tc=WHITE)
+chip(s, 5.06, 5.72, 1.15, "hashing", fill=NAVY2, tc=WHITE)
 
 # ================================================================ SLIDE 7 — ERD & constraints
 s = add_slide(); header(s, "04 · DATA MODEL", "Six tables, no cleverness"); footer(s, 7)
@@ -383,7 +383,7 @@ bullets(s, 0.55, 3.4, 4.9, 1.85, [
     "Weight = 2 per word of keyword; title scores ×2",
     "SAFETY_WORDS (ragging, shock, fire…) force High",
     "MASS_IMPACT (“entire”, “all students”) bumps one level",
-    "No match → General & Administration (logged manual fallback)",
+    "No keyword match → selected category is retained",
 ], size=9.2, gap=3, marker="→  ", mcolor=GOLD)
 txt(s, 0.55, 5.3, 4.6, 0.3, [dict(runs=[("RESOLUTION LOOP", dict(size=9.5, bold=True, color=GOLD))])])
 bullets(s, 0.55, 5.64, 4.6, 1.3, [
@@ -396,8 +396,8 @@ txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Swimlane — lodge → route → res
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 # ================================================================ SLIDE 10 — Demo: student view
 s = add_slide(); header(s, "06 · LIVE DEMO (1/2)", "Student view — lodge, track, confirm"); footer(s, 10)
-pic_fit(s, f"{IMG}/screen-dashboard-mock.png", 5.3, 1.5, 7.5, 4.55)
-txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Illustrative mock-up of an earlier student dashboard",
+pic_fit(s, f"{IMG}/screen-dashboard.png", 5.3, 1.5, 7.5, 4.55)
+txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Student dashboard — screenshot with seeded demo data",
                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 txt(s, 0.55, 1.55, 4.4, 0.3, [dict(runs=[("WHAT TO NOTICE", dict(size=10, bold=True, color=GOLD))])])
 bullets(s, 0.55, 2.0, 4.6, 3.9, [
@@ -409,11 +409,11 @@ bullets(s, 0.55, 2.0, 4.6, 3.9, [
 
 # ================================================================ SLIDE 11 — Demo: admin/console + audit timeline
 s = add_slide(); header(s, "06 · LIVE DEMO (2/2)", "Admin view — console & audit trail"); footer(s, 11)
-pic_fit(s, f"{IMG}/screen-console-mock.png", 0.55, 1.5, 6.05, 3.6)
-txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Earlier interface mock-up — admin console",
+pic_fit(s, f"{IMG}/screen-console.png", 0.55, 1.5, 6.05, 3.6)
+txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Admin console — screenshot with seeded demo data",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-pic_fit(s, f"{IMG}/screen-timeline-mock.png", 6.9, 1.5, 5.9, 3.6)
-txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Earlier interface mock-up — complaint timeline",
+pic_fit(s, f"{IMG}/screen-timeline.png", 6.9, 1.5, 5.9, 3.6)
+txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Complaint detail — screenshot with seeded demo data",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 card(s, 0.55, 5.55, 12.23, 0.85, fill=NAVY, line=None)
 txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("EVERY DEMO IS DETERMINISTIC", dict(size=9, bold=True, color=GOLD))])])
@@ -458,7 +458,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("18 / 18 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("19 / 19 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -505,7 +505,7 @@ for i, (r, d, st) in enumerate(milestones):
     txt(s, x + 0.12, 4.2, mw - 0.24, 0.52, [dict(runs=[(r, dict(size=7.3, bold=True, color=(GOLD_L if st == "today" else GOLD)))], line_spacing=1.12)])
     txt(s, x + 0.12, 4.8, mw - 0.24, 1.0, [dict(runs=[(d, dict(size=6.4, color=(CREAM if st == "today" else INK)))], line_spacing=1.15)])
 rect(s, 0.55, 6.05, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (30 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
+txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (32 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
                                            dict(size=9, color=NAVY3))])])
 
 # ================================================================ SLIDE 15 — Future work
@@ -518,7 +518,7 @@ phases = [
         ("E-4", "Admin category management UI — add/retire keywords", "1 wk"),
     ]),
     ("v1.3–1.5 — OPERATE IT", "infrastructure & visibility", [
-        ("E-5", "MySQL 8 migration — schema ports 1:1", "3 days"),
+        ("E-5", "MySQL migration — adapt schema and queries", "3 days"),
         ("E-6", "Nightly SLA-breach cron — 50%/100% auto-escalate", "2 days"),
         ("E-7", "Charts dashboard — pendency, trend, SLA %", "2 wks"),
         ("E-8", "Public board in the admin corridor — live counts", "1 wk"),
@@ -556,7 +556,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "18 automated checks; 8 manual scenarios recorded earlier."),
+    ("Tests — ", "19 automated checks; 8 manual scenarios recorded earlier."),
     ("Every complaint gets a trail — ", "lodge to close, one timeline, zero lost grievances."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)
@@ -570,7 +570,7 @@ rect(s, 8.62, 3.4, 3.6, 0.015, fill=GOLD)
 txt(s, 8.62, 3.55, 3.7, 0.3, [dict(runs=[("http://127.0.0.1:5001", dict(font=MONO, size=10.5, bold=True, color=WHITE))])])
 txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin / admin123 · MCA2026001 / student123", dict(font=MONO, size=8.2, bold=True, color=GOLD_L))])])
 txt(s, 8.62, 4.35, 3.7, 1.3,
-    [dict(runs=[("Report — 30 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
+    [dict(runs=[("Report — 32 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
      dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 0.85, 6.35, 12.0, 0.35,
     [dict(runs=[("Campus Shikayat Setu — because every grievance deserves a paper trail.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])

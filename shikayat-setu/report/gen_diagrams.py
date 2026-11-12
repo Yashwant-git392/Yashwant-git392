@@ -52,7 +52,7 @@ def fig_architecture():
     tiers = [
         ("PRESENTATION TIER (Client)", "Web Browser — HTML5 · CSS3 · JavaScript\nResponsive screens · print-ready Ctrl+P registers\nclient-side sanity (length/roll formats)", 40, GOLD),
         ("APPLICATION TIER (Server)", "Python 3.11 + Flask 3.x — Jinja2 templates\nSession auth · Role-based access (student/officer/admin)\nkeyword router · SLA engine · audit event log", 24, NAVY2),
-        ("DATA TIER (Storage)", "SQLite 3 — file shikayat_setu.db\nFK · CHECK · UNIQUE constraints · ACID\n(1:1 mappable to MySQL 8 for production)", 8, "#3d5a80"),
+        ("DATA TIER (Storage)", "SQLite 3 — file shikayat_setu.db\nFK · CHECK · UNIQUE constraints · ACID\nMySQL migration would require changes", 8, "#3d5a80"),
     ]
     for title, body, y, color in tiers:
         box(ax, 4, y, 92, 12.5, fc=LT if color != GOLD else "#fbf3d9", ec=color, lw=2.2)

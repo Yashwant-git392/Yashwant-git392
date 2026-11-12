@@ -115,7 +115,7 @@
       </form>
       {% if c['status'] == 'Resolved' %}
       <form method="post" action="{{ url_for('force_close', code=c['code']) }}" style="margin-top:10px">
-        <button class="btn btn-ghost full" type="submit">🔒 Force-close (7-day no-response)</button>
+        <button class="btn btn-ghost full" type="submit">🔒 Force-close resolved complaint</button>
       </form>
       {% endif %}
     </div>
