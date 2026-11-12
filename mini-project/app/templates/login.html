@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block body %}
+<div class="login-wrap" style="margin:-26px -30px">
+  <div class="login-card">
+    <div class="login-crest">
+      <div class="crest-logo">📚</div>
+      <h1>SmartLibrary</h1>
+      <p>Dr. B.V. Hiray College of Management and Research Centre<br>Malegaon Camp, Malegaon — SPPU Affiliated · MCA-I (Sem-I) Library System</p>
+    </div>
+    <form class="login-body" method="post" action="{{ url_for('login') }}">
+      <h2>Librarian / Admin Sign In</h2>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" value="{{ username }}" placeholder="e.g. admin" required autofocus autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;font-size:1rem;padding:12px">Sign In →</button>
+      <div class="demo-note">Demo credentials — username <code class="kbd">admin</code>, password <code class="kbd">admin123</code></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>📑 Reports</h1><p>Printed registers and analytics — use <code class="kbd">Ctrl+P</code> to print (print CSS hides navigation)</p></div>
+</div>
+<div class="report-tabs">
+  <a class="{{ 'active' if report=='issued' }}" href="{{ url_for('reports', report='issued') }}">Currently Issued</a>
+  <a class="{{ 'active' if report=='overdue' }}" href="{{ url_for('reports', report='overdue') }}">Overdue Books</a>
+  <a class="{{ 'active' if report=='fine' }}" href="{{ url_for('reports', report='fine') }}">Fine Collection</a>
+  <a class="{{ 'active' if report=='stock' }}" href="{{ url_for('reports', report='stock') }}">Category-wise Stock</a>
+  <a class="{{ 'active' if report=='member' }}" href="{{ url_for('reports', report='member') }}">Member-wise Activity</a>
+</div>
+
+{% if report == 'issued' %}
+<div class="card"><h2>📗 Report 1 — Books Currently Issued ({{ rows|length }} record{{ 's' if rows|length != 1 }})</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Book</th><th>Member</th><th>Roll No</th><th>Issue Date</th><th>Due Date</th><th>State</th></tr></thead>
+<tbody>{% for t in rows %}<tr><td>{{ loop.index }}</td><td>{{ t.title }}</td><td>{{ t.member_name }}</td><td><code>{{ t.roll_no }}</code></td><td>{{ t.issue_date }}</td><td>{{ t.due_date }}</td><td>{% if t.is_overdue %}<span class="badge badge-red">Overdue {{ t.late_days }}d</span>{% else %}On time{% endif %}</td></tr>{% else %}<tr><td colspan="7">No open issues</td></tr>{% endfor %}</tbody></table></div></div>
+
+{% elif report == 'overdue' %}
+<div class="card"><h2>📕 Report 2 — Overdue Books ({{ rows|length }} record{{ 's' if rows|length != 1 }})</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Book</th><th>Member</th><th>Roll No</th><th>Due Date</th><th>Late Days</th><th>Fine Payable</th></tr></thead>
+<tbody>{% for t in rows %}<tr><td>{{ loop.index }}</td><td>{{ t.title }}</td><td>{{ t.member_name }}</td><td><code>{{ t.roll_no }}</code></td><td>{{ t.due_date }}</td><td>{{ t.late_days }}</td><td><strong>₹{{ t.payable_fine }}</strong></td></tr>{% else %}<tr><td colspan="7">No overdue books 🎉</td></tr>{% endfor %}</tbody></table></div></div>
+
+{% elif report == 'fine' %}
+<div class="card"><h2>🧾 Report 3 — Fine Collection Register ({{ rows|length }} record{{ 's' if rows|length != 1 }}) — Total ₹{{ '%.0f'|format(total) }}</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Book</th><th>Member</th><th>Roll No</th><th>Return Date</th><th>Fine</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ loop.index }}</td><td>{{ r.title }}</td><td>{{ r.member_name }}</td><td><code>{{ r.roll_no }}</code></td><td>{{ r.return_date }}</td><td>₹{{ r.fine_amount }}</td></tr>{% else %}<tr><td colspan="6">No fines collected yet</td></tr>{% endfor %}</tbody></table></div></div>
+
+{% elif report == 'stock' %}
+<div class="card"><h2>📦 Report 4 — Category-wise Stock ({{ rows|length }} categories)</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Category</th><th>Titles</th><th>Total Copies</th><th>Available</th><th>Currently Out</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ loop.index }}</td><td>{{ r.category }}</td><td>{{ r.titles }}</td><td>{{ r.copies }}</td><td>{{ r.available }}</td><td>{{ r.copies - r.available }}</td></tr>{% endfor %}</tbody></table></div></div>
+
+{% elif report == 'member' %}
+<div class="card"><h2>👥 Report 5 — Member-wise Activity ({{ rows|length }} members)</h2>
+<div class="table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Roll No</th><th>Member</th><th>Total Issues</th><th>Open Issues</th><th>Fines Paid (₹)</th></tr></thead>
+<tbody>{% for r in rows %}<tr><td>{{ loop.index }}</td><td><code>{{ r.roll_no }}</code></td><td>{{ r.member_name }}</td><td>{{ r.total_issues }}</td><td>{{ r.open_issues }}</td><td>{{ '%.0f'|format(r.fines) }}</td></tr>{% endfor %}</tbody></table></div></div>
+{% endif %}
+{% endblock %}

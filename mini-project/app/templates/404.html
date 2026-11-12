@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Not Found{% endblock %}
+{% block body %}
+<div class="empty-state" style="padding-top:80px">
+  <div class="big">📚❓</div>
+  <h1 style="color:var(--navy);margin:10px 0">404 — Page not found</h1>
+  <p>The page you requested does not exist in SmartLibrary.</p>
+  <p style="margin-top:14px"><a class="btn btn-primary" href="{{ url_for('dashboard') }}">← Back to Dashboard</a></p>
+</div>
+{% endblock %}
