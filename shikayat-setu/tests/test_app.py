@@ -140,3 +140,32 @@ def test_12_reports_render_for_admin(client):
     for which in ("pendency", "sla", "restime", "trend", "feedback", "routing"):
         r = client.get(f"/reports?report={which}")
         assert r.status_code == 200, which
+
+
+def test_keyword_scoring_and_tie_break():
+    import routing
+    categories = [{"keywords": "water leak"}, {"keywords": "water leak"}]
+    text = routing.route_text("Water leak", "A water leak in the building")
+    category, score = routing.route(text, categories)
+    assert category is categories[0]
+    assert score == 12
+    assert routing.route("unrelated", categories) == (None, 0)
+    assert routing.score_category("leaking", "leak") == 0
+
+
+def test_priority_rules():
+    import routing
+    assert routing.assign_priority("Low", "Question", "For all students") == "Medium"
+    assert routing.assign_priority("Low", "Question", "There is a fire") == "High"
+    assert routing.assign_priority("High", "Question", "For everyone") == "High"
+
+
+def test_seeded_officers_are_assigned_to_departments(client):
+    conn = db.get_conn()
+    rows = conn.execute("""SELECT u.username, d.name FROM users u
+                           JOIN departments d ON d.id = u.department_id
+                           WHERE u.role = 'officer'""").fetchall()
+    conn.close()
+    officer_names = ["hostel.officer", "it.officer", "maint.officer", "exam.officer", "welfare.officer", "admin.officer"]
+    expected = {username: department[0] for username, department in zip(officer_names, db.DEPARTMENTS)}
+    assert {row["username"]: row["name"] for row in rows} == expected

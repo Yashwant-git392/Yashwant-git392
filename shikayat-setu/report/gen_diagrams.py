@@ -1,4 +1,6 @@
 """Generate all report diagrams for Campus Shikayat Setu (SPPU MCA mini project)."""
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
@@ -6,7 +8,7 @@ from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 NAVY, NAVY2, GOLD, GOLD_L = "#16243d", "#2b4a73", "#c9a227", "#ffd95e"
 CREAM, CARD, LT = "#f7f5ef", "#ffffff", "#e8edf7"
 GREEN, RED, GREY = "#1e7a46", "#b3372e", "#6b7280"
-OUT = "/home/user/Yashwant-git392/shikayat-setu/report/images"
+OUT = Path(__file__).resolve().parent / "images"
 
 def canvas(w=100, h=62):
     fig, ax = plt.subplots(figsize=(w / 8.4, h / 8.4), dpi=160)

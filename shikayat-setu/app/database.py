@@ -128,28 +128,24 @@ def seed_if_empty():
         dept_ids[name] = cur.lastrowid
 
     # categories
-    cat_ids = {}
+    dept_values = list(dept_ids.values())
     for name, di, prio, kw in CATEGORIES:
-        cur = conn.execute(
+        conn.execute(
             "INSERT INTO categories (name, department_id, default_priority, keywords) VALUES (?,?,?,?)",
-            (name, list(dept_ids.values())[di], prio, kw))
-        cat_ids[name] = cur.lastrowid
+            (name, dept_values[di], prio, kw))
 
     # users: admin, one officer per department, students
     pw = generate_password_hash("admin123")
     conn.execute("INSERT INTO users (role, username, password_hash, full_name, status) VALUES ('admin','admin',?,?, 'Active')",
                  (pw, "System Administrator"))
-    officer_ids = []
     officer_names = ["hostel.officer", "it.officer", "maint.officer", "exam.officer", "welfare.officer", "admin.officer"]
-    dept_values = list(dept_ids.values())
-    for (name, head, _e, _l), uname in zip(DEPARTMENTS, officer_names):
-        cur = conn.execute(
+    for (name, head, _email, _location), uname in zip(DEPARTMENTS, officer_names):
+        conn.execute(
             "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
-            (uname, generate_password_hash("officer123"), head, dept_values[DEPARTMENTS.index(next(d for d in DEPARTMENTS if d[0] == name))]))
-        officer_ids.append(cur.lastrowid)
+            (uname, generate_password_hash("officer123"), head, dept_ids[name]))
 
     student_ids = []
-    for roll, name, email, phone in STUDENTS:
+    for roll, name, _email, phone in STUDENTS:
         cur = conn.execute(
             "INSERT INTO users (role, username, password_hash, full_name, roll_no, phone, status) VALUES ('student',?,?,?,?,?, 'Active')",
             (roll, generate_password_hash("student123"), name, roll, phone))
@@ -157,10 +153,10 @@ def seed_if_empty():
 
     dept_of_category = {}
     for name, di, _p, _k in CATEGORIES:
-        dept_of_category[name] = list(dept_ids.values())[di]
+        dept_of_category[name] = dept_values[di]
 
     cat_by_name = {}
-    for name, di, prio, kw in CATEGORIES:
+    for name, _di, _prio, _kw in CATEGORIES:
         cat_by_name[name] = conn.execute("SELECT * FROM categories WHERE name=?", (name,)).fetchone()
 
     # complaints

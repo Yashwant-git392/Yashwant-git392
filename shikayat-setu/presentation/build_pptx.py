@@ -4,6 +4,8 @@
 Design system matches the project report: NAVY / GOLD / CREAM, Georgia display serif.
 All figures are the real generated assets from ../report/images/.
 """
+from pathlib import Path
+
 from PIL import Image
 from pptx import Presentation
 from pptx.util import Inches, Pt
@@ -12,8 +14,9 @@ from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
 
-IMG = "/home/user/Yashwant-git392/shikayat-setu/report/images"
-OUT = "/home/user/Yashwant-git392/shikayat-setu/presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx"
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+IMG = PROJECT_DIR / "report" / "images"
+OUT = PROJECT_DIR / "presentation" / "CampusShikayatSetu_MCA-Mini-Project_Review.pptx"
 
 NAVY   = RGBColor(0x16, 0x24, 0x3D)
 NAVY2  = RGBColor(0x2B, 0x4A, 0x73)
@@ -203,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "12/12 automated + 8 manual scenarios"),
+    ("08", "Testing evidence", "15 automated tests + 8 manual scenarios"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -217,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("12/12", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("15/15", "tests passing")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -305,7 +308,7 @@ txt(s, 5.6, 6.5, 7.0, 0.3, [dict(runs=[("Use-case diagram — report §3.3; role
                                           dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 
 # ================================================================ SLIDE 6 — Architecture & stack
-s = add_slide(); header(s, "04 · ARCHITECTURE", "Boring technology, deliberately"); footer(s, 6)
+s = add_slide(); header(s, "04 · ARCHITECTURE", "Flask and SQLite architecture"); footer(s, 6)
 pic_fit(s, f"{IMG}/fig-architecture.png", 5.15, 1.5, 7.65, 3.6)
 txt(s, 5.5, 5.22, 7.0, 0.3, [dict(runs=[("Three tiers on one machine — scale-out path: gunicorn + nginx + MySQL (E-5 / E-10)",
                                           dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
@@ -394,7 +397,7 @@ txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Swimlane — lodge → route → res
 # ================================================================ SLIDE 10 — Demo: student view
 s = add_slide(); header(s, "06 · LIVE DEMO (1/2)", "Student view — lodge, track, confirm"); footer(s, 10)
 pic_fit(s, f"{IMG}/screen-dashboard-mock.png", 5.3, 1.5, 7.5, 4.55)
-txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Rendering of the running app at http://127.0.0.1:5001 — seeded data, 09-11-2026",
+txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Illustrative mock-up of the student dashboard",
                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 txt(s, 0.55, 1.55, 4.4, 0.3, [dict(runs=[("WHAT TO NOTICE", dict(size=10, bold=True, color=GOLD))])])
 bullets(s, 0.55, 2.0, 4.6, 3.9, [
@@ -407,10 +410,10 @@ bullets(s, 0.55, 2.0, 4.6, 3.9, [
 # ================================================================ SLIDE 11 — Demo: admin/console + audit timeline
 s = add_slide(); header(s, "06 · LIVE DEMO (2/2)", "Admin view — console & audit trail"); footer(s, 11)
 pic_fit(s, f"{IMG}/screen-console-mock.png", 0.55, 1.5, 6.05, 3.6)
-txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Admin console — filters, reassign, escalate → High, force-close — report §3.3 UC-11",
+txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Illustrative admin console — filters, reassign and escalate",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 pic_fit(s, f"{IMG}/screen-timeline-mock.png", 6.9, 1.5, 5.9, 3.6)
-txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Complaint detail — the timeline IS the audit trail (append-only events)",
+txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Illustrative complaint detail — event timeline",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 card(s, 0.55, 5.55, 12.23, 0.85, fill=NAVY, line=None)
 txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("EVERY DEMO IS DETERMINISTIC", dict(size=9, bold=True, color=GOLD))])])
@@ -455,7 +458,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("12 / 12 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("15 / 15 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -484,7 +487,7 @@ bullets(s, 0.55, 5.4, 12.3, 0.95, [
 ], size=9.5, gap=3)
 
 # ================================================================ SLIDE 14 — Timeline & deliverables
-s = add_slide(); header(s, "09 · TIMELINE", "Five notified milestones — Review 3 is nine days away"); footer(s, 14)
+s = add_slide(); header(s, "09 · TIMELINE", "Five notified review milestones"); footer(s, 14)
 pic_fit(s, f"{IMG}/fig-gantt.png", 0.55, 1.42, 12.23, 2.5)
 milestones = [
     ("BUILD\n21 Sep → 08 Nov", "schema · engine · console · reports · tests (12/12)", "done"),
@@ -520,7 +523,7 @@ phases = [
         ("E-7", "Charts dashboard — pendency, trend, SLA %", "2 wks"),
         ("E-8", "Public board in the admin corridor — live counts", "1 wk"),
     ]),
-    ("v2.0 — RESEARCH", "beyond the brief, deliberately", [
+    ("FUTURE RESEARCH", "longer-term ideas", [
         ("E-9", "Marathi / Hindi UI toggle — ~120 gettext keys", "2 wks"),
         ("E-10", "ERP bridge — roll-no ↔ ERP student master sync", "3 wks"),
     ]),
@@ -553,7 +556,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests are the demo — ", "12/12 automated and 8/8 manual, run live in front of you."),
+    ("Tests — ", "15 automated checks; 8 manual scenarios recorded earlier."),
     ("Every complaint gets a trail — ", "lodge to close, one timeline, zero lost grievances."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)
@@ -567,8 +570,7 @@ rect(s, 8.62, 3.4, 3.6, 0.015, fill=GOLD)
 txt(s, 8.62, 3.55, 3.7, 0.3, [dict(runs=[("http://127.0.0.1:5001", dict(font=MONO, size=10.5, bold=True, color=WHITE))])])
 txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin / admin123 · MCA2026001 / student123", dict(font=MONO, size=8.2, bold=True, color=GOLD_L))])])
 txt(s, 8.62, 4.35, 3.7, 1.3,
-    [dict(runs=[("Report — 27 pages, Ch. 1–10 + Appendices A–C", dict(size=9, color=CREAM))], space_after=3),
-     dict(runs=[("Branch — arena/aafd53cc-yashwant-git392", dict(size=9, color=CREAM))], space_after=3),
+    [dict(runs=[("Report — 30 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
      dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 0.85, 6.35, 12.0, 0.35,
     [dict(runs=[("Campus Shikayat Setu — because every grievance deserves a paper trail.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])

@@ -1,8 +1,5 @@
-"""Stylized renderings of the Campus Shikayat Setu v2 UI (representative of the running app).
-
-Mirrors the Nov-2026 redesign: dark collapsible sidebar with gold house badge,
-sticky topbar, modern stat cards, donut charts, side panel actions, audit timeline.
-"""
+"""Create illustrative mock-ups of the Campus Shikayat Setu interface."""
+from pathlib import Path
 import sqlite3
 from datetime import date, datetime
 import matplotlib.pyplot as plt
@@ -15,8 +12,8 @@ GOLD = "#c9a227"; GOLD_L = "#ffd95e"; GOLD_D = "#241a02"
 CREAM = "#f6f5ef"; CARD = "#ffffff"; CARD2 = "#fbfaf6"; LT = "#e8edf7"
 GREEN = "#177a46"; RED = "#b3372e"; AMBER = "#96690a"; GREY = "#66707f"
 BLUE_BG = "#e9effc"; GREEN_BG = "#e6f6ec"; RED_BG = "#fdeaec"; AMBER_BG = "#fdf3d8"; GOLD_SOFT = "#f5e9c4"
-OUT = "/home/user/Yashwant-git392/shikayat-setu/report/images"
-DB = "/home/user/Yashwant-git392/shikayat-setu/app/shikayat_setu.db"
+OUT = Path(__file__).resolve().parent / "images"
+DB = Path(__file__).resolve().parent.parent / "app" / "shikayat_setu.db"
 
 def conn():
     c = sqlite3.connect(DB); c.row_factory = sqlite3.Row; return c
@@ -124,7 +121,7 @@ def donut(ax, cx, cy, r, segments, total_label):
     ax.text(cx, cy + 0.8, str(total_label), fontsize=10, fontweight="bold", color=NAVY, ha="center", va="center", family="serif", zorder=5)
     ax.text(cx, cy - 3.3, "TOTAL", fontsize=3.4, color=GREY, ha="center", zorder=5)
 
-# ================================================================ 1. LOGIN (v2 split)
+# ================================================================ 1. LOGIN
 def screen_login():
     fig, ax = canvas(160, 100, bg="#0b1020")
     # hero left
@@ -156,7 +153,7 @@ def screen_login():
     fig.savefig(f"{OUT}/screen-login-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-login-mock.png")
 
-# ================================================================ 2. DASHBOARD (student, v2)
+# ================================================================ 2. DASHBOARD (student)
 def screen_dashboard():
     mine = one("SELECT COUNT(*) c FROM complaints WHERE student_id=(SELECT id FROM users WHERE username='MCA2026001')")["c"]
     closed = one("SELECT COUNT(*) c FROM complaints WHERE student_id=(SELECT id FROM users WHERE username='MCA2026001') AND status IN ('Resolved','Closed')")["c"]
@@ -191,7 +188,7 @@ def screen_dashboard():
     fig.savefig(f"{OUT}/screen-dashboard-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-dashboard-mock.png")
 
-# ================================================================ 3. ADMIN CONSOLE (v2)
+# ================================================================ 3. ADMIN CONSOLE
 def screen_console():
     rows = q("""SELECT c.code, substr(c.title,1,30) AS t, d.name AS dept, c.priority, c.status, c.sla_due_at
                FROM complaints c JOIN departments d ON d.id=c.department_id
@@ -217,7 +214,7 @@ def screen_console():
     fig.savefig(f"{OUT}/screen-console-mock.png", bbox_inches="tight", facecolor=fig.get_facecolor()); plt.close(fig)
     print("screen-console-mock.png")
 
-# ================================================================ 4. COMPLAINT DETAIL + AUDIT TIMELINE (v2)
+# ================================================================ 4. COMPLAINT DETAIL + AUDIT TIMELINE
 def screen_timeline():
     c = q("SELECT c.*, cat.name AS cat, d.name AS dept FROM complaints c JOIN categories cat ON cat.id=c.category_id JOIN departments d ON d.id=c.department_id WHERE c.is_anonymous=0 AND c.status='Closed' ORDER BY c.id LIMIT 1")[0]
     ev = q("SELECT event_type, note, created_at FROM complaint_events WHERE complaint_id=? ORDER BY id", (c["id"],))

@@ -3,18 +3,17 @@
 Produces: shikayat-setu/report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf
 Two-pass build: pass 1 records chapter page numbers, pass 2 renders the real index.
 """
-import os
+from pathlib import Path
 import sqlite3
-import sys
 from datetime import date
 
 from fpdf import FPDF
 from fpdf.fonts import FontFace
 
-ROOT = "/home/user/Yashwant-git392"
-IMG = f"{ROOT}/shikayat-setu/report/images"
-DB = f"{ROOT}/shikayat-setu/app/shikayat_setu.db"
-OUT = f"{ROOT}/shikayat-setu/report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf"
+REPORT_DIR = Path(__file__).resolve().parent
+IMG = REPORT_DIR / "images"
+DB = REPORT_DIR.parent / "app" / "shikayat_setu.db"
+OUT = REPORT_DIR / "CampusShikayatSetu_MCA-Mini-Project_Report.pdf"
 
 D = "/usr/share/fonts/truetype/dejavu/"
 NAVY, NAVY2, GOLD, GOLD_L = (22, 36, 61), (31, 52, 85), (201, 162, 39), (255, 217, 94)
@@ -333,7 +332,7 @@ def index(pdf: Report):
         pdf.ln(6.4)
     pdf.ln(3)
     pdf.set_font("DVS", "I", 7.6); pdf.set_text_color(*GREY)
-    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. All “screens” reproduced in this report are faithful renderings of the running application captured from the live build, not photographs.")
+    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. The screen images in this report are illustrative mock-ups, not screenshots captured from the running application.")
 # =====================================================================
 def ch1(pdf: Report):
     pdf.h1("ch1", "Introduction", "Chapter 1")
@@ -415,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (schema maps to MySQL 8)"],
         ["Werkzeug", "3.x", "WSGI stack + PBKDF2 password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (12 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (15 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -432,7 +431,7 @@ def ch1(pdf: Report):
           "server-side (students cannot open the admin console — covered by test_11); SQL uses bound parameters; anonymous "
           "complaints hide identity from officers (admin-only visibility); status changes write immutable audit events.")
     pdf.h3("1.5.1  Operating systems used")
-    pdf.p("Development, seeding and all 12 automated tests were executed on GNU/Linux (Python 3.11.2). No OS-specific APIs "
+    pdf.p("Development, seeding and the original 12 automated tests were executed on GNU/Linux (Python 3.11.2). No OS-specific APIs "
           "are used; the app is runnable unchanged on Windows 10/11 lab machines via <i>python run.py</i>.")
 
 
@@ -585,7 +584,7 @@ def ch3(pdf: Report):
     pdf.figure(f"{IMG}/fig-modules.png", 150, "Figure 3.6  Module hierarchy — three role layers over the shared routing/SLA core.")
 
     pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
-    pdf.p("All sample screens carry valid seeded data (Appendix B — e.g. complaint CMP-2026-0001, roll MCA2026001). Every "
+    pdf.p("The screen illustrations use example data; see Appendix B for seeded records. Every "
           "register prints ≥ 5 valid records, as item 3.9 of the schedule requires. Full annotated screen catalogue with "
           "validation notes is given in Chapter 10 (User Manual, §10.3 and §10.5).")
     pdf.figure(f"{IMG}/screen-login-mock.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
@@ -686,7 +685,7 @@ def ch5(pdf: Report):
           "(B) manual end-to-end scenarios on the live seeded app at http://127.0.0.1:5001. Both are reproducible from "
           "a clean clone.")
 
-    pdf.h2("5.2  Track A — Automated tests (12/12 passing)")
+    pdf.h2("5.2  Track A — Original automated tests (12/12 passing)")
     pdf.table(["ID", "Scenario", "Result"], [
         ["TC-01", "Login page renders (200, brand present)", "PASS"],
         ["TC-02", "Wrong password → HTTP 401", "PASS"],
@@ -701,7 +700,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Output: 12 passed in ~16 s (isolated $TMPDIR database, seeded deterministically).")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 15 tests, including keyword scoring, priority and seeded officer assignments.")
 
     pdf.h2("5.3  Track B — Manual scenarios (live, 09-11-2026)")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -865,7 +864,7 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
 
 def appa(pdf: Report):
     pdf.h1("appa", "Appendix A — Database Schema (schema.sql)", "Appendix A")
-    with open(f"{ROOT}/shikayat-setu/app/schema.sql", "r", encoding="utf-8") as f:
+    with open(REPORT_DIR.parent / "app" / "schema.sql", "r", encoding="utf-8") as f:
         schema = f.read()
     pdf.code(schema, title="schema.sql (verbatim)")
 
@@ -972,7 +971,7 @@ def build(toc, recorder):
 
 
 if __name__ == "__main__":
-    # Pass 1 — dummy TOC page numbers (same line count ⇒ identical pagination)
+    # Pass 1 — placeholder TOC page numbers (same line count ⇒ identical pagination)
     rec1 = {}
     build({k: "00" for _, k in SECTIONS}, rec1)
     # Pass 2 — real index

@@ -1,101 +1,66 @@
 # Campus Shikayat Setu
-**College Grievance Redressal System** — turn the college's complaint box into a trackable, SLA-bound digital pipeline.
 
-**SPPU MCA-I (Sem-I) Application Development — mini project**
-Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik) · AY 2026-27
+Campus Shikayat Setu is a college grievance management mini project for SPPU MCA-I (Semester I). Students can submit and track complaints, department officers can work on them, and administrators can manage assignments and reports.
 
-**Creator: Yashwant Santosh Ahire** · Guide: Mrs. Priyanka M. Jagtap
+- **Creator:** Yashwant Santosh Ahire
+- **College:** Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik)
+- **Academic year:** 2026–27
 
----
+## Features
 
-## The problem
-Students report broken benches, leaking taps, dead projectors and missing marks — and hear nothing back for weeks. The complaint box is a black hole: no routing, no accountability, no memory, no analytics. This system gives every complaint a code, a department, an SLA deadline and an audit trail.
+- Submit complaints, track their status and view their event history.
+- Route complaints to departments using keywords, with a general category as fallback.
+- Assign priority and a service deadline; safety words raise priority to High.
+- Allow students to give feedback or reopen a resolved complaint.
+- Provide department queues, an admin console and six printable reports.
+- Track a complaint without signing in using its code and roll number.
+- Hide the student's identity from department officers for anonymous complaints; administrators can see it.
+- Use a responsive interface with a theme toggle, table filters and routing preview.
 
-## What it does
-- **Complaint lifecycle** — Submitted → Acknowledged → In Progress → Resolved → Closed, with a full event timeline.
-- **Automatic routing** — keyword-weighted engine assigns each complaint to the right department (multi-word keywords weigh more; title counts double). Falls back to General & Administration when nothing matches.
-- **SLA engine** — High 24 h · Medium 72 h · Low 7 days, deadline stamped at submission; safety words (ragging, shock, fire…) force High; mass-impact phrases ("entire", "all students"…) bump one level.
-- **Three roles** — Student (lodge / track / feedback / reopen), Department Officer (queue, acknowledge, progress, resolve), Admin (console, reassign, escalate, reports, user management).
-- **Anonymous mode** — identity withheld from departments; visible only to administrators.
-- **Reopen & feedback** — a student can reject a resolution within 7 days; ratings feed the department scorecard.
-- **v2 UI** — dark collapsible sidebar with SVG icons, light/dark theme toggle (persisted), topbar with RBAC pill, animated KPI counters, status donut (inline SVG), admin workload bars, instant client-side table filtering, live routing preview while typing (`/api/route-preview`), second-by-second SLA countdown on complaint pages, CSS-only star-rating widget, toast notifications — vanilla JS, works offline.
-- **6 print-ready registers** — Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.
-- **Public tracker** — code + roll number, no login required.
+## Run locally
 
-## Quick start
+Python 3 is required. From this directory:
+
 ```bash
-python -m venv .venv && source .venv/bin/activate   # optional
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-python run.py                                       # http://127.0.0.1:5001
+python run.py
 ```
-First run auto-creates and seeds `app/shikayat_setu.db`.
 
-**Demo accounts**
-| Role | Credentials |
-|---|---|
-| Admin | `admin` / `admin123` |
-| Officer (any dept) | `hostel.officer` / `it.officer` / `maint.officer` / `exam.officer` / `welfare.officer` / `admin.officer` — all `officer123` |
-| Student | `MCA2026001` … `MCA2026008` — all `student123` |
+Open http://127.0.0.1:5001. The application creates and seeds `app/shikayat_setu.db` on first run. This database is ignored by Git; deleting it resets the local demo data on the next run.
 
-## Deliverables (this folder)
-| Artefact | Path |
-|---|---|
-| Mini project report (27 pp, PDF) | `report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf` |
-| Report generator (build twice for TOC page map) | `report/build_report.py` |
-| Diagram + screen generators | `report/gen_diagrams.py` · `report/gen_screens.py` |
-| Review deck (16 slides) | `presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx` |
+### Demo accounts
+
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Officer | `hostel.officer`, `it.officer`, `maint.officer`, `exam.officer`, `welfare.officer` or `admin.officer` | `officer123` |
+| Student | `MCA2026001` to `MCA2026008` | `student123` |
+
+These credentials and the development secret key are for the local demo only. Do not use this configuration for a public deployment.
 
 ## Tests
+
 ```bash
-python -m pytest tests/ -q     # 12 passed
-```
-Covers auth, role scoping (students can't open the admin console; officers can't see other departments), routing (`leak` → Sanitation), safety-word priority escalation, and the full lodge→acknowledge→resolve→feedback→closed cycle.
-
-## Layout
-```
-shikayat-setu/
-├── run.py                 # launcher → :5001
-├── requirements.txt
-└── app/
-    ├── app.py             # Flask routes (auth, lodge, queue, console, reports)
-    ├── database.py        # schema init + deterministic seed (6 depts, 15 categories, 32 complaints)
-    ├── routing.py         # keyword router + SLA matrix
-    ├── schema.sql
-    ├── static/css/style.css
-    ├── static/js/app.js  # UI dynamics: theme, sidebar, toasts, counters, live preview
-    └── templates/         # Jinja2, navy/gold design system v2 (light/dark)
-├── report/            # report PDF + generators + images/
-├── presentation/      # review deck (.pptx) + build_pptx.py
-└── tests/test_app.py
+python -m pytest tests/ -q
 ```
 
-## Engineering notes
-- Flask 3 + SQLite (WAL off, file-based) — zero-configuration; maps 1:1 to MySQL 8 for production.
-- Passwords: Werkzeug PBKDF2 hashing. Availability: `available` stock-style recomputation is not needed; SLA state is computed at render time (deterministic demo, no cron).
-- Seed is date-offset relative to today so the demo always shows a live semester.
-- `app/shikayat_setu.db` is gitignored — delete it and restart to re-seed.
+The tests use temporary databases and cover login, registration, routing, access control, the complaint lifecycle and reports.
 
-## Roadmap
-SMS/e-mail alerts · photo evidence upload · WhatsApp deep-links · multi-branch rollout · grievance analytics public dashboard.
+## Project files
 
----
+- `run.py` — application launcher.
+- `app/app.py` — Flask routes and request handling.
+- `app/database.py` and `app/schema.sql` — database setup and sample data.
+- `app/routing.py` — keyword scoring, priority and SLA rules.
+- `app/templates/` and `app/static/` — page templates, CSS and JavaScript.
+- `tests/` — automated tests.
+- `report/` — PDF report, diagrams, illustrative screen mock-ups and generators.
+- `presentation/` — review slides and their generator.
 
-## Design: deliberately simple, and the right database
+The app uses Flask, SQLite, Jinja templates and vanilla JavaScript. The report's screen images are illustrations, not screenshots of the running application. The report and slide generators require additional libraries (`fpdf2`, `matplotlib`, `numpy`, `Pillow` and `python-pptx`); the PDF generator also uses DejaVu fonts from `/usr/share/fonts/truetype/dejavu/`. Initialize the demo database before rebuilding the report or screen mock-ups.
 
-**Why this is intentionally low-complexity** — the SPPU Sem-I bar is *working software a reviewer can understand*, not architecture theatre.
-- **No ORM, no frameworks beyond Flask.** Plain `sqlite3` + SQL you can show in the viva. ~1,750 lines total including templates and tests; single `app.py` (~450 lines of routes), one small `routing.py` (~60 lines) for the keyword/SLA logic.
-- **No background jobs, no message queues, no cache.** SLA and overdue state are computed at render time — deterministic, always demo-able.
-- **No microservices, no API layer, no JS build step.** Server-rendered Jinja; progressive-enhancement-free; works with JS disabled.
-- **Seeded demo** covers every screen — no live internet dependency during review.
+## Possible extensions
 
-**Use cases → database fit**
-| Requirement (real use case) | Choice | Why |
-|---|---|---|
-| Single college campus, ≤ ~2,000 students, ~35 complaints/day peak | **SQLite** (file-based) | Zero server, zero config, zero admin; backup = copy one file; handles this load trivially in WAL-free mode |
-| Structured relational data (complaints ↔ users ↔ departments ↔ feedback) with real FK constraints & CHECK rules | **Relational** (SQL) | Wrong shape for MongoDB — you need joins, transactions and referential integrity, not documents |
-| Read-mostly workload with tiny write bursts (a lodge every few minutes) | **SQLite** | No concurrent-writer contention worth worrying about; pragma `foreign_keys=ON` gives ACID |
-| Demo must run on the library PC with no DBA | **SQLite** | `python run.py` is the whole deployment |
-| Production (multi-department, 10k+ users, HA) | **MySQL 8** | Schema ports 1:1 (only `AUTOINCREMENT`→`AUTO_INCREMENT`, `datetime('now','localtime')`→`CURRENT_TIMESTAMP`), same routing.py, connection string swap in `database.py` |
-| Not chosen: MongoDB / PostgreSQL / Firebase | — | Document DB fits unstructured logs, not FK-rich grievance data; Postgres/Firebase add ops cost with zero benefit at this scale; "modern stack" adds no marks in a Sem-I viva |
-
-**Verdict for this project: SQLite now (correct for the use case), MySQL 8 as the documented 1:1 production path — the schema was written to be portable.**
+Email or SMS notifications, photo attachments, category management and deployment with a production database are possible future additions. SQLite is suitable for this local demonstration; moving to another database would require changes and testing rather than only a connection-string swap.

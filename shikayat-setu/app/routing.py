@@ -1,6 +1,6 @@
 """Keyword-based complaint router + SLA matrix for Campus Shikayat Setu.
 
-Design goals (kept deliberately simple and explainable for an MCA Sem-I demo):
+Routing rules:
 * every category carries a keyword list; multi-word keywords weigh more;
 * the title is weighted double (it usually carries the intent);
 * mass-impact phrases bump priority one level; catastrophe words force High;
@@ -10,21 +10,14 @@ import re
 
 SLA_HOURS = {"High": 24, "Medium": 72, "Low": 168}   # 24h / 72h / 7 days
 
-# One regex, applied to lowercase text, used for both scoring and impact checks.
-WORD_RE = re.compile(r"[a-z0-9][a-z0-9\-]*")
-
 SAFETY_WORDS = (
     "ragging", "harass", "threat", "shock", "fire", "short circuit", "electrocut",
     "collapse", "unsafe", "injur", "assault", "leak gas",
 )
 MASS_IMPACT = (
     "entire", "whole", "everyone", "everybody", "all students", "all rooms",
-    "all labs", "all classrooms", "mass", "common area", "everyone", "fully blocked",
+    "all labs", "all classrooms", "mass", "common area", "fully blocked",
 )
-
-
-def _word_count(s: str) -> int:
-    return len(WORD_RE.findall(s))
 
 
 def score_category(text: str, keywords: str) -> int:
@@ -32,11 +25,11 @@ def score_category(text: str, keywords: str) -> int:
     score = 0
     low = text.lower()
     for kw in (k.strip().lower() for k in keywords.split(",") if k.strip()):
-        # word-ish boundary search; substring-safe for phrases with spaces
+        # Match complete keywords and phrases.
         pattern = r"(?<![a-z0-9])" + re.escape(kw) + r"(?![a-z0-9])"
         hits = len(re.findall(pattern, low))
         if hits:
-            weight = max(1, len(kw.split()) * 2)      # multi-word kws are more specific
+            weight = len(kw.split()) * 2  # Multi-word keywords carry more weight.
             score += weight * hits
     return score
 
