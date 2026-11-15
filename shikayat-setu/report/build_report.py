@@ -410,7 +410,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (109 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (114 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -681,7 +681,7 @@ if errors:
 def ch5(pdf: Report):
     pdf.h1("ch5", "Testing", "Chapter 5")
     pdf.h2("5.1  Test strategy")
-    pdf.p("Tests run on isolated, freshly seeded temporary SQLite databases. Automated unit and integration tests use Flask's test client; browser checks and print checks are documented separately in TESTING.md. No existing user database is reset. Run python -m pytest tests/ -q from shikayat-setu. Most recent source and extracted-package runs: 109 passed. Results refer to those automated runs, not an unperformed guide acceptance.")
+    pdf.p("Tests run on isolated, freshly seeded temporary SQLite databases. Automated unit and integration tests use Flask's test client; browser checks and print checks are documented separately in TESTING.md. No existing user database is reset. Run python -m pytest tests/ -q from shikayat-setu. Most recent source and extracted-package runs: 114 passed. Results refer to those automated runs, not an unperformed guide acceptance.")
     pdf.h2("5.2  Unit test plan")
     pdf.table(["ID", "Steps / input", "Expected and observed in automated run", "Script"], [
         ["UT-01", "Score 'leaking leak leak.' for keyword leak; score two occurrences of short circuit.", "4 and 8 respectively; PASS.", "test_safety_and_mass_impact_and_word_boundaries"],
@@ -718,7 +718,7 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; performance with large datasets has not been measured.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 109 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 114 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
@@ -784,12 +784,7 @@ def ch10(pdf: Report):
     ], [26, 62, 90])
 
     pdf.h2("10.2  Quick start (on the demo PC)")
-    pdf.code('''git clone https://github.com/Yashwant-git392/Yashwant-git392.git
-cd Yashwant-git392/shikayat-setu
-python3 -m venv .venv && source .venv/bin/activate   # optional
-pip install -r requirements.txt
-python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)''',
-        title="run in five commands")
+    pdf.p("Extract the ZIP or clone the repository. Install Python 3.10 or newer (3.11 or 3.12 recommended), then open the shikayat-setu folder in VS Code. Choose Terminal → Run Task → Start Campus Shikayat Setu. First launch creates .venv and installs dependencies (internet usually required); later launches reuse it. Open http://127.0.0.1:5001 and press Ctrl+C in the terminal to stop. On Windows you can also double-click Start_Project.bat; on macOS/Linux run sh start-project.sh. See README.md for troubleshooting. The project database is not reset by the launcher.")
 
     pdf.h2("10.3  Screen catalogue — all application screen types")
     pdf.p("Images below are browser viewport captures from a fresh, disposable synthetic demo database. Some long pages require scrolling; role and status determine which action forms appear. Counts, names and dates in the demo are illustrative, not real grievance records.")

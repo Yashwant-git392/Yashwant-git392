@@ -5,7 +5,7 @@ The college circular allocates 15 marks to Review 3. This is a preparation aid, 
 ## Evidence in the project
 
 - **Coding:** report Chapter 4 has routing, validation, transition, SQL and schema examples; full source is in `app/`.
-- **Testing:** Chapter 5 identifies unit and acceptance-oriented integration scenarios with steps, inputs, expected and observed automated outcomes, and source test functions. `TESTING.md` explains scope and limitations. Latest source and extracted-package suite runs: 109 passed. Run `python -m pytest tests/ -q` again on the review PC.
+- **Testing:** Chapter 5 identifies unit and acceptance-oriented integration scenarios with steps, inputs, expected and observed automated outcomes, and source test functions. `TESTING.md` explains scope and limitations. Latest source and extracted-package suite runs: 114 passed. Run `python -m pytest tests/ -q` again on the review PC.
 - **Chapters 6–9:** limitations, proposed enhancements, conclusion and bibliography. The paper-based existing process is an assumption, not a verified description of the college.
 - **User manual:** Chapter 10 includes 25 annotated viewport screenshots, covering all app screen types, role-specific actions and six reports, plus the validation catalogue. Scroll on long screens to see the rest.
 - **Design:** Chapter 3 includes the ERD, table structure, separate actor use cases, conceptual class/record diagram, activity, deployment and module hierarchy diagrams. Editable diagrams.net sources are in `report/diagrams/`; they were generated programmatically and rendered with diagrams.net, not manually drawn in StarUML.

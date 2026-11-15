@@ -19,3 +19,9 @@ Thumbs.db
 
 # Shikayat Setu demo DB
 shikayat-setu/app/shikayat_setu.db
+
+# Share only the mini project's portable VS Code task and interpreter setting.
+!shikayat-setu/.vscode/
+shikayat-setu/.vscode/*
+!shikayat-setu/.vscode/tasks.json
+!shikayat-setu/.vscode/settings.json

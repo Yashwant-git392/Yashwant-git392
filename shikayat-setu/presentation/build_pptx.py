@@ -206,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "109 automated tests + browser checks"),
+    ("08", "Testing evidence", "114 automated tests + browser checks"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("109", "automated tests")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("114", "automated tests")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -462,7 +462,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("109 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("114 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -487,7 +487,7 @@ txt(s, 7.2, 4.71, 5.2, 0.24, [dict(runs=[("POST forms now require CSRF tokens", 
 txt(s, 0.55, 5.06, 12.2, 0.3, [dict(runs=[("DEFECTS FOUND & FIXED DURING TESTING", dict(size=9.5, bold=True, color=GOLD))])])
 bullets(s, 0.55, 5.4, 12.3, 0.95, [
     ("Earlier fixes — ", "(1) seed NOT NULL crash on complaints.code — placeholder + UPDATE · (2) minute-overflow in seed times · (3) officer dashboard Row vs dict is_overdue KeyError."),
-    ("Regression — ", "109 automated tests pass; no test suite proves absence of defects."),
+    ("Regression — ", "114 automated tests pass; no test suite proves absence of defects."),
 ], size=9.5, gap=3)
 
 # ================================================================ SLIDE 14 — Timeline & deliverables
@@ -560,7 +560,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "109 automated checks; see TESTING.md for scope and limits."),
+    ("Tests — ", "114 automated checks; see TESTING.md for scope and limits."),
     ("Every complaint gets a trail — ", "lodge to close with application-recorded events."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)

@@ -17,18 +17,38 @@ Campus Shikayat Setu is a college grievance management mini project for SPPU MCA
 - Hide the student's identity fields and event actor from officers for anonymous complaints; administrators can see them. Free text may still identify the student.
 - Use a responsive interface with a theme toggle, table filters and routing preview.
 
-## Run locally
+## Easy start in VS Code
 
-Python 3 is required. From this directory:
+You need **Python 3.10 or newer** (Python 3.11 or 3.12 recommended). Install it from [python.org](https://www.python.org/downloads/). On Windows, select **Add Python to PATH** during installation. The first setup generally needs internet to install the packages; later launches reuse the local environment and normally work offline.
+
+1. Download and **extract** the project ZIP, or clone the repository. Do not run the app from inside the ZIP viewer.
+2. In VS Code choose **File → Open Folder** and select the `shikayat-setu` folder itself (the folder containing `run.py` and `Start_Project.bat`).
+3. Choose **Terminal → Run Task → Start Campus Shikayat Setu**. On the first run it creates `.venv` and installs the requirements. Wait until the terminal says it is running.
+4. Open **http://127.0.0.1:5001** on the same computer. Leave the terminal open while using the app. Press **Ctrl+C** in that terminal to stop it.
+
+Alternatively, on Windows double-click `Start_Project.bat` in the extracted project folder, or run `.\Start_Project.bat` in the VS Code terminal. On macOS/Linux run `./start-project.sh` in the VS Code terminal; if your ZIP extractor does not preserve its executable bit, use `sh start-project.sh`. The cross-platform alternative is `python start_project.py` (or `python3 start_project.py`). No manual activation is required. Existing `.venv` and the database are never automatically deleted or reset by the launcher.
+
+VS Code's optional Python extension will find the project environment via `.vscode/settings.json`. After first setup, if the extension still shows another interpreter, open **Python: Select Interpreter** and choose `.venv` (`.venv\Scripts\python.exe` on Windows; `.venv/bin/python` on macOS/Linux). Open a new terminal if needed. The shared VS Code task requires opening `shikayat-setu` itself as the workspace folder.
+
+### Troubleshooting
+
+- **Python not found:** install Python, restart VS Code, and check `py -3 --version` or `python --version` on Windows; `python3 --version` on macOS/Linux. If `py` is unavailable the Windows launcher tries `python`.
+- **Installation failed:** check the internet connection and the terminal's pip error, then retry. On Debian/Ubuntu, install the OS package matching your Python, such as `python3-venv`, if venv creation fails. If a partial or copied `.venv` is broken, close the app, rename the **`.venv` folder only**, then rerun the launcher. Keep the database safe; renaming `.venv` does not reset it.
+- **Address already in use:** stop the existing app first. To use another port in PowerShell run `$env:SHIKAYAT_PORT = "5002"` before the launcher; in a Unix shell run `SHIKAYAT_PORT=5002 ./start-project.sh`, then open the indicated address. Do not run two copies against the same database unnecessarily.
+- **VS Code task not listed:** use **File → Open Folder** on `shikayat-setu` rather than only opening a file; then run the task again. The launcher scripts can also be run directly as above.
+
+Open http://127.0.0.1:5001 by default. The application creates and seeds `app/shikayat_setu.db` only on first run. This database is ignored by Git. Existing databases are not changed by seed updates; to inspect the refreshed demo safely, set `SHIKAYAT_DB` to a new file instead of deleting your data. A prebuilt `.venv` is deliberately not shipped: environments contain machine- and OS-specific paths and binaries, so copying one often causes precisely the errors this launcher avoids.
+
+### Manual setup (optional)
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+# Windows PowerShell: .\.venv\Scripts\Activate.ps1 (may require execution-policy permission)
+# Windows Command Prompt: .venv\Scripts\activate.bat
+# macOS/Linux: source .venv/bin/activate
+python -m pip install -r requirements.txt
 python run.py
 ```
-
-Open http://127.0.0.1:5001. The application creates and seeds `app/shikayat_setu.db` on first run. This database is ignored by Git. Existing databases are not changed by seed updates; to inspect the refreshed demo safely, set `SHIKAYAT_DB` to a new file instead of deleting your data.
 
 ### Demo accounts
 
@@ -57,7 +77,9 @@ The tests use temporary databases and cover the full allowed/blocked transition 
 
 ## Project files
 
-- `run.py` — application launcher.
+- `START_HERE.txt` — short step-by-step launch instructions.
+- `Start_Project.bat`, `start-project.sh`, `start_project.py` and `.vscode/` — easy setup and launch for Windows, macOS/Linux and VS Code.
+- `run.py` — application server launcher.
 - `app/app.py` — Flask routes and request handling.
 - `app/database.py` and `app/schema.sql` — database setup and sample data.
 - `app/routing.py` — keyword scoring, priority and SLA rules.

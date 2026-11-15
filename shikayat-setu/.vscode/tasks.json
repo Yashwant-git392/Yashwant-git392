@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Campus Shikayat Setu",
+      "type": "shell",
+      "command": "${workspaceFolder}/start-project.sh",
+      "windows": { "command": "${workspaceFolder}\\Start_Project.bat" },
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true },
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}
