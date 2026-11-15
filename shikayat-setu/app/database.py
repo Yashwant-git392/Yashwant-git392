@@ -1,6 +1,7 @@
 """Database layer for Campus Shikayat Setu (SQLite, zero-configuration)."""
 import os
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
@@ -20,9 +21,8 @@ def get_conn():
 def init_db():
     with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
         schema = f.read()
-    conn = get_conn()
-    conn.executescript(schema)
-    conn.close()
+    with closing(get_conn()) as conn:
+        conn.executescript(schema)
 
 
 DEPARTMENTS = [  # (name, head, email, location)
@@ -109,107 +109,104 @@ COMPLAINTS = [
 
 
 def seed_if_empty():
-    conn = get_conn()
-    if conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"] > 0:
-        conn.close()
-        return
+    with closing(get_conn()) as conn, conn:
+        if conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()["c"] > 0:
+            return
 
-    now = datetime.now()
+        now = datetime.now()
 
-    def ts(offset_days, hour):
-        d = now + timedelta(days=offset_days)
-        return d.replace(hour=hour, minute=(13 * hour + 7) % 60, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
+        def ts(offset_days, hour):
+            d = now + timedelta(days=offset_days)
+            return d.replace(hour=hour, minute=(13 * hour + 7) % 60, second=0, microsecond=0).strftime("%Y-%m-%d %H:%M:%S")
 
-    # departments
-    dept_ids = {}
-    for name, head, email, loc in DEPARTMENTS:
-        cur = conn.execute("INSERT INTO departments (name, head_name, email, location) VALUES (?,?,?,?)",
-                           (name, head, email, loc))
-        dept_ids[name] = cur.lastrowid
+        # departments
+        dept_ids = {}
+        for name, head, email, loc in DEPARTMENTS:
+            cur = conn.execute("INSERT INTO departments (name, head_name, email, location) VALUES (?,?,?,?)",
+                               (name, head, email, loc))
+            dept_ids[name] = cur.lastrowid
 
-    # categories
-    dept_values = list(dept_ids.values())
-    for name, di, prio, kw in CATEGORIES:
-        conn.execute(
-            "INSERT INTO categories (name, department_id, default_priority, keywords) VALUES (?,?,?,?)",
-            (name, dept_values[di], prio, kw))
+        # categories
+        dept_values = list(dept_ids.values())
+        for name, di, prio, kw in CATEGORIES:
+            conn.execute(
+                "INSERT INTO categories (name, department_id, default_priority, keywords) VALUES (?,?,?,?)",
+                (name, dept_values[di], prio, kw))
 
-    # users: admin, one officer per department, students
-    pw = generate_password_hash("admin123")
-    conn.execute("INSERT INTO users (role, username, password_hash, full_name, status) VALUES ('admin','admin',?,?, 'Active')",
-                 (pw, "System Administrator"))
-    officer_names = ["hostel.officer", "it.officer", "maint.officer", "exam.officer", "welfare.officer", "admin.officer"]
-    for (name, head, _email, _location), uname in zip(DEPARTMENTS, officer_names):
-        conn.execute(
-            "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
-            (uname, generate_password_hash("officer123"), head, dept_ids[name]))
+        # users: admin, one officer per department, students
+        pw = generate_password_hash("admin123")
+        conn.execute("INSERT INTO users (role, username, password_hash, full_name, status) VALUES ('admin','admin',?,?, 'Active')",
+                     (pw, "System Administrator"))
+        officer_names = ["hostel.officer", "it.officer", "maint.officer", "exam.officer", "welfare.officer", "admin.officer"]
+        for (name, head, _email, _location), uname in zip(DEPARTMENTS, officer_names):
+            conn.execute(
+                "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
+                (uname, generate_password_hash("officer123"), head, dept_ids[name]))
 
-    student_ids = []
-    for roll, name, _email, phone in STUDENTS:
-        cur = conn.execute(
-            "INSERT INTO users (role, username, password_hash, full_name, roll_no, phone, status) VALUES ('student',?,?,?,?,?, 'Active')",
-            (roll, generate_password_hash("student123"), name, roll, phone))
-        student_ids.append(cur.lastrowid)
+        student_ids = []
+        for roll, name, _email, phone in STUDENTS:
+            cur = conn.execute(
+                "INSERT INTO users (role, username, password_hash, full_name, roll_no, phone, status) VALUES ('student',?,?,?,?,?, 'Active')",
+                (roll, generate_password_hash("student123"), name, roll, phone))
+            student_ids.append(cur.lastrowid)
 
-    dept_of_category = {}
-    for name, di, _p, _k in CATEGORIES:
-        dept_of_category[name] = dept_values[di]
+        dept_of_category = {}
+        for name, di, _p, _k in CATEGORIES:
+            dept_of_category[name] = dept_values[di]
 
-    cat_by_name = {}
-    for name, _di, _prio, _kw in CATEGORIES:
-        cat_by_name[name] = conn.execute("SELECT * FROM categories WHERE name=?", (name,)).fetchone()
+        cat_by_name = {}
+        for name, _di, _prio, _kw in CATEGORIES:
+            cat_by_name[name] = conn.execute("SELECT * FROM categories WHERE name=?", (name,)).fetchone()
 
-    # complaints
-    for (si, ci, title, desc, loc, off, hour, status, resolution, rating, fb_comment) in COMPLAINTS:
-        cat_name = CATEGORIES[ci][0]
-        cat = cat_by_name[cat_name]
-        dept_id = dept_of_category[cat_name]
-        submitted = datetime.strptime(ts(off, hour), "%Y-%m-%d %H:%M:%S")
-        # route competition scoring for audit realism
-        text = routing.route_text(title, desc)
-        score = routing.score_category(text, cat["keywords"])
-        priority = routing.assign_priority(cat["default_priority"], title, desc)
-        due = submitted + timedelta(hours=routing.SLA_HOURS[priority])
-        cur = conn.execute(
-            """INSERT INTO complaints
-               (code, student_id, category_id, department_id, title, description, location, priority,
-                routing, routing_score, status, is_anonymous, submitted_at, sla_due_at, resolved_at)
-               VALUES ('TMP-' || lower(hex(randomblob(4))),?,?,?,?,?,?,?,'auto',?,?,?,?,?,?)""",
-            (student_ids[si], cat["id"], dept_id, title, desc, loc, priority, score, status,
-             1 if (si == 5 and ci == 0) else 0,   # the ragging complaint is anonymous
-             submitted.strftime("%Y-%m-%d %H:%M:%S"), due.strftime("%Y-%m-%d %H:%M:%S"),
-             datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S") if resolution else None))
-        cid = cur.lastrowid
-        code = f"CMP-{submitted.year}-{cid:04d}"
-        conn.execute("UPDATE complaints SET code=? WHERE id=?", (code, cid))
-        # events: routing always; status transitions per current state
-        conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
-                     (cid, "routed", f"Auto-routed to {cat['name']} → score {score}", None, submitted.strftime("%Y-%m-%d %H:%M:%S")))
-        if status in ("Acknowledged", "In Progress", "Resolved", "Closed"):
-            ack_time = submitted + timedelta(hours=2)
-            officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
+        # complaints
+        for (si, ci, title, desc, loc, off, hour, status, resolution, rating, fb_comment) in COMPLAINTS:
+            cat_name = CATEGORIES[ci][0]
+            cat = cat_by_name[cat_name]
+            dept_id = dept_of_category[cat_name]
+            submitted = datetime.strptime(ts(off, hour), "%Y-%m-%d %H:%M:%S")
+            # route competition scoring for audit realism
+            text = routing.route_text(title, desc)
+            score = routing.score_category(text, cat["keywords"])
+            priority = routing.assign_priority(cat["default_priority"], title, desc)
+            due = submitted + timedelta(hours=routing.SLA_HOURS[priority])
+            cur = conn.execute(
+                """INSERT INTO complaints
+                   (code, student_id, category_id, department_id, title, description, location, priority,
+                    routing, routing_score, status, is_anonymous, submitted_at, sla_due_at, resolved_at)
+                   VALUES ('TMP-' || lower(hex(randomblob(4))),?,?,?,?,?,?,?,'auto',?,?,?,?,?,?)""",
+                (student_ids[si], cat["id"], dept_id, title, desc, loc, priority, score, status,
+                 1 if (si == 5 and ci == 0) else 0,   # the ragging complaint is anonymous
+                 submitted.strftime("%Y-%m-%d %H:%M:%S"), due.strftime("%Y-%m-%d %H:%M:%S"),
+                 datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S") if resolution else None))
+            cid = cur.lastrowid
+            code = f"CMP-{submitted.year}-{cid:04d}"
+            conn.execute("UPDATE complaints SET code=? WHERE id=?", (code, cid))
+            # events: routing always; status transitions per current state
             conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
-                         (cid, "acknowledged", "Complaint acknowledged by department.", officer["id"], ack_time.strftime("%Y-%m-%d %H:%M:%S")))
-        if status in ("In Progress", "Resolved", "Closed"):
-            ip_time = submitted + timedelta(hours=6)
-            officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
-            conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
-                         (cid, "status", "Work started on the complaint.", officer["id"], ip_time.strftime("%Y-%m-%d %H:%M:%S")))
-        if resolution:
-            res_time = datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S")
-            officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
-            conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
-                         (cid, "status", f"Resolved — {resolution[1]}", officer["id"], res_time.strftime("%Y-%m-%d %H:%M:%S")))
-        if status == "Closed":
-            close_time = datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
-            conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
-                         (cid, "closed", "Student confirmed resolution. Complaint closed.", student_ids[si], close_time.strftime("%Y-%m-%d %H:%M:%S")))
-        if rating:
-            conn.execute("INSERT INTO feedback (complaint_id, rating, comment, created_at) VALUES (?,?,?,?)",
-                         (cid, rating, fb_comment or "", (datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S") + timedelta(days=1)).strftime("%Y-%m-%d")))
+                         (cid, "routed", f"Auto-routed to {cat['name']} → score {score}", None, submitted.strftime("%Y-%m-%d %H:%M:%S")))
+            if status in ("Acknowledged", "In Progress", "Resolved", "Closed"):
+                ack_time = submitted + timedelta(hours=2)
+                officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
+                conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
+                             (cid, "acknowledged", "Complaint acknowledged by department.", officer["id"], ack_time.strftime("%Y-%m-%d %H:%M:%S")))
+            if status in ("In Progress", "Resolved", "Closed"):
+                ip_time = submitted + timedelta(hours=6)
+                officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
+                conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
+                             (cid, "status", "Work started on the complaint.", officer["id"], ip_time.strftime("%Y-%m-%d %H:%M:%S")))
+            if resolution:
+                res_time = datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S")
+                officer = conn.execute("SELECT id FROM users WHERE role='officer' AND department_id=?", (dept_id,)).fetchone()
+                conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
+                             (cid, "status", f"Resolved — {resolution[1]}", officer["id"], res_time.strftime("%Y-%m-%d %H:%M:%S")))
+            if status == "Closed":
+                close_time = datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
+                conn.execute("INSERT INTO complaint_events (complaint_id, event_type, note, actor_id, created_at) VALUES (?,?,?,?,?)",
+                             (cid, "closed", "Student confirmed resolution. Complaint closed.", student_ids[si], close_time.strftime("%Y-%m-%d %H:%M:%S")))
+            if rating:
+                conn.execute("INSERT INTO feedback (complaint_id, rating, comment, created_at) VALUES (?,?,?,?)",
+                             (cid, rating, fb_comment or "", (datetime.strptime(ts(resolution[0], hour), "%Y-%m-%d %H:%M:%S") + timedelta(days=1)).strftime("%Y-%m-%d")))
 
-    conn.commit()
-    conn.close()
 
 
 def reset_db():

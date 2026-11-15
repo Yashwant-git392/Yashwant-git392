@@ -26,7 +26,7 @@
     <div class="auth-card" style="width:min(470px,100%)">
       <h2>Create your account</h2>
       <p class="sub">Campus Shikayat Setu — for SPPU MCA-I students. Officers are created by the administrator.</p>
-      <form method="post">
+      <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="auth-field"><label for="reg-name">Full Name</label><input id="reg-name" name="full_name" value="{{ form.get('full_name','') }}" placeholder="e.g. Yashwant Santosh Ahire" required></div>
         <div class="auth-field"><label for="reg-roll">Roll Number</label><input id="reg-roll" name="roll_no" value="{{ form.get('roll_no','') }}" placeholder="MCA2026###" required></div>
         <div class="auth-field"><label for="reg-email">Email</label><input id="reg-email" type="email" name="email" value="{{ form.get('email','') }}" placeholder="name@bvhrcet.ac.in" required></div>

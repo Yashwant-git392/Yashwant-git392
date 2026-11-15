@@ -26,7 +26,7 @@
         <mxCell id="8" value="«device» Demo computer" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
           <mxGeometry x="698" y="200" width="604" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="run.py / Flask development server&#10;0.0.0.0:5001&#10;Templates and static files&#10;SQLite: app/shikayat_setu.db" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+        <mxCell id="9" value="run.py / Flask development server&#10;0.0.0.0:5001 (default)&#10;Templates and static files&#10;SQLite: app/shikayat_setu.db" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
           <mxGeometry x="702" y="237" width="596" height="256" as="geometry" />
         </mxCell>
         <mxCell id="10" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#187b77;strokeWidth=2;endArrow=block;endFill=1;dashed=0;" edge="1" parent="1">

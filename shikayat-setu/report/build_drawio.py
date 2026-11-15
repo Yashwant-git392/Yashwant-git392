@@ -115,7 +115,7 @@ def activity():
     d.edge(150,570,930,570,[(150,650),(930,650)],color=LINE); d.text(320,650,220,30,'resolve directly',15)
     d.edge(410,570,930,570,[(410,620),(930,620)],color=LINE); d.text(580,620,220,30,'resolve directly',15)
     d.edge(930,570,670,570,[(930,725),(670,725)],color='#aa6b24'); d.text(695,730,210,30,'student reopens',15,color='#8d5a18')
-    d.note(45,795,1310,100,'Resolve requires a remark of at least 10 characters. Reopen requires an eligible student and a reason of at least 10 characters.\nReopen uses a whole-day age check; an invalid timestamp skips that check. Admin force-close does not enforce a waiting period.',16)
+    d.note(45,795,1310,100,'Resolve requires a remark of at least 10 characters. Reopen requires an eligible student and a reason of at least 10 characters.\nReopen uses a whole-day age check; an invalid timestamp blocks reopening. Admin force-close does not enforce a waiting period.',16)
     d.save('fig-activity')
 
 def klass():
@@ -133,7 +133,7 @@ def klass():
 def deployment():
     d=Diagram('Deployment diagram','Local demonstration setup — not a production deployment')
     d.box(80,235,350,220,'«device» Browser','Same computer or LAN client\nhttp://SERVER:5001')
-    d.box(690,190,620,310,'«device» Demo computer','run.py / Flask development server\n0.0.0.0:5001\nTemplates and static files\nSQLite: app/shikayat_setu.db',PALE)
+    d.box(690,190,620,310,'«device» Demo computer','run.py / Flask development server\n0.0.0.0:5001 (default)\nTemplates and static files\nSQLite: app/shikayat_setu.db',PALE)
     d.edge(430,345,690,345,color=TEAL);d.text(500,300,120,35,'HTTP',18,True)
     d.note(100,620,1200,95,'Local address: http://127.0.0.1:5001. LAN access depends on network and firewall settings.\nThere is no external database server or background worker in this demo.')
     d.save('fig-deployment')

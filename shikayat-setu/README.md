@@ -38,7 +38,14 @@ Open http://127.0.0.1:5001. The application creates and seeds `app/shikayat_setu
 | Officer | `hostel.officer`, `it.officer`, `maint.officer`, `exam.officer`, `welfare.officer` or `admin.officer` | `officer123` |
 | Student | `MCA2026001` to `MCA2026008` | `student123` |
 
-These credentials and the development secret key are for the local demo only. Do not use this configuration for a public deployment. The admin force-close action checks for Resolved status but does not enforce a seven-day waiting period; treat this as a known limitation.
+Demo credentials and the fallback secret key are for local use only. POST forms (including sign-out) use Flask-WTF CSRF tokens. The application uses a request-scoped SQLite connection and rolls back uncommitted work on teardown. To configure a stable secret and port, set environment variables before running `python run.py`:
+
+```bash
+export SHIKAYAT_SECRET_KEY="replace-with-a-strong-private-random-value"
+export SHIKAYAT_PORT=5001
+```
+
+On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_PORT = "5001"`. Changing the secret invalidates existing signed sessions and CSRF tokens; keep it private and stable across app workers. Never commit a real secret. If it is not set, startup warns and uses an insecure demo fallback. This remains a development server, not a production deployment; HTTPS, stronger credentials, rate limiting, secure session handling and a security review are still needed. The admin force-close action checks for Resolved status but does not enforce a seven-day waiting period; treat this as a known limitation.
 
 ## Tests
 
@@ -46,7 +53,7 @@ These credentials and the development secret key are for the local demo only. Do
 python -m pytest tests/ -q
 ```
 
-The tests use temporary databases and cover login, registration, routing and its preview, access control, the complaint lifecycle and reports.
+The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, the complaint lifecycle and reports. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
 
 ## Project files
 

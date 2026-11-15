@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (20 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (28 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -427,9 +427,9 @@ def ch1(pdf: Report):
     pdf.p("<b>SQLite 3</b> was selected after matching databases to the use case: single-campus, low-write, read-mostly, "
           "one-machine demo with zero DBA. It enforces integrity with UNIQUE, CHECK and FOREIGN KEY constraints. The schema "
           "works without a separate server. A move to MySQL would require changes to queries, connection handling and deployment (see Chapter 7).")
-    pdf.p("<b>Security:</b> passwords are hashed with Werkzeug; every authenticated route checks the session role "
+    pdf.p("<b>Security:</b> passwords are hashed with Werkzeug; protected routes check login and relevant roles "
           "server-side (students cannot open the admin console — covered by test_11); SQL uses bound parameters; "
-          "anonymous identity fields and student event actors are hidden from officers, but free text may reveal identity; status changes write immutable audit events.")
+          "anonymous identity fields and student event actors are hidden from officers, but free text may reveal identity; status changes write event records. POST forms use CSRF tokens.")
     pdf.h3("1.5.1  Operating systems used")
     pdf.p("Development, seeding and the original 12 automated tests were executed on GNU/Linux (Python 3.11.2). No OS-specific APIs "
           "are used; the app is runnable unchanged on Windows 10/11 lab machines via <i>python run.py</i>.")
@@ -537,7 +537,7 @@ def ch3(pdf: Report):
     pdf.table(["ID", "Requirement"], [
         ["NFR-1", "Login response < 300 ms on a lab PC; page render < 500 ms; no JS framework dependency."],
         ["NFR-2", "Zero data loss on crash: SQLite ACID with foreign_keys ON; backup = file copy."],
-        ["NFR-3", "Passwords hashed with Werkzeug; no plaintext anywhere; sessions are signed cookies."],
+        ["NFR-3", "Passwords hashed with Werkzeug; signed sessions and CSRF tokens. Demo credentials are not secure."],
         ["NFR-4", "Print CSS hides chrome; registers fit A4 portrait without truncation."],
         ["NFR-5", "Deterministic seed: fresh clone reproduces the exact demo dataset (< 200 ms)."],
         ["NFR-6", "Code style: PEP 8, bound parameters only, no string-concatenated SQL."],
@@ -564,7 +564,7 @@ def ch3(pdf: Report):
         ["Lodge complaint", "Student", "Fill title+description+location+category → submit → router assigns dept & SLA → code shown on timeline."],
         ["Resolve complaint", "Officer", "Open complaint → optionally acknowledge/start work → resolve with remark; direct resolution is also permitted."],
         ["Confirm & close", "Student", "Resolved list → star rating + comment → status Closed; feedback row inserted (UNIQUE per complaint)."],
-        ["Reopen (whole-day check)", "Student", "Own resolved complaint → reason → status In Progress; age uses whole days and invalid timestamps skip the check."],
+        ["Reopen (whole-day check)", "Student", "Own resolved complaint → reason → status In Progress; age uses whole days and invalid timestamps prevent reopening."],
         ["Reassign", "Admin", "Console → pick new department → routing=manual → audit event with old→new."],
         ["Escalate to High", "Admin", "Console → escalate → priority=High → audit event; SLA kept at original deadline; escalation surfaces on all views."],
         ["Track without login", "Public", "Enter code + roll no. → timeline & current status rendered."],
@@ -693,7 +693,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 20 tests, including routing preview, anonymous identity masking, UI checks and ERD schema consistency.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 28 tests, including CSRF, rollback, reopen checks, routing preview, privacy and ERD consistency.")
 
     pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -730,10 +730,10 @@ def ch6(pdf: Report):
         "<b>L-3  No notifications:</b> students must poll /my-complaints or the tracker; no SMS/e-mail push yet.",
         "<b>L-4  Single node:</b> SQLite file on one PC is the whole database; horizontal scaling is impossible without migration.",
         "<b>L-5  Category catalogue is seed-fixed:</b> officers cannot add categories; admins cannot edit them without SQL.",
-        "<b>L-6  Reopen age check:</b> compares whole days to 7, skips the check if the timestamp cannot be parsed, and is not configurable per department.",
+        "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 20 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 28 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
@@ -852,7 +852,7 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
         ["Lodge — Anonymous", "Optional tick; the student identity and student event actor are hidden from officers. Free-text descriptions or notes can still identify the student."],
         ["Officer resolve — Remark", "Mandatory, ≥ 10 characters; resolution is blocked otherwise."],
         ["Student confirm — Rating", "1–5 stars mandatory for Close; comment optional; feedback UNIQUE per complaint (FK constraint)."],
-        ["Student reopen — Reason", "Mandatory, ≥ 10 characters; whole-day resolution age must be ≤ 7 if the timestamp parses; status returns to In Progress."],
+        ["Student reopen — Reason", "Mandatory, ≥ 10 characters; whole-day resolution age must be ≤ 7 and the timestamp must parse; status returns to In Progress."],
         ["Admin — Reassign / Force-close", "Reassign requires a valid department. Force-close requires Resolved status; the seven-day wait is not enforced. Both actions are logged."],
         ["Public tracker (/track)", "Requires BOTH code and roll no.; mismatched pairs render nothing (no enumeration)."],
     ], [54, 124], size=7.6)
@@ -916,7 +916,7 @@ def appc(pdf: Report):
         ("Keyword weight", "Routing score = Σ(weight × hits); multi-word keywords weigh double per word."),
         ("Mass impact", "Phrase class (“entire”, “all students”) that bumps priority one level."),
         ("OLA", "Operational Level Agreement — internal equivalent of SLA between departments."),
-        ("Reopen", "Student rejection of a resolution; whole-day age check applies if timestamp parses; returns status to In Progress."),
+        ("Reopen", "Student rejection of a resolution; whole-day age check requires a valid timestamp; returns status to In Progress."),
         ("Resolution remark", "Mandatory ≥ 10-character note officers must enter when resolving."),
         ("Safety word", "Phrase class (ragging, shock, fire…) that forces priority High at submission."),
         ("SLA", "Service-Level Agreement — High 24 h · Medium 72 h · Low 7 days for this college."),

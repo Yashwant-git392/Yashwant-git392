@@ -15,7 +15,7 @@
   <div class="card" style="background:linear-gradient(160deg,var(--navy-2),#141f36);border:none;color:#eef1f8">
     <h2 style="color:#a0e8da"><span class="h-icon" style="background:rgba(160,232,218,.15)">🔎</span> Find your grievance</h2>
     <p style="color:#b9c5dd;font-size:.86rem;margin-bottom:14px">The code was shown to you the moment you lodged (format <code class="kbd" style="color:#a0e8da;background:rgba(255,255,255,.08);border-color:transparent">CMP-2026-0007</code>).</p>
-    <form method="post" style="display:flex;flex-direction:column;gap:12px">
+    <form method="post" style="display:flex;flex-direction:column;gap:12px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="auth-field" style="margin:0"><label for="track-code" style="color:#8fa9d0">Complaint code</label>
         <input id="track-code" name="code" placeholder="CMP-2026-0007" required autocomplete="off" spellcheck="false"></div>
       <div class="auth-field" style="margin:0"><label for="track-roll" style="color:#8fa9d0">Roll number</label>

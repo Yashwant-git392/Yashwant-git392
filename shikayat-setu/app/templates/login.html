@@ -28,7 +28,7 @@
     <div class="auth-card">
       <h2>Welcome back</h2>
       <p class="sub">Campus Shikayat Setu — College Grievance Redressal System</p>
-      <form method="post" autocomplete="on">
+      <form method="post" autocomplete="on"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="auth-field">
           <label for="login-user">Roll number / Username</label>
           <input id="login-user" type="text" name="username" placeholder="e.g. MCA2026001 or admin" required autofocus>

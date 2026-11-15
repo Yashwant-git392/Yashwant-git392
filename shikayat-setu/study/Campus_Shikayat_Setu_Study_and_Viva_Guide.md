@@ -30,7 +30,7 @@ This is an explainable rules-based mini project, not machine learning. It is a l
 1. The browser displays an HTML form rendered from a Jinja template. Local CSS and JavaScript improve the interface.
 2. The browser sends an HTTP request to a Flask route in `app/app.py`. A GET usually requests a page; a POST usually submits or changes data.
 3. The route checks the session, role and, where relevant, ownership or department. The server validates submitted data even when JavaScript has already provided feedback.
-4. Business rules call functions in `app/routing.py`; database work uses `app/database.py` and parameterized SQLite queries.
+4. Business rules call functions in `app/routing.py`; database work uses `app/database.py` and parameterized SQLite queries. Flask `g` holds the connection, and teardown rolls back uncommitted work and closes it.
 5. Flask commits the change and typically redirects to another page. Jinja renders the result, complaint list or timeline.
 
 A useful memory map is: **Browser → Flask route → authorization and validation → routing/SQLite → response**. The browser is not the database; the JavaScript preview is not the authoritative submission.
@@ -46,7 +46,7 @@ A useful memory map is: **Browser → Flask route → authorization and validati
 
 ## 4. File-by-file reading order
 
-1. `run.py` — adds the app directory to the import path, calls `init_db()` and `seed_if_empty()`, then runs Flask on port 5001 with debug disabled.
+1. `run.py` — adds the app directory to the import path, calls `init_db()` and `seed_if_empty()`, then runs Flask on port 5001 by default with debug disabled. `SHIKAYAT_PORT` can change the port.
 2. `app/schema.sql` — defines tables, constraints, relationships and indexes. Start here to understand stored data.
 3. `app/database.py` — opens SQLite connections, enables foreign keys, initializes the schema and inserts demo records if there are no users. The default file is `app/shikayat_setu.db`; environment variable `SHIKAYAT_DB` can change it.
 4. `app/routing.py` — contains `score_category`, `route`, `assign_priority`, `route_text` and the SLA mapping.
@@ -98,7 +98,7 @@ A useful memory map is: **Browser → Flask route → authorization and validati
 - **Submitted, Acknowledged or In Progress → Resolved:** officer/admin may resolve directly; a remark of at least 10 characters is required and `resolved_at` is set.
 - **Resolved → Closed:** normally the owner submits a rating from 1 to 5 and optional comment. The feedback endpoint also permits an admin; the user-facing messages still refer to the student. An admin can instead force-close a Resolved complaint without feedback.
 - **Resolved → In Progress:** the owning student may reopen with a reason of at least 10 characters, subject to the implemented time check.
-- **Reopen time nuance:** The code rejects when `(now - resolved_at).days > 7`. `.days` uses whole days, so this is not an exact 168-hour cutoff. If parsing fails, the current exception handler skips the age check. Reopening does not recalculate the original SLA deadline.
+- **Reopen time nuance:** The code rejects when `(now - resolved_at).days > 7`. `.days` uses whole days, so this is not an exact 168-hour cutoff. If the timestamp is missing or cannot be parsed, reopening is rejected and the user is asked to contact the administration. Reopening does not recalculate the original SLA deadline.
 - **Force-close nuance:** The current route requires Resolved status but does not enforce a waiting period. It is not an automatic scheduled task.
 
 ![Complaint submission and supported lifecycle transitions](../report/images/fig-activity.png)
@@ -111,7 +111,7 @@ Events capture actions such as creation, routing, acknowledgement, resolution, r
 
 An anonymous complaint still stores the student's ID. In officer-facing views the identity fields and student event actor are masked; administrators can see the identity. A description or other free text might identify the student. This is therefore **identity masking**, not full anonymity. Public tracking normally requires both code and roll number, which should not be treated as a strong secret.
 
-This is a demo: the secret key and demo passwords are fixed, the app uses Flask's development server, and production security controls such as CSRF protection, stronger session management, rate limiting, HTTPS and a security review are needed. Inactive status is checked at login; existing sessions are not comprehensively revoked on deactivation. Avoid claiming the app is fully secure.
+This is a demo: Flask-WTF checks CSRF tokens on POST forms, but the fallback secret and demo passwords are insecure. Set a strong private `SHIKAYAT_SECRET_KEY` before deployment. The app uses Flask's development server; stronger session management, rate limiting, HTTPS and a security review are still needed. Inactive status is checked at login; existing sessions are not comprehensively revoked on deactivation. Avoid claiming the app is fully secure.
 
 ## 10. Reports, diagrams and tests
 
@@ -119,7 +119,7 @@ The admin's six printable views are: **department pendency**, **SLA compliance**
 
 Explain the diagram types: architecture shows request/data layers; ERD shows six tables and foreign keys; use case shows roles and interactions; activity/lifecycle shows submission and allowed transitions; deployment shows a browser and local Flask/SQLite computer; module hierarchy maps actual files. The class/record diagram is conceptual: the project uses SQLite rows, not ORM model classes. Editable `.drawio` sources were programmatically generated and rendered with diagrams.net; do not represent them as manually drawn in another tool.
 
-The test suite has 20 tests at the time of this guide: 19 application tests plus one diagram/schema consistency test. Coverage includes authentication, registration, routing, preview, permissions, lifecycle, reports and anonymous-event masking. Tests passing is useful evidence, not proof of absence of defects. Run them yourself before the viva.
+The test suite has 28 test cases at the time of this guide, including CSRF, rollback, configuration, reopen handling and a diagram/schema consistency test. Coverage includes authentication, registration, routing, preview, permissions, lifecycle, reports and anonymous-event masking. Tests passing is useful evidence, not proof of absence of defects. Run them yourself before the viva.
 
 # PART B — RUN AND DEMONSTRATE
 
@@ -278,10 +278,10 @@ For an eligible Resolved complaint, the owner chooses a rating from 1 to 5 and a
 The `complaint_id` column in `feedback` is unique, so the database allows at most one current feedback row per complaint. The endpoint uses `INSERT OR REPLACE`.
 
 ### Q38. When can a student reopen a complaint?
-The student must own it, it must be Resolved and the reason must contain at least 10 characters. The route also applies its whole-day age check when it can parse `resolved_at`.
+The student must own it, it must be Resolved and the reason must contain at least 10 characters. The route requires a valid `resolved_at` timestamp and applies the whole-day age check.
 
 ### Q39. Is the reopen cutoff exactly seven days?
-No. The code checks whether the difference's whole-day `.days` value exceeds 7. If the timestamp cannot be parsed, it currently skips the age check. An exact duration and failure handling are improvements.
+No. The code checks whether the difference's whole-day `.days` value exceeds 7. If the timestamp is missing or invalid, the route rejects reopening. An exact-duration rule is a possible improvement.
 
 ### Q40. What happens to the deadline after reopening?
 The current reopen route changes the status to In Progress and records an event; it does not create a new SLA deadline.
@@ -342,7 +342,7 @@ Authentication checks who the user is, such as verifying a password. Authorizati
 The app uses Werkzeug's `generate_password_hash` and checks with `check_password_hash`; it does not store the original password in the user table. The seeded demo passwords are still weak.
 
 ### Q58. How are sessions used?
-After login, the app stores identifiers and role information in Flask's signed session. Signing prevents undetected modification when the secret is protected; it does not make the cookie contents secret.
+After login, the app stores identifiers and role information in Flask's signed session. The key can be set through `SHIKAYAT_SECRET_KEY`; the built-in fallback is only for the demo. Signing prevents undetected modification when the secret is protected; it does not make the cookie contents secret.
 
 ### Q59. How does an officer get restricted to their department?
 The queue query filters on the officer's department, and complaint-level access is checked by `can_see` for detail/actions. An administrator can see all departments.
@@ -354,7 +354,7 @@ No. The student ID remains in the database. Officers see masked identity fields 
 No. It is a simple demo tracking check, not a strong secret or a replacement for proper identity verification, rate limiting and privacy controls.
 
 ### Q62. What security work is needed before real deployment?
-Use a protected secret and non-default credentials; add CSRF protection, HTTPS, rate limits, stronger session and account controls, safe redirect validation, security testing and secure deployment/backups. Do not expose the development server publicly as-is.
+Use a protected secret and non-default credentials; the app already checks CSRF tokens on POST forms. Add HTTPS, rate limits, stronger session and account controls, safe redirect validation, security testing and secure deployment/backups. Do not expose the development server publicly as-is.
 
 ### Q63. What happens when an account is deactivated?
 The login route rejects inactive accounts. The current application does not comprehensively invalidate an already active session when status changes, so this needs improvement.
@@ -371,7 +371,7 @@ The report calculates the difference between `resolved_at` and `submitted_at` us
 The pendency report uses `COUNT(*)` on a LEFT JOIN, so a department with no complaints can appear to have a total of 1. Use `COUNT(c.id)` and add a zero-complaint test when fixing it.
 
 ### Q67. What tests are included?
-The current suite has 19 app tests and one schema/diagram consistency test. Examples include login, registration, routing, preview, permissions, lifecycle, reports and anonymous actor masking.
+The current suite has 28 test cases, including CSRF, rollback, configuration, reopen handling and schema/diagram consistency. Examples include login, registration, routing, preview, permissions, lifecycle, reports and anonymous actor masking.
 
 ### Q68. Does passing the tests prove there are no bugs?
 No. Tests check selected cases; untested inputs, concurrency, security issues and real-world behavior may still reveal defects.
@@ -395,13 +395,19 @@ I can explain architecture, ERD, use case, complaint lifecycle/activity, concept
 The `.drawio` source files were generated programmatically and rendered using diagrams.net. They can be opened and edited there; I should not claim they were manually drawn in StarUML or EdrawMax.
 
 ### Q75. What is one limitation you would fix first?
-For a real rollout, I would prioritize security and correctness: remove demo secrets/passwords, add CSRF and session protections, enforce an exact reopen rule and validate failures, fix report edge cases and test them. This is proposed work, not already implemented.
+For a real rollout, I would prioritize security and correctness: replace demo secrets/passwords, strengthen session protections, consider an exact reopen rule, fix report edge cases and test them. CSRF protection and invalid-timestamp rejection are already implemented; the other items are proposed work.
 
 ### Q76. What future features are possible?
 Notifications, attachment support, category administration, improved search and a production deployment are possible future additions. They are not existing features in this mini project.
 
 ### Q77. What if the examiner asks something you do not know?
 State what you understand, identify the relevant file and say you would verify the implementation. Do not invent functionality, measurements or authorship details.
+
+### Q78. How does the application protect POST forms against CSRF?
+Flask-WTF issues a session-linked token in each POST form and rejects missing or invalid tokens. Sign-out is also a protected POST. The demo secret must be replaced for deployment, and CSRF protection alone does not make the app production-ready.
+
+### Q79. How are database connections closed safely?
+Flask `g` holds a connection for the current application context. Teardown rolls back any uncommitted transaction and closes it, including on errors. Schema setup and seeding use closing contexts; seeding also uses a transaction.
 
 # PART D — SELF-CHECK
 

@@ -192,7 +192,7 @@
         <mxCell id="47" value="student reopens" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#8d5a18;" vertex="1" parent="1">
           <mxGeometry x="695" y="730" width="210" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="48" value="Resolve requires a remark of at least 10 characters. Reopen requires an eligible student and a reason of at least 10 characters.&#10;Reopen uses a whole-day age check; an invalid timestamp skips that check. Admin force-close does not enforce a waiting period." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e9;strokeColor=#c6a650;fontFamily=Arial;fontSize=16;fontColor=#172b3a;spacing=8;" vertex="1" parent="1">
+        <mxCell id="48" value="Resolve requires a remark of at least 10 characters. Reopen requires an eligible student and a reason of at least 10 characters.&#10;Reopen uses a whole-day age check; an invalid timestamp blocks reopening. Admin force-close does not enforce a waiting period." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e9;strokeColor=#c6a650;fontFamily=Arial;fontSize=16;fontColor=#172b3a;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="45" y="795" width="1310" height="100" as="geometry" />
         </mxCell>
       </root>

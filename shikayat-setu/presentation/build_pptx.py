@@ -206,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "20 automated tests + 8 historical manual scenarios"),
+    ("08", "Testing evidence", "28 automated tests + 8 historical manual scenarios"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("20/20", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("28/28", "tests passing")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -270,7 +270,7 @@ for i, o in enumerate(objectives):
 card(s, 6.15, 1.5, 6.6, 2.32)
 txt(s, 6.4, 1.66, 3.0, 0.3, [dict(runs=[("IN SCOPE — v1.0", dict(size=9.5, bold=True, color=GREEN))])])
 bullets(s, 6.4, 2.05, 6.15, 1.7, [
-    "Register & login; Werkzeug hashing; signed sessions",
+    "Register & login; password hashes; CSRF tokens",
     "Keyword routing with explainable scores (title weighted ×2)",
     "Optional acknowledge / progress → resolve; feedback closes; reopen uses whole-day age",
     "Officer department queue; admin console (reassign/escalate/force-close)",
@@ -458,7 +458,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("20 / 20 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("28 / 28 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -478,7 +478,7 @@ bullets(s, 7.05, 2.72, 5.6, 1.6, [
     "TC-17/18 routed Medium/72h · reopen within 7 days",
 ], size=8.6, gap=3, marker="•  ", mcolor=GOLD)
 rect(s, 7.05, 4.6, 5.5, 0.42, fill=NAVY, round_=True, radius=0.5)
-txt(s, 7.2, 4.71, 5.2, 0.24, [dict(runs=[("$ curl -i -X POST …/login  →  HTTP/1.1 401", dict(font=MONO, size=9.5, color=GOLD_L))])])
+txt(s, 7.2, 4.71, 5.2, 0.24, [dict(runs=[("POST forms now require CSRF tokens", dict(font=MONO, size=9.5, color=GOLD_L))])])
 
 txt(s, 0.55, 5.06, 12.2, 0.3, [dict(runs=[("DEFECTS FOUND & FIXED DURING TESTING", dict(size=9.5, bold=True, color=GOLD))])])
 bullets(s, 0.55, 5.4, 12.3, 0.95, [
@@ -556,7 +556,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "20 automated checks; 8 manual scenarios recorded earlier."),
+    ("Tests — ", "28 automated checks; 8 manual scenarios recorded earlier."),
     ("Every complaint gets a trail — ", "lodge to close, one timeline, zero lost grievances."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)

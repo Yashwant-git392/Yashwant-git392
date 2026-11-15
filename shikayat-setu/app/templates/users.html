@@ -18,12 +18,12 @@
             <td><span class="badge badge-navy">{{ u['role'] }}</span></td>
             <td>{{ u['department_name'] or '—' }}</td>
             <td><span class="badge {{ 'badge-green' if u['status']=='Active' else 'badge-gray' }}">{{ u['status'] }}</span></td>
-            <td>{% if u['username'] != 'admin' %}<form method="post" action="{{ url_for('toggle_user', uid=u['id']) }}"><button class="btn btn-sm btn-ghost" type="submit">{{ 'Deactivate' if u['status']=='Active' else 'Activate' }}</button></form>{% endif %}</td></tr>
+            <td>{% if u['username'] != 'admin' %}<form method="post" action="{{ url_for('toggle_user', uid=u['id']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-ghost" type="submit">{{ 'Deactivate' if u['status']=='Active' else 'Activate' }}</button></form>{% endif %}</td></tr>
       {% endfor %}</tbody></table></div>
   </div>
   <div class="card">
     <h2><span class="h-icon">➕</span> Create department officer</h2>
-    <form method="post" action="{{ url_for('create_officer') }}" class="form-grid" style="grid-template-columns:1fr">
+    <form method="post" action="{{ url_for('create_officer') }}" class="form-grid" style="grid-template-columns:1fr"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="field"><label for="off-name">Full name</label><input id="off-name" name="full_name" required placeholder="e.g. Mrs. S. Kulkarni"></div>
       <div class="field"><label for="off-dept">Department</label>
         <select id="off-dept" name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
