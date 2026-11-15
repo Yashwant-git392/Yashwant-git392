@@ -42,7 +42,7 @@
         <tr><td>Location</td><td>{{ c['location'] or '—' }}</td></tr>
         <tr><td>Submitted</td><td>{{ c['submitted_at'] }}</td></tr>
         <tr><td>SLA due</td><td class="{{ 'sla-late' if c['is_overdue'] else 'sla-ok' }}">{{ c['sla_due_at'] }} {% if c['is_overdue'] %}(overdue){% endif %}</td></tr>
-        <tr><td>Routing</td><td>{{ 'Automatic (engine score ' + c['routing_score']|string + ')' if c['routing']=='auto' else 'Manually reassigned by admin' }}</td></tr>
+        <tr><td>Routing</td><td>{{ 'Automatic (engine score ' + c['routing_score']|string + ')' if c['routing']=='auto' else ('Manually reassigned by admin' if c['steps']|selectattr('event_type', 'equalto', 'reassign')|list else 'Selected category retained (manual routing)') }}</td></tr>
       </tbody></table>
       <div style="margin-top:12px"><b>Description</b>
         <p style="margin-top:6px;line-height:1.6">{{ c['description'] }}</p></div>

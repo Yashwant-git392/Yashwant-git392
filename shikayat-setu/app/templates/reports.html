@@ -69,7 +69,7 @@
 <thead><tr><th>Routing mode</th><th>Complaints</th><th>Avg keyword score</th></tr></thead>
 <tbody>{% for r in rows %}<tr><td><b>{{ r['routing']|capitalize }}</b></td><td>{{ r['n'] }}</td><td>{{ r['avg_score'] }}</td></tr>{% endfor %}</tbody></table></div></div>
 {% if manual %}
-<div class="card"><h2><span class="h-icon">🔀</span> Manually reassigned complaints</h2>
+<div class="card"><h2><span class="h-icon">🔀</span> Manual routing: selected category or admin reassignment</h2>
 <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Final department</th></tr></thead>
 <tbody>{% for r in manual %}<tr><td class="mono">{{ r['code'] }}</td><td>{{ r['title'] }}</td><td>{{ r['dept'] }}</td></tr>{% endfor %}</tbody></table></div></div>
 {% endif %}

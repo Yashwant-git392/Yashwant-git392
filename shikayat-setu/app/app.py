@@ -10,6 +10,7 @@ import os
 import re
 from datetime import date, datetime, timedelta
 from functools import wraps
+from urllib.parse import unquote, urlsplit
 
 from flask import (
     Flask, flash, redirect, render_template, request, session, url_for, abort, jsonify, g,
@@ -64,6 +65,32 @@ def current_user():
         u = conn.execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
         return u
     return None
+
+
+@app.before_request
+def validate_session_account():
+    """Reject stale sessions and keep authorization data in sync with the database."""
+    if "user_id" not in session:
+        return
+    user = current_user()
+    if not user or user["status"] != "Active":
+        session.clear()
+        return
+    session["role"] = user["role"]
+    session["full_name"] = user["full_name"]
+    session["department_id"] = user["department_id"]
+
+
+def safe_next(target):
+    """Allow only relative, absolute-path redirects within this application."""
+    if not target:
+        return False
+    decoded = unquote(target)
+    if (not decoded.startswith("/") or decoded.startswith("//") or
+            "\\" in decoded or any(ord(ch) < 32 or ord(ch) == 127 for ch in decoded)):
+        return False
+    parts = urlsplit(decoded)
+    return not parts.scheme and not parts.netloc
 
 
 def login_required(view):
@@ -202,8 +229,8 @@ def login():
         session["user_id"], session["role"], session["full_name"] = u["id"], u["role"], u["full_name"]
         session["department_id"] = u["department_id"]
         flash(f"Welcome, {u['full_name']}.", "success")
-        nxt = request.args.get("next") or url_for("dashboard")
-        return redirect(nxt)
+        nxt = request.args.get("next")
+        return redirect(nxt if safe_next(nxt) else url_for("dashboard"))
     return render_template("login.html")
 
 
@@ -268,7 +295,8 @@ def dashboard():
         rows = conn.execute(
             """SELECT c.*, cat.name AS category_name, u.full_name AS student_name
                FROM complaints c JOIN categories cat ON cat.id=c.category_id JOIN users u ON u.id=c.student_id
-               WHERE c.department_id=? AND c.status!='Closed' ORDER BY c.submitted_at DESC""", (user["department_id"],)).fetchall()
+               WHERE c.department_id=? AND c.status NOT IN ('Resolved','Closed')
+               ORDER BY CASE c.priority WHEN 'High' THEN 0 WHEN 'Medium' THEN 1 ELSE 2 END, c.submitted_at DESC""", (user["department_id"],)).fetchall()
         overdue = sum(1 for r in rows if is_overdue(r))
         high = sum(1 for r in rows if r["priority"] == "High")
         status_counts = {s: 0 for s in STATUS_ORDER}
@@ -295,7 +323,7 @@ def dashboard():
             "SELECT d.name, COUNT(c.id) AS n FROM departments d JOIN complaints c ON c.department_id=d.id "
             "WHERE c.status NOT IN ('Resolved','Closed') GROUP BY d.id ORDER BY n DESC")]
         decided = conn.execute("SELECT COUNT(*) c FROM complaints WHERE status IN ('Resolved','Closed')").fetchone()["c"]
-        on_time = conn.execute("SELECT COUNT(*) c FROM complaints WHERE resolved_at IS NOT NULL AND resolved_at <= sla_due_at").fetchone()["c"]
+        on_time = conn.execute("SELECT COUNT(*) c FROM complaints WHERE status IN ('Resolved','Closed') AND resolved_at IS NOT NULL AND resolved_at <= sla_due_at").fetchone()["c"]
         on_time_pct = round(100.0 * on_time / decided, 1) if decided else 0
         csat = conn.execute("SELECT AVG(rating) a FROM feedback").fetchone()["a"]
         ctx = dict(total=total, by_status=by_status, overdue=overdue, recent=recent, role="admin",
@@ -489,11 +517,12 @@ def feedback(code):
     conn.execute("INSERT OR REPLACE INTO feedback (complaint_id, rating, comment) VALUES (?,?,?)",
                  (c["id"], int(rating), comment))
     conn.execute("UPDATE complaints SET status='Closed' WHERE id=?", (c["id"],))
-    log_event(conn, c["id"], "feedback", f"Student rated {rating}/5.{(' — ' + comment) if comment else ''}", user["id"])
-    log_event(conn, c["id"], "closed", "Student confirmed resolution. Complaint closed.", user["id"])
+    actor = "Student" if user["role"] == "student" else "Admin"
+    log_event(conn, c["id"], "feedback", f"{actor} rated {rating}/5.{(' — ' + comment) if comment else ''}", user["id"])
+    log_event(conn, c["id"], "closed", f"{actor} confirmed resolution. Complaint closed.", user["id"])
     conn.commit()
     flash("Thank you — complaint closed.", "success")
-    return redirect(url_for("my_complaints"))
+    return redirect(url_for("my_complaints") if user["role"] == "student" else url_for("complaint_detail", code=code))
 
 
 @app.route("/complaint/<code>/reopen", methods=["POST"])
@@ -517,7 +546,7 @@ def reopen(code):
             return redirect(url_for("complaint_detail", code=code))
         conn.execute("UPDATE complaints SET status='In Progress' WHERE id=?", (c["id"],))
         log_event(conn, c["id"], "reopened", f"Student reopened: {reason}", user["id"])
-        conn.commit(); flash("Complaint reopened. The department has been notified.", "success")
+        conn.commit(); flash("Complaint reopened and returned to the department queue.", "success")
     return redirect(url_for("complaint_detail", code=code))
 
 
@@ -580,7 +609,7 @@ def queue():
     if user["role"] == "officer":
         q += " AND c.department_id=?"; params.append(user["department_id"])
     elif dept and dept.isdigit():
-        q += " AND c.department_id=?"; params.append(int(dept))
+        q += " AND c.department_id=?"; params.append(dept)
     flt_status = request.args.get("status") or ""
     if flt_status in STATUS_ORDER:
         q += " AND c.status=?"; params.append(flt_status)
@@ -603,7 +632,7 @@ def console():
            FROM complaints c JOIN categories cat ON cat.id=c.category_id
            JOIN departments d ON d.id=c.department_id JOIN users u ON u.id=c.student_id WHERE 1=1"""
     params = []
-    if dept.isdigit(): q += " AND c.department_id=?"; params.append(int(dept))
+    if dept.isdigit(): q += " AND c.department_id=?"; params.append(dept)
     if status in STATUS_ORDER: q += " AND c.status=?"; params.append(status)
     if prio in ("High", "Medium", "Low"): q += " AND c.priority=?"; params.append(prio)
     q += " ORDER BY CASE c.priority WHEN 'High' THEN 0 WHEN 'Medium' THEN 1 ELSE 2 END, c.submitted_at DESC"
@@ -636,12 +665,14 @@ def create_officer():
     conn = get_request_conn()
     if len(name) < 3 or not uname or not dept.isdigit():
         flash("Name, username and department are required.", "danger")
+    elif not conn.execute("SELECT 1 FROM departments WHERE id=?", (dept,)).fetchone():
+        flash("Choose a valid department.", "danger")
     elif conn.execute("SELECT 1 FROM users WHERE username=?", (uname,)).fetchone():
         flash("Username already exists.", "danger")
     else:
         conn.execute(
             "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
-            (uname, generate_password_hash(pw), name, int(dept)))
+            (uname, generate_password_hash(pw), name, dept))
         conn.commit(); flash(f"Officer {uname} created.", "success")
     return redirect(url_for("users"))
 
@@ -702,7 +733,7 @@ def reports():
                       SUM(CASE WHEN c.status='In Progress' THEN 1 ELSE 0 END) AS in_progress,
                       SUM(CASE WHEN c.status='Resolved' THEN 1 ELSE 0 END) AS resolved,
                       SUM(CASE WHEN c.status='Closed' THEN 1 ELSE 0 END) AS closed,
-                      COUNT(*) AS total
+                      COUNT(c.id) AS total
                FROM departments d LEFT JOIN complaints c ON c.department_id=d.id GROUP BY d.id ORDER BY total DESC""").fetchall()
         pend = conn.execute("""SELECT department_id, COUNT(*) c FROM complaints
                                 WHERE status NOT IN ('Resolved','Closed') AND datetime(sla_due_at) < datetime('now','localtime')
@@ -724,7 +755,7 @@ def reports():
             """SELECT cat.name AS category, COUNT(*) AS n,
                       ROUND(AVG((julianday(c.resolved_at) - julianday(c.submitted_at)) * 24), 1) AS avg_hours
                FROM complaints c JOIN categories cat ON cat.id=c.category_id
-               WHERE c.resolved_at IS NOT NULL GROUP BY cat.id ORDER BY avg_hours""").fetchall()
+               WHERE c.status IN ('Resolved','Closed') AND c.resolved_at IS NOT NULL GROUP BY cat.id ORDER BY avg_hours""").fetchall()
         ctx["rows"] = rows
     elif which == "trend":
         rows = conn.execute(

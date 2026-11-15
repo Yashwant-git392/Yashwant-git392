@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (28 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (43 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -693,7 +693,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 28 tests, including CSRF, rollback, reopen checks, routing preview, privacy and ERD consistency.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The expanded suite covers CSRF, rollback, reopen checks, session deactivation, report edge cases, routing preview, privacy and ERD consistency.")
 
     pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -733,7 +733,7 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 28 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 43 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
@@ -847,7 +847,7 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
         ["Register — E-mail", "RFC-ish check ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$; validated but not stored."],
         ["Register — Mobile", "10-digit Indian mobile, first digit 6–9 (^[6-9]\d{9}$)."],
         ["Registration — Password", "≥ 6 characters; confirmation must match; hashed with Werkzeug — never plaintext."],
-        ["Login", "Username OR roll no. + password; deactivated accounts rejected at session creation; wrong credentials return a generic error."],
+        ["Login", "Username OR roll no. + password; deactivated accounts rejected at login and cleared on their next request; wrong credentials return a generic error."],
         ["Lodge — Title / Description", "Title ≥ 8 characters; description ≥ 20 characters (“help the department”); category must reference an existing categories.id."],
         ["Lodge — Anonymous", "Optional tick; the student identity and student event actor are hidden from officers. Free-text descriptions or notes can still identify the student."],
         ["Officer resolve — Remark", "Mandatory, ≥ 10 characters; resolution is blocked otherwise."],

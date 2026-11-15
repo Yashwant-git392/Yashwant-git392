@@ -111,11 +111,11 @@ Events capture actions such as creation, routing, acknowledgement, resolution, r
 
 An anonymous complaint still stores the student's ID. In officer-facing views the identity fields and student event actor are masked; administrators can see the identity. A description or other free text might identify the student. This is therefore **identity masking**, not full anonymity. Public tracking normally requires both code and roll number, which should not be treated as a strong secret.
 
-This is a demo: Flask-WTF checks CSRF tokens on POST forms, but the fallback secret and demo passwords are insecure. Set a strong private `SHIKAYAT_SECRET_KEY` before deployment. The app uses Flask's development server; stronger session management, rate limiting, HTTPS and a security review are still needed. Inactive status is checked at login; existing sessions are not comprehensively revoked on deactivation. Avoid claiming the app is fully secure.
+This is a demo: Flask-WTF checks CSRF tokens on POST forms, but the fallback secret and demo passwords are insecure. Set a strong private `SHIKAYAT_SECRET_KEY` before deployment. The app uses Flask's development server; stronger session management, rate limiting, HTTPS and a security review are still needed. Inactive or deleted accounts lose access on their next request; role and department are refreshed from the database. This does not revoke a copied session if an account is later reactivated. Avoid claiming the app is fully secure.
 
 ## 10. Reports, diagrams and tests
 
-The admin's six printable views are: **department pendency**, **SLA compliance**, **average resolution time by category**, **monthly trend**, **feedback** and **routing**. They are calculated from SQLite queries, not downloaded from an outside analytics service. Verify results with representative data; for example, the current pendency query uses `COUNT(*)` with a LEFT JOIN, so a department with no matching complaints can show a misleading total of 1. The admin dashboard's on-time calculation should also be reviewed for reopened items because its numerator can include records with a `resolved_at` timestamp even if their current status is In Progress.
+The admin's six printable views are: **department pendency**, **SLA compliance**, **average resolution time by category**, **monthly trend**, **feedback** and **routing**. They are calculated from SQLite queries, not downloaded from an outside analytics service. The pendency query uses `COUNT(c.id)` so empty departments show zero. SLA and average resolution time calculations include complaints currently Resolved or Closed, not reopened In Progress complaints; the stored resolution timestamp is overwritten on the next resolution.
 
 Explain the diagram types: architecture shows request/data layers; ERD shows six tables and foreign keys; use case shows roles and interactions; activity/lifecycle shows submission and allowed transitions; deployment shows a browser and local Flask/SQLite computer; module hierarchy maps actual files. The class/record diagram is conceptual: the project uses SQLite rows, not ORM model classes. Editable `.drawio` sources were programmatically generated and rendered with diagrams.net; do not represent them as manually drawn in another tool.
 
@@ -296,7 +296,7 @@ A chronological display of `complaint_events` records. Events store a type, note
 No. The application normally adds events instead of editing them, but SQLite itself does not prevent a database administrator from changing them.
 
 ### Q44. Does the app send email or SMS when a complaint changes?
-No. Some on-screen wording says a department was notified, but there is no email/SMS delivery service in the implementation. The department can see the complaint in its queue.
+No. There is no email/SMS delivery service in the implementation. A reopened complaint returns to the department queue, where an officer can see it.
 
 ## Database and SQL
 
@@ -354,10 +354,10 @@ No. The student ID remains in the database. Officers see masked identity fields 
 No. It is a simple demo tracking check, not a strong secret or a replacement for proper identity verification, rate limiting and privacy controls.
 
 ### Q62. What security work is needed before real deployment?
-Use a protected secret and non-default credentials; the app already checks CSRF tokens on POST forms. Add HTTPS, rate limits, stronger session and account controls, safe redirect validation, security testing and secure deployment/backups. Do not expose the development server publicly as-is.
+Use a protected secret and non-default credentials; the app already checks CSRF tokens on POST forms. Add HTTPS, rate limits, stronger session and account controls, security testing and secure deployment/backups. Login redirects are restricted to local paths. Do not expose the development server publicly as-is.
 
 ### Q63. What happens when an account is deactivated?
-The login route rejects inactive accounts. The current application does not comprehensively invalidate an already active session when status changes, so this needs improvement.
+The login route rejects inactive accounts. On the next request, an existing session for an inactive or deleted account is cleared. A copied cookie could still work after reactivation, so stronger revocation would be needed for production.
 
 ## Reports, testing and viva challenges
 
@@ -365,10 +365,10 @@ The login route rejects inactive accounts. The current application does not comp
 Department pendency, SLA compliance, average resolution time by category, monthly trend, feedback and routing summaries.
 
 ### Q65. How is average resolution time calculated?
-The report calculates the difference between `resolved_at` and `submitted_at` using SQLite `julianday`, converts it to hours and averages by category for rows with a resolution timestamp.
+The report calculates the difference between `resolved_at` and `submitted_at` using SQLite `julianday`, converts it to hours and averages by category for currently Resolved or Closed rows with a resolution timestamp.
 
 ### Q66. What is one reporting limitation?
-The pendency report uses `COUNT(*)` on a LEFT JOIN, so a department with no complaints can appear to have a total of 1. Use `COUNT(c.id)` and add a zero-complaint test when fixing it.
+The pendency report uses `COUNT(c.id)` with a LEFT JOIN, so departments with no complaints show zero rather than counting the unmatched join row.
 
 ### Q67. What tests are included?
 The current suite has 28 test cases, including CSRF, rollback, configuration, reopen handling and schema/diagram consistency. Examples include login, registration, routing, preview, permissions, lifecycle, reports and anonymous actor masking.
@@ -395,7 +395,7 @@ I can explain architecture, ERD, use case, complaint lifecycle/activity, concept
 The `.drawio` source files were generated programmatically and rendered using diagrams.net. They can be opened and edited there; I should not claim they were manually drawn in StarUML or EdrawMax.
 
 ### Q75. What is one limitation you would fix first?
-For a real rollout, I would prioritize security and correctness: replace demo secrets/passwords, strengthen session protections, consider an exact reopen rule, fix report edge cases and test them. CSRF protection and invalid-timestamp rejection are already implemented; the other items are proposed work.
+For a real rollout, I would prioritize security and correctness: replace demo secrets/passwords, strengthen session protections, consider an exact reopen rule, continue testing report and security edge cases. CSRF protection, invalid-timestamp rejection, local redirect validation and the identified report fixes are already implemented; stronger production controls are proposed work.
 
 ### Q76. What future features are possible?
 Notifications, attachment support, category administration, improved search and a production deployment are possible future additions. They are not existing features in this mini project.

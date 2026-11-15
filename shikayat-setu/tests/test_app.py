@@ -423,3 +423,136 @@ def test_secret_and_invalid_port_configuration(tmp_path):
     result = subprocess.run([sys.executable, 'run.py'], cwd=project, env=env, capture_output=True, text=True)
     assert result.returncode != 0
     assert 'SHIKAYAT_PORT must be an integer between 1 and 65535' in result.stderr
+
+
+def test_empty_department_pendency_count_is_zero(client):
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    conn.execute("INSERT INTO departments (name, head_name, email, location) VALUES ('Empty Department', 'Head', 'dept@example.test', 'Lab')")
+    conn.commit()
+    conn.close()
+    response = client.get('/reports?report=pendency')
+    row = re.search(rb'<tr><td><b>Empty Department</b></td>(.*?)</tr>', response.data, re.S)
+    assert row and b'<td><b>0</b></td>' in row.group(1)
+
+
+def test_reopened_complaint_not_counted_as_currently_resolved(client):
+    from flask import template_rendered
+    from app import app
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    conn.execute("UPDATE complaints SET status='Submitted', resolved_at=NULL")
+    ids = [r[0] for r in conn.execute('SELECT id FROM complaints LIMIT 2')]
+    conn.execute("UPDATE complaints SET status='Resolved', resolved_at='2020-01-01 00:00:00', sla_due_at='2020-01-02 00:00:00' WHERE id=?", (ids[0],))
+    conn.execute("UPDATE complaints SET status='In Progress', resolved_at='2020-01-01 00:00:00', sla_due_at='2020-01-02 00:00:00' WHERE id=?", (ids[1],))
+    conn.commit()
+    conn.close()
+    captured = []
+    def record(sender, template, context, **extra):
+        captured.append(context)
+    with template_rendered.connected_to(record, app):
+        assert client.get('/dashboard').status_code == 200
+        assert captured[-1]['on_time_pct'] == 100.0
+        assert client.get('/reports?report=restime').status_code == 200
+        assert sum(r['n'] for r in captured[-1]['rows']) == 1
+
+
+def test_create_officer_rejects_invalid_department_without_server_error(client):
+    login(client, 'admin', 'admin123')
+    response = post(client, '/users/officer', data={'username':'invalid.officer','full_name':'Test Officer', 'department_id':'999999','password':'test123'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'valid department' in response.data
+    conn = db.get_conn()
+    assert conn.execute("SELECT 1 FROM users WHERE username='invalid.officer'").fetchone() is None
+    conn.close()
+
+
+def test_deactivated_account_loses_existing_session(client):
+    from app import app
+    officer = app.test_client()
+    login(officer, 'hostel.officer', 'officer123')
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    uid = conn.execute("SELECT id FROM users WHERE username='hostel.officer'").fetchone()['id']
+    conn.close()
+    post(client, f'/users/{uid}/toggle')
+    response = officer.get('/queue', follow_redirects=False)
+    assert response.status_code == 302 and '/login' in response.headers['Location']
+    assert officer.get('/dashboard', follow_redirects=False).status_code == 302
+    assert login(officer, 'hostel.officer', 'officer123').status_code == 403
+
+
+def test_missing_account_invalidates_existing_session(client):
+    login(client, 'MCA2026001', 'student123')
+    with client.session_transaction() as session:
+        session['user_id'] = 999999
+    response = client.get('/dashboard', follow_redirects=False)
+    assert response.status_code == 302 and '/login' in response.headers['Location']
+
+
+@pytest.mark.parametrize('target', ['https://example.com/x', '//example.com/x', '/\\example.com', '/%0aexample'])
+def test_login_rejects_external_or_unsafe_next(client, target):
+    response = post(client, '/login?next=' + __import__('urllib.parse', fromlist=['quote']).quote(target, safe=''), data={'username':'admin','password':'admin123'})
+    assert response.status_code == 302 and response.headers['Location'] == '/dashboard'
+
+
+def test_login_allows_local_next(client):
+    response = post(client, '/login?next=%2Fqueue%3Fstatus%3DSubmitted', data={'username':'admin','password':'admin123'})
+    assert response.status_code == 302 and response.headers['Location'] == '/queue?status=Submitted'
+
+
+def test_manual_routing_label_distinguishes_retained_selection_and_reassignment(client):
+    login(client, 'MCA2026001', 'student123')
+    data = {'title':'A puzzling matter', 'description':'Nothing specific can be identified here.', 'category_id':'1'}
+    post(client, '/lodge', data=data)
+    conn = db.get_conn()
+    code = conn.execute('SELECT code FROM complaints ORDER BY id DESC LIMIT 1').fetchone()['code']
+    conn.close()
+    response = client.get('/complaint/' + code)
+    assert b'Selected category' in response.data
+    assert b'Manually reassigned by admin' not in response.data
+    post(client, '/logout')
+    login(client, 'admin', 'admin123')
+    post(client, '/complaint/' + code + '/reassign', data={'department_id':'2'})
+    assert b'Manually reassigned by admin' in client.get('/complaint/' + code).data
+    assert b'Manual routing' in client.get('/reports?report=routing').data
+
+
+def test_admin_feedback_redirect_and_timeline_credit(client):
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    code = conn.execute("SELECT code FROM complaints WHERE status='Resolved' LIMIT 1").fetchone()['code']
+    conn.close()
+    response = post(client, '/complaint/' + code + '/feedback', data={'rating':'5', 'comment':'Test feedback'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Admin rated 5/5.' in response.data
+    assert b'Admin confirmed resolution.' in response.data
+
+
+def test_officer_dashboard_only_active_and_priority_ordered(client):
+    from flask import template_rendered
+    from app import app
+    conn = db.get_conn()
+    dept = conn.execute("SELECT department_id FROM users WHERE username='hostel.officer'").fetchone()[0]
+    ids = [r[0] for r in conn.execute('SELECT id FROM complaints LIMIT 3')]
+    conn.execute("UPDATE complaints SET department_id=?, status='Closed'", (dept,))
+    conn.execute("UPDATE complaints SET status='Submitted', priority='Low', submitted_at='2026-11-09 10:00:00' WHERE id=?", (ids[0],))
+    conn.execute("UPDATE complaints SET status='Submitted', priority='High', submitted_at='2026-11-08 10:00:00' WHERE id=?", (ids[1],))
+    conn.execute("UPDATE complaints SET status='Resolved', priority='High' WHERE id=?", (ids[2],))
+    conn.commit()
+    conn.close()
+    login(client, 'hostel.officer', 'officer123')
+    captured = []
+    def record(sender, template, context, **extra): captured.append(context)
+    with template_rendered.connected_to(record, app):
+        assert client.get('/dashboard').status_code == 200
+    assert captured[-1]['assigned'] == 2 and captured[-1]['high'] == 1
+    assert [r['priority'] for r in captured[-1]['queue']] == ['High', 'Low']
+
+
+@pytest.mark.parametrize('department', ['²', '9' * 5000])
+def test_unusual_department_filters_do_not_crash(client, department):
+    from urllib.parse import quote
+    login(client, 'admin', 'admin123')
+    for path in ('/queue', '/console'):
+        assert client.get(path + '?department_id=' + quote(department)).status_code == 200

@@ -45,7 +45,7 @@ export SHIKAYAT_SECRET_KEY="replace-with-a-strong-private-random-value"
 export SHIKAYAT_PORT=5001
 ```
 
-On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_PORT = "5001"`. Changing the secret invalidates existing signed sessions and CSRF tokens; keep it private and stable across app workers. Never commit a real secret. If it is not set, startup warns and uses an insecure demo fallback. This remains a development server, not a production deployment; HTTPS, stronger credentials, rate limiting, secure session handling and a security review are still needed. The admin force-close action checks for Resolved status but does not enforce a seven-day waiting period; treat this as a known limitation.
+On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_PORT = "5001"`. Changing the secret invalidates existing signed sessions and CSRF tokens; keep it private and stable across app workers. Never commit a real secret. If it is not set, startup warns and uses an insecure demo fallback. This remains a development server, not a production deployment; HTTPS, stronger credentials, rate limiting, secure session handling and a security review are still needed. Inactive or deleted accounts lose access on their next request, but copied session cookies could become usable after reactivation; stronger session revocation is needed for production. The admin force-close action checks for Resolved status but does not enforce a seven-day waiting period; treat this as a known limitation.
 
 ## Tests
 
@@ -53,7 +53,7 @@ On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_
 python -m pytest tests/ -q
 ```
 
-The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, the complaint lifecycle and reports. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
+The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, inactive-account sessions, safe login redirects, the complaint lifecycle and report edge cases. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
 
 ## Project files
 

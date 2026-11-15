@@ -505,7 +505,7 @@ for i, (r, d, st) in enumerate(milestones):
     txt(s, x + 0.12, 4.2, mw - 0.24, 0.52, [dict(runs=[(r, dict(size=7.3, bold=True, color=(GOLD_L if st == "today" else GOLD)))], line_spacing=1.12)])
     txt(s, x + 0.12, 4.8, mw - 0.24, 1.0, [dict(runs=[(d, dict(size=6.4, color=(CREAM if st == "today" else INK)))], line_spacing=1.15)])
 rect(s, 0.55, 6.05, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (33 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
+txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
                                            dict(size=9, color=NAVY3))])])
 
 # ================================================================ SLIDE 15 — Future work
@@ -570,7 +570,7 @@ rect(s, 8.62, 3.4, 3.6, 0.015, fill=GOLD)
 txt(s, 8.62, 3.55, 3.7, 0.3, [dict(runs=[("http://127.0.0.1:5001", dict(font=MONO, size=10.5, bold=True, color=WHITE))])])
 txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin / admin123 · MCA2026001 / student123", dict(font=MONO, size=8.2, bold=True, color=GOLD_L))])])
 txt(s, 8.62, 4.35, 3.7, 1.3,
-    [dict(runs=[("Report — 33 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
+    [dict(runs=[("Report — Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
      dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 0.85, 6.35, 12.0, 0.35,
     [dict(runs=[("Campus Shikayat Setu — because every grievance deserves a paper trail.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
