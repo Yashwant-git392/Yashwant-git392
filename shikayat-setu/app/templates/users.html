@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Users &amp; Officers{% endblock %}
+{% block body %}
+<div class="page-head"><div><div class="eyebrow">Administration</div><h1>Users &amp; Officers</h1><p>Create department officers; activate or deactivate accounts.</p></div></div>
+<div class="grid two-col">
+  <div class="card">
+    <h2><span class="h-icon">👥</span> All accounts</h2>
+    <div class="toolbar" style="margin-bottom:12px">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" placeholder="Filter by name, role, department…" data-filter-table="#users-table" aria-label="Filter accounts">
+      </div>
+    </div>
+    <div class="table-wrap"><table class="tbl" id="users-table">
+      <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Department</th><th>Status</th><th></th></tr></thead>
+      <tbody>{% for u in rows %}
+        <tr><td class="mono">{{ u['username'] }}</td><td>{{ u['full_name'] }}</td>
+            <td><span class="badge badge-navy">{{ u['role'] }}</span></td>
+            <td>{{ u['department_name'] or '—' }}</td>
+            <td><span class="badge {{ 'badge-green' if u['status']=='Active' else 'badge-gray' }}">{{ u['status'] }}</span></td>
+            <td>{% if u['username'] != 'admin' %}<form method="post" action="{{ url_for('toggle_user', uid=u['id']) }}"><button class="btn btn-sm btn-ghost" type="submit">{{ 'Deactivate' if u['status']=='Active' else 'Activate' }}</button></form>{% endif %}</td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+  <div class="card">
+    <h2><span class="h-icon">➕</span> Create department officer</h2>
+    <form method="post" action="{{ url_for('create_officer') }}" class="form-grid" style="grid-template-columns:1fr">
+      <div class="field"><label for="off-name">Full name</label><input id="off-name" name="full_name" required placeholder="e.g. Mrs. S. Kulkarni"></div>
+      <div class="field"><label for="off-dept">Department</label>
+        <select id="off-dept" name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
+      <div class="field"><label for="off-user">Username</label><input id="off-user" name="username" required placeholder="e.g. hostel.officer" autocomplete="off"></div>
+      <div class="field"><label for="off-pwd">Initial password</label>
+        <div class="pwd-wrap"><input id="off-pwd" name="password" value="officer123" required autocomplete="off">
+          <button class="pwd-toggle" type="button" data-pwd-toggle aria-label="Toggle password visibility">👁</button></div>
+      </div>
+      <button class="btn btn-gold" type="submit">Create Officer</button>
+    </form>
+    <p class="help" style="margin-top:10px">Default password <code class="kbd">officer123</code> — ask the officer to change it on first sign-in.</p>
+  </div>
+</div>
+{% endblock %}

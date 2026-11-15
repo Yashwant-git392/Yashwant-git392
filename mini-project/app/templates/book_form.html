@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add' if mode=='add' else 'Edit' }} Book{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>{{ '➕ Add New Book' if mode=='add' else '✏️ Edit Book' }}</h1><p>All fields marked * are mandatory. ISBN must be unique.</p></div>
+  <a class="btn btn-ghost" href="{{ url_for('books') }}">← Back to Catalog</a>
+</div>
+<form method="post" class="card" action="{{ url_for('add_book') if mode=='add' else url_for('edit_book', book_id=book_id) }}">
+  <div class="form-grid">
+    <div class="field"><label for="isbn">ISBN *</label><input id="isbn" name="isbn" required pattern="[0-9Xx -]{10,17}" title="ISBN-10 or ISBN-13, e.g. 978-0-13-468599-1" placeholder="978-0-13-468599-1" value="{{ book.isbn or form.isbn or '' }}"><span class="help">ISBN-10 / ISBN-13 (hyphens allowed)</span></div>
+    <div class="field"><label for="title">Title *</label><input id="title" name="title" required minlength="2" maxlength="200" placeholder="e.g. Effective Java" value="{{ book.title or form.title or '' }}"></div>
+    <div class="field"><label for="author">Author(s) *</label><input id="author" name="author" required minlength="2" placeholder="e.g. Joshua Bloch" value="{{ book.author or form.author or '' }}"></div>
+    <div class="field"><label for="publisher">Publisher</label><input id="publisher" name="publisher" placeholder="e.g. Addison-Wesley" value="{{ book.publisher or form.publisher or '' }}"></div>
+    <div class="field"><label for="category">Category *</label>
+      <select id="category" name="category" required>
+        {% for c in ['Programming','Database','Algorithms','Operating Systems','Software Engineering','Theory of Computation','Networking','Mathematics','General Knowledge','Other'] %}
+        <option value="{{ c }}" {{ 'selected' if (book.category or form.category) == c }}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field"><label for="edition">Edition</label><input id="edition" name="edition" placeholder="e.g. 3rd Edition" value="{{ book.edition or form.edition or '' }}"></div>
+    <div class="field"><label for="quantity">Quantity (copies) *</label><input id="quantity" name="quantity" type="number" min="0" max="10000" required value="{{ book.quantity if book.quantity is defined else (form.quantity or 1) }}"><span class="help">Cannot go below copies currently issued{% if mode=='edit' %} (available will be recalculated){% endif %}</span></div>
+    <div class="field"><label for="shelf_location">Shelf Location</label><input id="shelf_location" name="shelf_location" placeholder="e.g. A-01" value="{{ book.shelf_location or form.shelf_location or '' }}"></div>
+  </div>
+  <div class="actions" style="margin-top:18px">
+    <button class="btn btn-primary" type="submit">💾 {{ 'Add Book' if mode=='add' else 'Save Changes' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('books') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

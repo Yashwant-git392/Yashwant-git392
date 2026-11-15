@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Complaint Queue{% endblock %}
+{% block body %}
+<div class="page-head"><div><div class="eyebrow">Department Workspace</div><h1>Complaint Queue</h1><p>Your department’s workload — highest priority first, overdue highlighted.</p></div></div>
+<div class="card">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" placeholder="Filter by code, title, category…" data-filter-table="#queue-table" aria-label="Filter queue">
+    </div>
+  </div>
+  {% if rows %}
+  <div class="table-wrap"><table class="tbl" id="queue-table">
+    <thead><tr><th>Code</th><th>Title</th><th>Priority</th><th>Status</th><th>SLA due</th><th></th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b class="mono">{{ r['code'] }}</b></a></td>
+          <td class="row-title">{{ r['title'] }}<br><span class="help">{{ r['category_name'] }} · {{ '🕶️ anonymous' if r['is_anonymous'] else r['student_name'] }}</span></td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
+          <td>{{ r['status'] }}</td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else 'mono' }}">{{ r['sla_due_at'][:16] }}</td>
+          <td><a class="btn btn-sm btn-primary" href="{{ url_for('complaint_detail', code=r['code']) }}">Open →</a></td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}
+  <div class="empty-state"><div class="big">🎉</div><p>Queue is clear — nothing pending in your department.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

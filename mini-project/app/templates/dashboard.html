@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>📊 Dashboard</h1><p>Live overview of the library — {{ now_date }}</p></div>
+  <div class="actions"><a class="btn btn-gold" href="{{ url_for('issue_book') }}">+ Issue Book</a><a class="btn btn-primary" href="{{ url_for('add_book') }}">+ Add Book</a></div>
+</div>
+<div class="grid stats">
+  <div class="stat"><div class="label">Titles</div><div class="value">{{ stats.total_titles }}</div><div class="hint">distinct titles in catalog</div></div>
+  <div class="stat"><div class="label">Total Copies</div><div class="value">{{ stats.total_copies }}</div><div class="hint">physical copies owned</div></div>
+  <div class="stat"><div class="label">Available</div><div class="value">{{ stats.available }}</div><div class="hint">ready to issue</div></div>
+  <div class="stat"><div class="label">Active Members</div><div class="value">{{ stats.members }}</div><div class="hint">students + faculty</div></div>
+  <div class="stat"><div class="label">Currently Issued</div><div class="value">{{ stats.issued }}</div><div class="hint">unreturned copies</div></div>
+  <div class="stat"><div class="label">Overdue</div><div class="value" style="color:{{ 'var(--red)' if stats.overdue else 'var(--green)' }}">{{ stats.overdue }}</div><div class="hint">past due date</div></div>
+  <div class="stat"><div class="label">Fines Collected</div><div class="value">₹{{ '%.0f'|format(stats.fines_collected) }}</div><div class="hint">@ ₹2 / day late</div></div>
+</div>
+<div class="grid two-col">
+  <div class="card">
+    <h2>🕘 Recent Transactions</h2>
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Book</th><th>Member</th><th>Issued</th><th>Due</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for t in recent %}
+        <tr><td>{{ t.title }}</td><td>{{ t.member_name }}</td><td>{{ t.issue_date }}</td><td>{{ t.due_date }}</td>
+          <td>{% if t.status == 'Issued' %}<span class="badge {{ 'badge-red' if t.is_overdue else 'badge-blue' }}">{{ 'Overdue' if t.is_overdue else 'Issued' }}</span>{% else %}<span class="badge badge-green">Returned</span>{% endif %}</td></tr>
+        {% else %}<tr><td colspan="5" class="empty-state">No transactions yet</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>⚠️ Low Stock Alert (≤ 1 copy)</h2>
+    {% if low_stock %}
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Title</th><th>Available</th></tr></thead>
+      <tbody>{% for b in low_stock %}<tr><td>{{ b.title }}</td><td><span class="badge badge-amber">{{ b.available_quantity }} left</span></td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<div class="empty-state"><div class="big">✅</div>All titles well stocked</div>{% endif %}
+  </div>
+</div>
+<div class="footer-note">SmartLibrary v1.0 · SPPU MCA-I Sem-I Mini Project · Application Development · Guide: MCA Department</div>
+{% endblock %}

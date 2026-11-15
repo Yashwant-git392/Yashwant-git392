@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Members{% endblock %}
+{% block body %}
+<div class="page-head">
+  <div><h1>🎓 Members</h1><p>Student and faculty library memberships</p></div>
+  <a class="btn btn-gold" href="{{ url_for('add_member') }}">+ Register Member</a>
+</div>
+<form class="toolbar" method="get" action="{{ url_for('members') }}">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search roll no / name / email…" aria-label="Search members">
+  <button class="btn btn-primary" type="submit">🔍 Search</button>
+  {% if q %}<a class="btn btn-ghost" href="{{ url_for('members') }}">Clear</a>{% endif %}
+</form>
+{% if members %}
+<div class="table-wrap"><table class="tbl">
+  <thead><tr><th>Roll / ID</th><th>Name</th><th>Contact</th><th>Dept · Sem</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for m in members %}
+    <tr>
+      <td><code>{{ m.roll_no }}</code></td>
+      <td><strong>{{ m.name }}</strong><br><span class="help">{{ m.email }}</span></td>
+      <td>{{ m.phone }}</td>
+      <td>{{ m.department }} · {{ m.semester }}</td>
+      <td><span class="badge badge-blue">{{ m.membership_type }}</span></td>
+      <td>{% if m.status=='Active' %}<span class="badge badge-green">Active</span>{% else %}<span class="badge badge-red">Inactive</span>{% endif %}</td>
+      <td class="actions">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('edit_member', member_id=m.member_id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_member', member_id=m.member_id) }}" onsubmit="return confirm('Delete member “{{ m.name }}”?');">
+          <button class="btn btn-red btn-sm" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="empty-state"><div class="big">🎓</div><p>No members found. Try a different search.</p></div>
+{% endif %}
+{% endblock %}

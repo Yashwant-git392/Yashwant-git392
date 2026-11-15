@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}My Complaints{% endblock %}
+{% block body %}
+<div class="page-head"><div><div class="eyebrow">Student Workspace</div><h1>My Complaints</h1><p>Every complaint you lodged — filter instantly, track inline.</p></div>
+  <a class="btn btn-gold" href="{{ url_for('lodge') }}">✍️ Lodge new</a></div>
+<div class="card">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" placeholder="Filter by code, title, department…" data-filter-table="#my-table" data-filter-count="#my-count" aria-label="Filter complaints">
+    </div>
+    <span class="help" id="my-count"></span>
+  </div>
+  {% if rows %}
+  <div class="table-wrap"><table class="tbl" id="my-table">
+    <thead><tr><th>Code</th><th>Title</th><th>Department</th><th>Priority</th><th>Status</th><th>SLA due</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><a href="{{ url_for('complaint_detail', code=r['code']) }}"><b class="mono">{{ r['code'] }}</b></a></td>
+          <td class="row-title">{{ r['title'] }}</td>
+          <td>{{ r['department_name'] }}</td>
+          <td><span class="badge {{ 'badge-red' if r['priority']=='High' else ('badge-amber' if r['priority']=='Medium' else 'badge-gray') }}"><span class="b-dot"></span>{{ r['priority'] }}</span></td>
+          <td><span class="badge {{ 'badge-green' if r['status'] in ['Resolved','Closed'] else 'badge-blue' }}">{{ r['status'] }}</span></td>
+          <td class="{{ 'sla-late' if r['is_overdue'] else 'mono' }}">{{ r['sla_due_at'][:16] }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  <div class="table-foot"><span>Showing <span id="my-count-foot">{{ rows|length }}</span> of {{ rows|length }}</span><span>SLA: High 24h · Medium 72h · Low 7d</span></div>
+  {% else %}
+  <div class="empty-state"><div class="big">📭</div><p>You haven’t lodged anything yet.</p><a class="btn btn-gold" style="margin-top:12px" href="{{ url_for('lodge') }}">Lodge your first complaint</a></div>
+  {% endif %}
+</div>
+{% endblock %}

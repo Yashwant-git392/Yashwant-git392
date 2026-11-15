@@ -1,5 +1,13 @@
 ## Hi there 👋
 
+**Featured project — SmartLibrary (SPPU MCA-I, Application Development, 2026-27)**
+A college library management system (Python · Flask · SQLite): catalogue, membership,
+circulation rules (3-book limit · 14-day loan · ₹2/day fine), and five print-ready registers.
+Code: [`mini-project/`](mini-project/) · [run it](mini-project/README.md) ·
+[33-page report (PDF)](report/SmartLibrary_MCA-Mini-Project_Report.pdf) ·
+tests: 12/12 passing.
+
+
 <!--
 **Yashwant-git392/Yashwant-git392** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 

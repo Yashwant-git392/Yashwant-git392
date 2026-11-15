@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Local demo database — auto-created and seeded on first run (see mini-project/README.md)
+mini-project/app/smartlibrary.db
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Shikayat Setu demo DB
+shikayat-setu/app/shikayat_setu.db

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Lodge Complaint{% endblock %}
+{% block body %}
+<div class="page-head"><div><div class="eyebrow">New Grievance</div><h1>Lodge a Complaint</h1><p>Tell us what happened and where. Your complaint will be reviewed and assigned to a department.</p></div></div>
+<div class="card">
+  <div class="form-intro"><h2>Complaint details</h2><p>Fields marked required must be completed. Please do not include passwords or other sensitive information.</p></div>
+  <form method="post" id="lodge-form">
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1"><label for="lodge-title">Title <span class="help">(required · at least 8 characters)</span></label>
+        <input id="lodge-title" name="title" value="{{ form.get('title','') }}" placeholder="e.g. Leaking tap in washroom near Lab 3" required minlength="8" autocomplete="off" aria-describedby="title-hint title-count">
+        <div class="field-hint" id="title-hint">Give a short summary of the issue.</div>
+        <div class="counter" id="title-count" data-counter-for="#lodge-title" data-min="8">0 / min 8</div></div>
+      <div class="field" style="grid-column:1/-1"><label for="lodge-desc">Description <span class="help">(required · at least 20 characters)</span></label>
+        <textarea id="lodge-desc" name="description" rows="4" required minlength="20" aria-describedby="desc-hint desc-count" placeholder="What exactly is wrong? Where? Since when? Who is affected?">{{ form.get('description','') }}</textarea>
+        <div class="field-hint" id="desc-hint">Include what happened, when it started and who is affected.</div>
+        <div class="counter" id="desc-count" data-counter-for="#lodge-desc" data-min="20">0 / min 20</div></div>
+      <div class="field"><label for="lodge-cat">Category <span class="help">(required)</span></label>
+        <select id="lodge-cat" name="category_id" required aria-describedby="category-hint">
+          <option value="">— choose —</option>
+          {% for c in cats %}<option value="{{ c['id'] }}" {{ 'selected' if form.get('category_id')|string == c['id']|string }}>{{ c['name'] }} → {{ c['dept'] }}</option>{% endfor %}
+        </select><div class="field-hint" id="category-hint">Choose the closest match. Keywords may suggest a different category.</div></div>
+      <div class="field"><label for="lodge-loc">Location <span class="help">(optional)</span></label>
+        <input id="lodge-loc" name="location" value="{{ form.get('location','') }}" placeholder="e.g. Washroom, 2nd Floor"></div>
+    </div>
+
+    <div class="route-preview" id="route-preview" aria-live="polite">
+      <div class="rp-head"><span class="pulse"></span> Estimated routing</div>
+      <div class="rp-grid">
+        <div class="rp-item"><div class="rp-k">Category</div><div class="rp-v" data-rp="cat">—</div></div>
+        <div class="rp-item"><div class="rp-k">Department</div><div class="rp-v" data-rp="dept">—</div></div>
+        <div class="rp-item"><div class="rp-k">Priority</div><div class="rp-v badge badge-gray" data-rp="prio">—</div></div>
+        <div class="rp-item"><div class="rp-k">SLA</div><div class="rp-v" data-rp="sla">—</div></div>
+        <div class="rp-item"><div class="rp-k">Keyword score</div><div class="rp-v" data-rp="score">—</div></div>
+      </div>
+      <p class="route-note">Based on your description and selected category. The final assignment is confirmed when you submit.</p>
+    </div>
+
+    <div style="margin:14px 0 16px">
+      <label class="switch" for="lodge-anon">
+        <input type="checkbox" id="lodge-anon" name="is_anonymous" {{ 'checked' if form.get('is_anonymous') }}>
+        <span class="track" aria-hidden="true"></span>
+        <span><b>Lodge anonymously</b><br><span class="help">Your identity is hidden from department officers, but administrators can see it. Avoid identifying yourself in the description if you wish to remain anonymous.</span></span>
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-gold">Submit Complaint&nbsp;→</button>
+      <a class="btn btn-ghost" href="{{ url_for('my_complaints') }}">My complaints</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
