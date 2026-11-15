@@ -4,7 +4,7 @@ Routing rules:
 * every category carries a keyword list; multi-word keywords weigh more;
 * the title is weighted double (it usually carries the intent);
 * mass-impact phrases bump priority one level; catastrophe words force High;
-* if nothing matches, the complaint falls back to General & Administration.
+* the application keeps the selected category when no stronger match exists.
 """
 import re
 

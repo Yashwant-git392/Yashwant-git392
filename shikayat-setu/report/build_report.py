@@ -384,7 +384,7 @@ def ch1(pdf: Report):
         "Complaint lodging with category, description, location and optional anonymous flag.",
         "Automatic department routing with weighted keyword scoring + audit event; admin reassign with full trace.",
         "SLA matrix (High 24 h / Medium 72 h / Low 7 days) with live overdue computation and escalation-to-High.",
-        "Officer workflow: acknowledge → in-progress → resolve (remark mandatory) · student confirmation with 1–5 star rating or reopen (≤ 7 days).",
+        "Officer workflow: acknowledge → in-progress → resolve (remark mandatory) · student confirmation with 1–5 star rating or reopen (whole-day age check).",
         "Admin console: filter by department/status/priority, reassign, escalate, force-close resolved complaints, manage officer accounts.",
         "Six print-ready registers: Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.",
         "Public tracker (complaint code + roll no., no login) and seeded deterministic demo (32 complaints across 6 departments).",
@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (19 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (20 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -480,7 +480,7 @@ def ch2(pdf: Report):
     pdf.h2("2.4  Users of System")
     pdf.table(["User", "Access scope", "Capabilities"], [
         ["Student (seeded MCA2026001–008)", "Own complaints only",
-         "Self-register (name / roll / e-mail / mobile / password) · lodge (category, location, anonymous option) · track (code and roll no.) · submit 1–5 ★ feedback to close · reopen within 7 days · change password"],
+         "Self-register (name / roll / e-mail / mobile / password) · lodge (category, location, anonymous option) · track (code and roll no.) · submit 1–5 ★ feedback to close · reopen with a whole-day age check · change password"],
         ["Department Officer (×6 departments)", "Assigned department only",
          "Priority-ordered queue · acknowledge → in-progress → resolve (remark ≥ 10 chars) · every action written to the audit timeline"],
         ["Administrator", "College-wide",
@@ -505,7 +505,7 @@ def ch2(pdf: Report):
     pdf.table(["Module", "Responsibility"], [
         ["Auth & Profile", "Login (username or roll no.), logout, student self-registration, change password, account activation/deactivation."],
         ["Lodging", "Category picker, validation (title ≥ 8 chars, description ≥ 20), anonymous flag, preview of routing score."],
-        ["Routing Engine (routing.py)", "Weighted keyword scoring (multi-word keywords weigh more; title counts double); safety words force High; mass-impact phrases bump one level; unmatched → General & Administration."],
+        ["Routing Engine (routing.py)", "Weighted keyword scoring (multi-word keywords weigh more; title counts double); safety words force High; mass-impact phrases bump one level; no stronger match → retain selected category."],
         ["SLA & Escalation", "Deadline = submission + SLA(priority); overdue computed at render time; admin escalation raises priority to High with an audit event."],
         ["Officer Workflow", "Department-scoped queue (priority, then recency); acknowledge / start work / resolve with mandatory ≥ 10-char remark; timeline remarks."],
         ["Student Closure", "Feedback (1–5 + comment) closes; or reopen (≤ 7 days, reason mandatory) returns to In Progress."],
@@ -521,11 +521,11 @@ def ch3(pdf: Report):
     pdf.h3("3.1.1  Functional requirements")
     pdf.table(["ID", "Requirement", "Priority"], [
         ["FR-1", "Student shall register with roll no. (MCA2026NNN), e-mail, mobile (Indian format) and password; duplicate roll nos. are rejected.", "Must"],
-        ["FR-2", "Any user shall be able to lodge a complaint (students), with title ≥ 8 chars and description ≥ 20 chars.", "Must"],
-        ["FR-3", "System shall auto-route on submit with weighted keyword scoring; unmatched → General & Administration.", "Must"],
+        ["FR-2", "Students can lodge complaints; title ≥ 8 chars, description ≥ 20 chars and a valid category.", "Must"],
+        ["FR-3", "System uses keyword scoring; when no stronger match exists, the selected category is retained.", "Must"],
         ["FR-4", "System shall compute SLA due time at submission: High 24 h, Medium 72 h, Low 168 h.", "Must"],
         ["FR-5", "Officers shall acknowledge / mark in-progress / resolve; resolution requires a ≥ 10-char remark.", "Must"],
-        ["FR-6", "Students shall close via feedback (1–5 stars) or reopen within 7 days of resolution.", "Must"],
+        ["FR-6", "Students shall close via feedback (1–5 stars) or reopen with a whole-day age check of resolution.", "Must"],
         ["FR-7", "Anonymous complaints shall hide complainant identity from all officers; visible to admins only.", "Must"],
         ["FR-8", "Admin shall filter, reassign, escalate (→High) and force-close resolved complaints.", "Must"],
         ["FR-9", "Every state change shall append an immutable timeline event.", "Must"],
@@ -543,8 +543,8 @@ def ch3(pdf: Report):
         ["NFR-6", "Code style: PEP 8, bound parameters only, no string-concatenated SQL."],
     ], [18, 160])
 
-    pdf.h2("3.2  Entity Relationship Diagram (ERD)", reserve=115)
-    pdf.figure(f"{IMG}/fig-erd.png", 142, "Figure 3.1  ERD — six tables with PK/FK crow's-foot cardinalities.")
+    pdf.h2("3.2  Entity Relationship Diagram (ERD)", reserve=150)
+    pdf.figure(f"{IMG}/fig-erd.png", 178, "Figure 3.1  ERD — actual SQLite foreign keys and relationship cardinalities.")
 
     pdf.h2("3.3  Table Structure")
     pdf.p("Physical schema (verbatim from <b>schema.sql</b>, Appendix A) — every column, key and CHECK constraint in force:")
@@ -557,31 +557,31 @@ def ch3(pdf: Report):
         ["feedback", "id PK · complaint_id FK UNIQUE · rating CHECK(1..5) · comment · created_at"],
     ], [30, 148])
 
-    pdf.h2("3.4  Use-Case Diagrams", reserve=106)
-    pdf.figure(f"{IMG}/fig-usecase.png", 152, "Figure 3.2  Use-case diagram — Student / Officer / Admin swimlanes with shared use cases.")
+    pdf.h2("3.4  Use-Case Diagrams", reserve=140)
+    pdf.figure(f"{IMG}/fig-usecase.png", 178, "Figure 3.2  Use cases — Student, Officer, Administrator and public visitor.")
     pdf.h3("3.4.1  Use-case descriptions (selection)")
     pdf.table(["Use case", "Actor", "Flow"], [
         ["Lodge complaint", "Student", "Fill title+description+location+category → submit → router assigns dept & SLA → code shown on timeline."],
-        ["Resolve complaint", "Officer", "Open queue → acknowledge → in-progress → resolve with remark → status Resolved; resolved_at = now."],
+        ["Resolve complaint", "Officer", "Open complaint → optionally acknowledge/start work → resolve with remark; direct resolution is also permitted."],
         ["Confirm & close", "Student", "Resolved list → star rating + comment → status Closed; feedback row inserted (UNIQUE per complaint)."],
-        ["Reopen (≤7 days)", "Student", "Resolved list → reason → status back to In Progress; event reopened logged."],
+        ["Reopen (whole-day check)", "Student", "Own resolved complaint → reason → status In Progress; age uses whole days and invalid timestamps skip the check."],
         ["Reassign", "Admin", "Console → pick new department → routing=manual → audit event with old→new."],
         ["Escalate to High", "Admin", "Console → escalate → priority=High → audit event; SLA kept at original deadline; escalation surfaces on all views."],
         ["Track without login", "Public", "Enter code + roll no. → timeline & current status rendered."],
     ], [32, 18, 128])
 
-    pdf.h2("3.5  Class Diagram", reserve=104)
-    pdf.figure(f"{IMG}/fig-class.png", 152, "Figure 3.3  Class view — RouteEngine, Complaint, ComplaintEvent, Feedback, User hierarchy.")
+    pdf.h2("3.5  Class Diagram", reserve=140)
+    pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3  Conceptual data records and selected module functions; the app does not use ORM classes.")
 
-    pdf.h2("3.6  Activity Diagram", reserve=103)
-    pdf.figure(f"{IMG}/fig-activity.png", 152, "Figure 3.4  Activity diagram — lodging, routing, SLA stamping, officer workflow, closure path.")
+    pdf.h2("3.6  Activity Diagram", reserve=135)
+    pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4  Activity diagram — submission and supported status transitions.")
     pdf.note("Overdue is never stored — it is derived: now > sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
 
-    pdf.h2("3.7  Deployment Diagram", reserve=90)
-    pdf.figure(f"{IMG}/fig-deployment.png", 150, "Figure 3.5  Deployment — single node lab PC; browsers on same PC or LAN peers.")
+    pdf.h2("3.7  Deployment Diagram", reserve=110)
+    pdf.figure(f"{IMG}/fig-deployment.png", 178, "Figure 3.5  Deployment — single node lab PC; browsers on same PC or LAN peers.")
 
-    pdf.h2("3.8  Module Hierarchy Diagram", reserve=108)
-    pdf.figure(f"{IMG}/fig-modules.png", 150, "Figure 3.6  Module hierarchy — three role layers over the shared routing/SLA core.")
+    pdf.h2("3.8  Module Hierarchy Diagram", reserve=125)
+    pdf.figure(f"{IMG}/fig-modules.png", 178, "Figure 3.6  Module hierarchy — actual project files and responsibilities.")
 
     pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
     pdf.p("These screenshots use seeded demo data; see Appendix B for sample records. Every "
@@ -693,7 +693,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 19 tests, including routing preview, anonymous identity masking and UI checks.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The current suite has 20 tests, including routing preview, anonymous identity masking, UI checks and ERD schema consistency.")
 
     pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -730,10 +730,10 @@ def ch6(pdf: Report):
         "<b>L-3  No notifications:</b> students must poll /my-complaints or the tracker; no SMS/e-mail push yet.",
         "<b>L-4  Single node:</b> SQLite file on one PC is the whole database; horizontal scaling is impossible without migration.",
         "<b>L-5  Category catalogue is seed-fixed:</b> officers cannot add categories; admins cannot edit them without SQL.",
-        "<b>L-6  Reopen window fixed at 7 days:</b> not configurable per department.",
+        "<b>L-6  Reopen age check:</b> compares whole days to 7, skips the check if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 19 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 20 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
@@ -801,7 +801,7 @@ def ch10(pdf: Report):
         ["Admin", "admin / admin123", "Everything: console, reassign, escalate, force-close, users & officers, reports"],
         ["Officer", "hostel.officer · it.officer · maint.officer · exam.officer · welfare.officer · admin.officer / officer123",
          "Own-department queue; acknowledge / progress / resolve; remarks"],
-        ["Student", "MCA2026001 … MCA2026008 / student123", "Lodge, track, feedback, reopen (≤ 7 days)"],
+        ["Student", "MCA2026001 … MCA2026008 / student123", "Lodge, track, feedback, reopen (whole-day age check)"],
         ["Public (no login)", "/track + complaint code + roll no.", "View timeline only"],
     ], [26, 62, 90])
 
@@ -852,7 +852,7 @@ python3 run.py        # → http://127.0.0.1:5001  (auto-initialises & seeds)'''
         ["Lodge — Anonymous", "Optional tick; the student identity and student event actor are hidden from officers. Free-text descriptions or notes can still identify the student."],
         ["Officer resolve — Remark", "Mandatory, ≥ 10 characters; resolution is blocked otherwise."],
         ["Student confirm — Rating", "1–5 stars mandatory for Close; comment optional; feedback UNIQUE per complaint (FK constraint)."],
-        ["Student reopen — Reason", "Mandatory, ≥ 10 characters; accepted only within 7 days of resolution; status returns to In Progress."],
+        ["Student reopen — Reason", "Mandatory, ≥ 10 characters; whole-day resolution age must be ≤ 7 if the timestamp parses; status returns to In Progress."],
         ["Admin — Reassign / Force-close", "Reassign requires a valid department. Force-close requires Resolved status; the seven-day wait is not enforced. Both actions are logged."],
         ["Public tracker (/track)", "Requires BOTH code and roll no.; mismatched pairs render nothing (no enumeration)."],
     ], [54, 124], size=7.6)
@@ -916,7 +916,7 @@ def appc(pdf: Report):
         ("Keyword weight", "Routing score = Σ(weight × hits); multi-word keywords weigh double per word."),
         ("Mass impact", "Phrase class (“entire”, “all students”) that bumps priority one level."),
         ("OLA", "Operational Level Agreement — internal equivalent of SLA between departments."),
-        ("Reopen", "Student rejection of a resolution within 7 days; returns status to In Progress."),
+        ("Reopen", "Student rejection of a resolution; whole-day age check applies if timestamp parses; returns status to In Progress."),
         ("Resolution remark", "Mandatory ≥ 10-character note officers must enter when resolving."),
         ("Safety word", "Phrase class (ragging, shock, fire…) that forces priority High at submission."),
         ("SLA", "Service-Level Agreement — High 24 h · Medium 72 h · Low 7 days for this college."),

@@ -206,7 +206,7 @@ agenda = [
     ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
     ("06", "Live demo", "dashboard, console, timeline"),
     ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "19 automated tests + 8 historical manual scenarios"),
+    ("08", "Testing evidence", "20 automated tests + 8 historical manual scenarios"),
     ("09", "Timeline & deliverables", "review track, effort, artefacts"),
     ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
 ]
@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("19/19", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("20/20", "tests passing")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -272,7 +272,7 @@ txt(s, 6.4, 1.66, 3.0, 0.3, [dict(runs=[("IN SCOPE — v1.0", dict(size=9.5, bol
 bullets(s, 6.4, 2.05, 6.15, 1.7, [
     "Register & login; Werkzeug hashing; signed sessions",
     "Keyword routing with explainable scores (title weighted ×2)",
-    "Acknowledge → in-progress → resolve; feedback ★1–5 closes; reopen ≤ 7 days",
+    "Optional acknowledge / progress → resolve; feedback closes; reopen uses whole-day age",
     "Officer department queue; admin console (reassign/escalate/force-close)",
     "Print CSS registers; public tracker without login",
 ], size=9.2, gap=3, marker="•  ", mcolor=GREEN)
@@ -291,7 +291,7 @@ s = add_slide(); header(s, "03 · USERS & USE CASES", "Three logged-in roles, on
 card(s, 0.55, 1.5, 4.35, 1.5)
 txt(s, 0.78, 1.62, 3.9, 0.3, [dict(runs=[("ACTOR 1 — STUDENT (COMPLAINANT)", dict(size=9, bold=True, color=GOLD))])])
 txt(s, 0.78, 1.94, 3.9, 0.26, [dict(runs=[("The aggrieved", dict(size=11, bold=True, color=NAVY))])])
-txt(s, 0.78, 2.26, 3.95, 0.72, [dict(runs=[("Lodges complaints (optionally anonymous), tracks by code, rates resolutions, reopens within 7 days.",
+txt(s, 0.78, 2.26, 3.95, 0.72, [dict(runs=[("Lodges complaints (optionally anonymous), tracks by code, rates resolutions, reopens subject to a whole-day age check.",
                                              dict(size=9.5, color=INK))], line_spacing=1.15)])
 card(s, 0.55, 3.14, 4.35, 1.5)
 txt(s, 0.78, 3.26, 3.9, 0.3, [dict(runs=[("ACTOR 2 — OFFICER (DEPARTMENT)", dict(size=9, bold=True, color=GOLD))])])
@@ -304,7 +304,7 @@ txt(s, 0.78, 5.22, 3.9, 0.26, [dict(runs=[("The backstop", dict(size=11, bold=Tr
 txt(s, 0.78, 5.54, 3.95, 0.72, [dict(runs=[("Console over everything; reassign, escalate to High, force-close resolved complaints; view anonymous identity fields.",
                                              dict(size=9.5, color=INK))], line_spacing=1.12)])
 pic_fit(s, f"{IMG}/fig-usecase.png", 5.25, 1.52, 7.55, 4.9)
-txt(s, 5.6, 6.5, 7.0, 0.3, [dict(runs=[("Use-case diagram — report §3.3; roles swimlane-separated, public tracker outside login",
+txt(s, 5.6, 6.5, 7.0, 0.3, [dict(runs=[("Use-case diagram — report §3.4; includes public tracking",
                                           dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 
 # ================================================================ SLIDE 6 — Architecture & stack
@@ -331,7 +331,7 @@ chip(s, 5.06, 5.72, 1.15, "hashing", fill=NAVY2, tc=WHITE)
 # ================================================================ SLIDE 7 — ERD & constraints
 s = add_slide(); header(s, "04 · DATA MODEL", "Six tables, no cleverness"); footer(s, 7)
 pic_fit(s, f"{IMG}/fig-erd.png", 0.55, 1.5, 6.6, 4.35)
-txt(s, 0.75, 5.9, 6.2, 0.3, [dict(runs=[("ERD — report §3.2; PK/FK crow’s-foot cardinalities", dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
+txt(s, 0.75, 5.9, 6.2, 0.3, [dict(runs=[("ERD — report §3.2; actual SQLite foreign keys and cardinalities", dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 tables = [
     ("departments", "name UNIQUE · head_name · email · location"),
     ("categories", "FK→departments · default_priority CHECK · keywords TEXT"),
@@ -350,15 +350,15 @@ bullets(s, 7.5, 5.95, 5.3, 1.1, [
 ], size=9, gap=3)
 
 # ================================================================ SLIDE 8 — Module hierarchy
-s = add_slide(); header(s, "05 · MODULES", "One app, three role layers"); footer(s, 8)
+s = add_slide(); header(s, "05 · MODULES", "Project files and responsibilities"); footer(s, 8)
 pic_fit(s, f"{IMG}/fig-modules.png", 0.55, 1.48, 7.3, 4.35)
-txt(s, 0.75, 5.88, 6.9, 0.3, [dict(runs=[("Module hierarchy — report §3.7; each leaf maps to a Flask route group",
+txt(s, 0.75, 5.88, 6.9, 0.3, [dict(runs=[("Module hierarchy — report §3.8; actual application files",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 routes = [
-    ("auth_bp", "/login · /logout · /register · /change-password"),
+    ("auth", "/login · /logout · /register · /change-password"),
     ("student", "/lodge · /my-complaints · /complaint/<code>/feedback|reopen"),
-    ("officer", "/queue · /complaint/<code>/acknowledge|start|resolve|remark"),
-    ("admin", "/console · /reassign · /escalate · /force-close · /users · /officers"),
+    ("officer", "/queue · /complaint/<code>/acknowledge|progress|resolve|remark"),
+    ("admin", "/console · /complaint/<code>/reassign|escalate|force-close · /users"),
     ("public", "/track — complaint code + roll no., no login"),
     ("reports", "/reports?report=pendency|sla|restime|trend|feedback|routing"),
 ]
@@ -389,10 +389,10 @@ txt(s, 0.55, 5.3, 4.6, 0.3, [dict(runs=[("RESOLUTION LOOP", dict(size=9.5, bold=
 bullets(s, 0.55, 5.64, 4.6, 1.3, [
     ("resolve — ", "remark ≥ 10 chars, status → Resolved"),
     ("close — ", "student rates ★1–5 → Closed"),
-    ("reopen — ", "≤ 7 days → back to In Progress"),
+    ("reopen — ", "whole-day check → back to In Progress"),
 ], size=9.2, gap=3, marker="→  ", mcolor=GOLD)
 pic_fit(s, f"{IMG}/fig-activity.png", 5.55, 2.9, 7.25, 3.35)
-txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Swimlane — lodge → route → resolve → close, admin escalation path — report §3.4",
+txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Submission and permitted status transitions — report §3.6",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 # ================================================================ SLIDE 10 — Demo: student view
 s = add_slide(); header(s, "06 · LIVE DEMO (1/2)", "Student view — lodge, track, confirm"); footer(s, 10)
@@ -403,7 +403,7 @@ txt(s, 0.55, 1.55, 4.4, 0.3, [dict(runs=[("WHAT TO NOTICE", dict(size=10, bold=T
 bullets(s, 0.55, 2.0, 4.6, 3.9, [
     ("Signed in as MCA2026001 — ", "dashboard shows only your own complaints, KPIs counted live."),
     ("Lodge in one page — ", "title ≥ 8 · description ≥ 20; router confirms or overrides the picked category, score printed on the timeline."),
-    ("Feedback closes, reopen ≤ 7 days — ", "if the fix failed, one click sends it back to In Progress."),
+    ("Feedback closes; reopen uses whole days — ", "if the fix failed, a reason is required to return it to In Progress."),
     ("Public tracker — ", "CMP code + roll number, no login: great for the demo queue."),
 ], size=10.5, gap=8)
 
@@ -458,7 +458,7 @@ bullets(s, 0.55, 6.12, 12.2, 0.6, [
 s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
 card(s, 0.55, 1.5, 6.0, 3.3)
 txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("19 / 19 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
+txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("20 / 20 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
 bullets(s, 0.8, 2.72, 5.6, 1.6, [
     "Auth: login page · wrong password → 401 · anonymous → /login",
     "Register: happy path · duplicate roll no. → 400",
@@ -505,7 +505,7 @@ for i, (r, d, st) in enumerate(milestones):
     txt(s, x + 0.12, 4.2, mw - 0.24, 0.52, [dict(runs=[(r, dict(size=7.3, bold=True, color=(GOLD_L if st == "today" else GOLD)))], line_spacing=1.12)])
     txt(s, x + 0.12, 4.8, mw - 0.24, 1.0, [dict(runs=[(d, dict(size=6.4, color=(CREAM if st == "today" else INK)))], line_spacing=1.15)])
 rect(s, 0.55, 6.05, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (32 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
+txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (33 pp, 4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
                                            dict(size=9, color=NAVY3))])])
 
 # ================================================================ SLIDE 15 — Future work
@@ -556,7 +556,7 @@ rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
 txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
 bullets(s, 0.85, 3.45, 6.1, 2.2, [
     ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "19 automated checks; 8 manual scenarios recorded earlier."),
+    ("Tests — ", "20 automated checks; 8 manual scenarios recorded earlier."),
     ("Every complaint gets a trail — ", "lodge to close, one timeline, zero lost grievances."),
 ], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
 card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)
@@ -570,7 +570,7 @@ rect(s, 8.62, 3.4, 3.6, 0.015, fill=GOLD)
 txt(s, 8.62, 3.55, 3.7, 0.3, [dict(runs=[("http://127.0.0.1:5001", dict(font=MONO, size=10.5, bold=True, color=WHITE))])])
 txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin / admin123 · MCA2026001 / student123", dict(font=MONO, size=8.2, bold=True, color=GOLD_L))])])
 txt(s, 8.62, 4.35, 3.7, 1.3,
-    [dict(runs=[("Report — 32 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
+    [dict(runs=[("Report — 33 pages, Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
      dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
 txt(s, 0.85, 6.35, 12.0, 0.35,
     [dict(runs=[("Campus Shikayat Setu — because every grievance deserves a paper trail.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
