@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("32", "complaints"), ("100", "audit events"), ("28/28", "tests passing")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("108", "automated tests")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -416,8 +416,8 @@ pic_fit(s, f"{IMG}/screen-timeline.png", 6.9, 1.5, 5.9, 3.6)
 txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Complaint detail — screenshot with seeded demo data",
                                             dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 card(s, 0.55, 5.55, 12.23, 0.85, fill=NAVY, line=None)
-txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("EVERY DEMO IS DETERMINISTIC", dict(size=9, bold=True, color=GOLD))])])
-txt(s, 0.8, 5.95, 11.8, 0.3, [dict(runs=[("Fresh clone → seed → 32 complaints, 100 events, 6 feedback rows — the viva demo reproduces exactly; no live typing needed.",
+txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("ILLUSTRATIVE DEMO DATA", dict(size=9, bold=True, color=GOLD))])])
+txt(s, 0.8, 5.95, 11.8, 0.3, [dict(runs=[("Fresh seed: 37 complaints, 135 events, 11 feedback rows. Five historical examples are synthetic; dates are relative.",
                                             dict(size=9.5, color=CREAM))])])
 
 # ================================================================ SLIDE 12 — Reports
@@ -429,7 +429,7 @@ rows = [
     ("1", "Department pendency", "Open workload per department + overdue count (derives from SLA)"),
     ("2", "SLA compliance", "% resolved within deadline per department — ROUND over COUNT"),
     ("3", "Avg resolution time", "Hours per category, julianday arithmetic on timestamps"),
-    ("4", "Monthly trend", "Lodged vs resolved, last 6 months — capacity planning"),
+    ("4", "Monthly trend", "Submission month and current resolved status — last 6 months"),
     ("5", "Feedback / ratings", "Average ★ per department + latest 10 comments"),
     ("6", "Routing quality", "auto vs manual split + avg routing score — proves the router"),
 ]
@@ -448,7 +448,7 @@ for i, row in enumerate(rows):
             r.font.color.rgb = INK if j != 0 else NAVY
             r.font.bold = (j == 0)
 rect(s, 0.55, 5.35, 12.23, 0.62, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 5.47, 12, 0.3, [dict(runs=[("≥ 5 valid records per report — the Review 3 acceptance bar, met from the seed itself (32 complaints, 6 departments).",
+txt(s, 0.82, 5.47, 12, 0.3, [dict(runs=[("Five or more example rows per view; routing has two mode totals plus at least five manual detail rows.",
                                           dict(size=9.5, italic=True, color=NAVY3))])])
 bullets(s, 0.55, 6.12, 12.2, 0.6, [
     ("Print-ready — ", "Ctrl+P: chrome vanishes via @media print; A4 portrait; headers repeat per page."),

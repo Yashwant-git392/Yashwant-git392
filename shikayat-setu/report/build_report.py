@@ -387,7 +387,7 @@ def ch1(pdf: Report):
         "Officer workflow: acknowledge → in-progress → resolve (remark mandatory) · student confirmation with 1–5 star rating or reopen (whole-day age check).",
         "Admin console: filter by department/status/priority, reassign, escalate, force-close resolved complaints, manage officer accounts.",
         "Six print-ready registers: Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.",
-        "Public tracker (complaint code + roll no., no login) and seeded deterministic demo (32 complaints across 6 departments).",
+        "Public tracker (complaint code + roll no., no login) and seeded demo (37 illustrative complaints across 6 departments).",
     ])
     pdf.figure(f"{IMG}/fig-gantt.png", 172, "Figure 1.1  Project timeline — milestones notified 30-09-2026: Review 1 (10 Oct) → Review 2 (24 Oct) → Review 3 (21 Nov) → Review 4 (05 Dec) → Final Internal Demo (19 Dec).")
     pdf.h3("Out of scope (deferred — see Chapter 7)")
@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (44 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (108 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -498,7 +498,7 @@ def ch2(pdf: Report):
         "<b>Student layer:</b> register → lodge (category, location, anonymous flag) → track (code and roll no.) → confirm or reopen with feedback.",
         "<b>Officer layer:</b> department queue ordered by priority then recency; acknowledge → start work → resolve with mandatory remark.",
         "<b>Admin layer:</b> college-wide console — filter, reassign, escalate (priority→High), force-close resolved complaints, manage officer accounts.",
-        "<b>Report layer:</b> six Ctrl+P print-ready registers, each with ≥ 5 live records from the seed.",
+        "<b>Report layer:</b> six Ctrl+P print-ready registers, with at least five example records; the routing summary has two modes plus a list of manual examples.",
     ])
 
     pdf.h2("2.6  Modules Identified")
@@ -539,7 +539,7 @@ def ch3(pdf: Report):
         ["NFR-2", "Zero data loss on crash: SQLite ACID with foreign_keys ON; backup = file copy."],
         ["NFR-3", "Passwords hashed with Werkzeug; signed sessions and CSRF tokens. Demo credentials are not secure."],
         ["NFR-4", "Print CSS hides chrome; registers fit A4 portrait without truncation."],
-        ["NFR-5", "Deterministic seed: fresh clone reproduces the exact demo dataset (< 200 ms)."],
+        ["NFR-5", "Fresh databases receive illustrative seed data with dates relative to the seeding date."],
         ["NFR-6", "Code style: PEP 8, bound parameters only, no string-concatenated SQL."],
     ], [18, 160])
 
@@ -585,12 +585,12 @@ def ch3(pdf: Report):
 
     pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
     pdf.p("These screenshots use seeded demo data; see Appendix B for sample records. Every "
-          "register prints ≥ 5 valid records, as item 3.9 of the schedule requires. Full annotated screen catalogue with "
+          "fresh-seed register includes at least five illustrative records; routing has two mode summaries and a separate manual example list. Full annotated screen catalogue with "
           "validation notes is given in Chapter 10 (User Manual, §10.3 and §10.5).")
     pdf.figure(f"{IMG}/screen-login.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
     pdf.figure(f"{IMG}/screen-dashboard.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).")
     pdf.figure(f"{IMG}/screen-lodge.png", 148, "Figure 3.9  Sample input — Complaint form with estimated routing.")
-    pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (32-record filterable register).")
+    pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (fresh-seed filterable register).")
     pdf.figure(f"{IMG}/screen-timeline.png", 148, "Figure 3.11  Sample output — Complaint detail: SLA clock, stepper and timeline.")
 
     pdf.h2("3.10  Constraints and Assumptions")
@@ -628,13 +628,13 @@ def assign_priority(default_priority, title, description):
 
     pdf.h2("4.2  Lodging a complaint — validation, routing, SLA stamping")
     pdf.code('''def select_category(title, description, chosen, categories):
-    text = routing.route_text(title, description)
-    matched, score = routing.route(text, categories)
+    text = route_text(title, description)
+    matched, score = route(text, categories)
     if matched and (matched["id"] == chosen["id"] or
-                    score > routing.score_category(text, chosen["keywords"])):
+                    score > score_category(text, chosen["keywords"])):
         return matched, "auto", score
     return chosen, "manual", 0''',
-        title="app.py — category selection shared by submission and preview")
+        title="routing.py — selection shared by submission, preview and seed")
 
     pdf.h2("4.3  Resolution workflow — status transitions")
     pdf.code('''@app.route("/complaint/<code>/resolve", methods=["POST"])
@@ -646,8 +646,10 @@ def resolve(code):
     if c["status"] not in ("In Progress", "Acknowledged", "Submitted"):
         flash("Complaint is already resolved or closed.", "warning")
     else:
-        conn.execute("UPDATE complaints SET status='Resolved', resolved_at=? WHERE id=?",
-                     (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), c["id"]))
+        if not transition_status(conn, c, 'Resolved',
+                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "status", f"Resolved — {remark}", user["id"])
         conn.commit()''', title="app.py — resolve() excerpt")
 
@@ -693,12 +695,12 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The expanded suite covers CSRF, rollback, reopen checks, session deactivation, report edge cases, routing preview, privacy and ERD consistency.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The 108-test suite also covers the lifecycle matrix, role and ownership checks, CSRF, rollback, seed data, report calculations, concurrency, privacy and ERD consistency; see TESTING.md.")
 
     pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
         ["TC-13", "Login page in browser", "Brand + demo credentials visible", "PASS"],
-        ["TC-14", "Admin login → dashboard KPIs (32 complaints)", "Counts match seed", "PASS"],
+        ["TC-14", "Admin login → dashboard KPIs (fresh seed)", "Counts match seed", "PASS"],
         ["TC-15", "Officer “it.officer” opens queue", "Only IT & Computer Labs rows; ragging complaint absent", "PASS"],
         ["TC-16", "Anonymous complaint CMP-2026-0015 viewed by officer", "Identity shows “Anonymous”; admin sees full identity", "PASS"],
         ["TC-17", "Lodge “fan regulator … classroom 3-A” as student", "Routed to Sanitation & Maintenance, Medium, SLA 72 h", "PASS"],
@@ -711,14 +713,14 @@ def ch5(pdf: Report):
     pdf.p("The tables above list the original automated and manual test cases and their recorded results. Run pytest to check the current suite. The following defects were recorded during development.")
     pdf.table(["ID", "Defect", "Fix", "Verified"], [
         ["DEF-01", "Seed crashed: complaints.code NOT NULL constraint on insert",
-         "Insert placeholder TMP-<hex>, then UPDATE to CMP-YYYY-NNNN using lastrowid", "Re-seeded clean 32/32"],
+         "Insert placeholder TMP-<hex>, then UPDATE to CMP-YYYY-NNNN using lastrowid", "Original seed verified"],
         ["DEF-02", "Seed crashed: minute overflow (7*hour+3 could be ≥ 60)",
          "minute = (13*hour + 7) % 60", "Re-seeded clean"],
         ["DEF-03", "Officer dashboard passed sqlite Row to template expecting dict key is_overdue",
          "Rows converted to dict with computed is_overdue before render", "12/12 tests + manual TC-17"],
     ], [14, 58, 58, 22])
     pdf.h2("5.5  Regression")
-    pdf.p("After each fix the full suite was re-run (12/12) plus the affected manual scenario; final state on 09-11-2026: "
+    pdf.p("After each fix the full suite was re-run (12/12) plus the affected manual scenario; original run on 09-11-2026: "
           "<b>12 passed in 15.85 s; manual TC-13 … TC-20 all PASS.</b>")
 
 
@@ -733,7 +735,7 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 44 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 108 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
@@ -764,7 +766,7 @@ def ch8(pdf: Report):
     pdf.h1("ch8", "Conclusion", "Chapter 8")
     pdf.p("Campus Shikayat Setu replaces an untraceable complaint box with an auditable, SLA-bound grievance pipeline — "
           "built, seeded, tested and documented inside one semester. Every functional requirement FR-1…FR-12 is executable "
-          "on the live build; every manual scenario TC-13…TC-20 passes; all known defects were fixed and re-verified.")
+          "on the live build; the recorded original manual scenarios passed; current test scope and remaining limitations are documented in TESTING.md.")
     pdf.p("The engineering lesson is old but worth repeating: for a single-campus grievance tool, a boring stack (Flask + "
           "SQLite + Jinja) outperforms any fashionable one — the database choice was made for the use case, the architecture "
           "is one file deep, and the demo is deterministic. The craft is in the rules on the timeline: routing score, SLA "
@@ -888,17 +890,17 @@ def appb(pdf: Report):
               [[r["username"], r["role"], r["full_name"], r["dept"], r["status"]] for r in rows],
               [30, 18, 44, 52, 24], size=7.0)
 
-    pdf.h2("B.4  complaints — 32 rows (₹-style totals not applicable)")
+    pdf.h2("B.4  complaints — 37 rows (₹-style totals not applicable)")
     rows = db_rows("SELECT code, title, priority, status FROM complaints ORDER BY id")
     pdf.table(["Code", "Title", "Pri", "Status"],
               [[r["code"], r["title"], r["priority"], r["status"]] for r in rows],
               [24, 108, 12, 24], size=6.8)
 
-    pdf.h2("B.5  complaint_events — 100 rows (audit trail)")
+    pdf.h2("B.5  complaint_events — 135 rows (audit trail)")
     rows = db_rows("""SELECT event_type, COUNT(*) AS n FROM complaint_events GROUP BY event_type ORDER BY n DESC""")
     pdf.table(["Event type", "Count"], [[r["event_type"], r["n"]] for r in rows], [60, 40], size=8.2)
 
-    pdf.h2("B.6  feedback — 6 rows")
+    pdf.h2("B.6  feedback — 11 rows")
     rows = db_rows("""SELECT c.code, f.rating, f.comment FROM feedback f JOIN complaints c ON c.id=f.complaint_id ORDER BY f.id""")
     pdf.table(["Complaint", "Rating", "Comment"],
               [[r["code"], "★" * r["rating"], (r["comment"] or "—")] for r in rows],

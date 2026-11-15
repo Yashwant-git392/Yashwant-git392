@@ -323,6 +323,13 @@ code.kbd{background:var(--gray-bg);border:1px solid var(--line);border-radius:6p
   .sidebar,.topbar,.toolbar,.btn,.report-tabs,.toast-stack,.overlay{display:none!important}
   .content{margin:0;padding:0}.card{box-shadow:none;border:1px solid #ddd}
   .print-only{display:block}
+  .table-wrap{overflow:visible;border:0}
+  table.tbl{width:100%;table-layout:auto;font-size:8pt}
+  .tbl thead{display:table-header-group}
+  .tbl thead th{position:static;white-space:normal;overflow-wrap:anywhere;letter-spacing:0;font-size:7pt;padding:5px 3px}
+  .tbl td{padding:5px 3px;overflow-wrap:anywhere}
+  .tbl .mono{white-space:normal}
+  .tbl tr{break-inside:avoid}
 }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -348,3 +355,14 @@ code.kbd{background:var(--gray-bg);border:1px solid var(--line);border-radius:6p
   .search-wrap,.search-wrap input{width:100%;min-width:0}
   .toast-stack{left:14px;right:14px;bottom:14px;max-width:none}
 }
+
+/* Keep the navigation controls usable on narrow phones. */
+@media(max-width:420px){
+  .topbar .crumb{min-width:0;overflow:hidden;white-space:nowrap}
+  .topbar .crumb span{display:none}
+  .topbar .crumb b{overflow:hidden;text-overflow:ellipsis}
+  .topbar .pill{display:none}
+  .topbar .hamburger,.topbar .icon-btn{flex:0 0 auto}
+}
+
+@page{size:A4 portrait;margin:12mm}

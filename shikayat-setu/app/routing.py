@@ -50,6 +50,17 @@ def route(text: str, categories) -> tuple[object, int]:
     return best_cat, best_score
 
 
+
+def select_category(title, description, chosen, categories):
+    """Use the highest keyword match when it is not weaker than the choice."""
+    text = route_text(title, description)
+    matched, score = route(text, categories)
+    if matched and (matched["id"] == chosen["id"] or
+                    score > score_category(text, chosen["keywords"])):
+        return matched, "auto", score
+    return chosen, "manual", 0
+
+
 def bump_priority(priority: str) -> str:
     return {"Low": "Medium", "Medium": "High", "High": "High"}[priority]
 

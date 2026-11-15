@@ -10,7 +10,7 @@ These diagrams describe the current application, not a proposed rewrite. The sev
 | ERD | `app/schema.sql` via SQLite PRAGMA metadata | Six tables and all eight foreign keys, including nullable `users.department_id` and `complaint_events.actor_id`. `feedback.complaint_id` is unique, so a complaint has at most one feedback row. |
 | Use case | Route decorators and handlers in `app/app.py` | Student, officer, administrator and public visitor. Admins can also use officer complaint actions; public tracking normally needs both the complaint code and roll number. |
 | Class model | `app/schema.sql`, functions in `app/app.py` and `app/routing.py` | A **conceptual** model of SQLite rows and selected associations. The application does not implement these records as Python/ORM classes. The ERD is authoritative for all foreign keys. |
-| Activity | `lodge`, `select_category`, `acknowledge`, `start_work`, `resolve`, `feedback`, `reopen`, `force_close` in `app/app.py` | Submission, optional acknowledgement and progress, direct resolution, feedback closure, reopening and admin force-close. |
+| Activity | `lodge`, `acknowledge`, `start_work`, `resolve`, `feedback`, `reopen`, `force_close` in `app/app.py`; category selection delegates to `app/routing.py` | Submission, optional acknowledgement and progress, direct resolution, feedback closure, reopening and admin force-close. |
 | Deployment | `run.py`, `app/database.py` | Flask's development server defaults to port 5001 (configurable with `SHIKAYAT_PORT`) and uses a SQLite file. LAN access depends on local network settings. |
 | Module hierarchy | Project files and Python imports | Actual launcher, Flask routes, router, database module, schema, templates and static assets; no blueprints or background workers. |
 

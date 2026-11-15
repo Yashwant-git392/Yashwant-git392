@@ -8,6 +8,7 @@ Run:  python run.py            → http://127.0.0.1:5001
 """
 import os
 import re
+import sqlite3
 from datetime import date, datetime, timedelta
 from functools import wraps
 from urllib.parse import unquote, urlsplit
@@ -47,8 +48,8 @@ def close_request_conn(error):
             conn.close()
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
-PHONE_RE = re.compile(r"^[6-9]\d{9}$")
-ROLL_RE  = re.compile(r"^MCA2026\d{3}$", re.I)
+PHONE_RE = re.compile(r"^[6-9][0-9]{9}$")
+ROLL_RE  = re.compile(r"^MCA2026[0-9]{3}$", re.I)
 
 STATUS_ORDER = ["Submitted", "Acknowledged", "In Progress", "Resolved", "Closed"]
 
@@ -156,12 +157,7 @@ def is_overdue(complaint):
 
 def select_category(title, description, chosen, categories):
     """Use the keyword match when it scores higher than the chosen category."""
-    text = routing.route_text(title, description)
-    matched, score = routing.route(text, categories)
-    if matched and (matched["id"] == chosen["id"] or
-                    score > routing.score_category(text, chosen["keywords"])):
-        return matched, "auto", score
-    return chosen, "manual", 0
+    return routing.select_category(title, description, chosen, categories)
 
 
 @app.route("/api/route-preview")
@@ -265,10 +261,18 @@ def register():
         if errors:
             for e in errors: flash(e, "danger")
             return render_template("register.html", form=request.form), 400
-        conn.execute(
-            "INSERT INTO users (role, username, password_hash, full_name, roll_no, phone, status) VALUES ('student',?,?,?,?,?, 'Active')",
-            (roll, generate_password_hash(pw), name, roll, phone))
-        conn.commit()
+        try:
+            conn.execute(
+                "INSERT INTO users (role, username, password_hash, full_name, roll_no, phone, status) VALUES ('student',?,?,?,?,?, 'Active')",
+                (roll, generate_password_hash(pw), name, roll, phone))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            # Another request may have registered the same roll after our check.
+            if not conn.execute("SELECT 1 FROM users WHERE roll_no=? OR username=?", (roll, roll)).fetchone():
+                raise
+            flash("Roll number already registered or account already exists.", "danger")
+            return render_template("register.html", form=request.form), 400
         flash("Registration successful. Please log in with your roll number.", "success")
         return redirect(url_for("login"))
     return render_template("register.html", form={})
@@ -441,6 +445,25 @@ def get_for_action(code, roles=None):
     return conn, c, user
 
 
+def transition_status(conn, complaint, new_status, resolved_at=None):
+    """Only transition the exact state/assignment observed during authorization."""
+    if resolved_at is None:
+        result = conn.execute(
+            """UPDATE complaints SET status=? WHERE id=? AND status=?
+               AND department_id=? AND resolved_at IS ?""",
+            (new_status, complaint["id"], complaint["status"], complaint["department_id"], complaint["resolved_at"]))
+    else:
+        result = conn.execute(
+            """UPDATE complaints SET status=?, resolved_at=? WHERE id=? AND status=?
+               AND department_id=? AND resolved_at IS ?""",
+            (new_status, resolved_at, complaint["id"], complaint["status"], complaint["department_id"], complaint["resolved_at"]))
+    return result.rowcount == 1
+
+
+def stale_complaint():
+    flash("Complaint changed while you were working. Please review it and try again.", "warning")
+
+
 @app.route("/complaint/<code>/acknowledge", methods=["POST"])
 @login_required
 @role_required("officer", "admin")
@@ -449,7 +472,9 @@ def acknowledge(code):
     if c["status"] != "Submitted":
         flash("Only Submitted complaints can be acknowledged.", "warning")
     else:
-        conn.execute("UPDATE complaints SET status='Acknowledged' WHERE id=?", (c["id"],))
+        if not transition_status(conn, c, 'Acknowledged'):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "acknowledged", (request.form.get("note") or "Complaint acknowledged by department.").strip(), user["id"])
         conn.commit(); flash("Complaint acknowledged.", "success")
     return redirect(url_for("complaint_detail", code=code))
@@ -463,7 +488,9 @@ def start_work(code):
     if c["status"] not in ("Acknowledged", "Submitted"):
         flash("Work can only start on Submitted/Acknowledged complaints.", "warning")
     else:
-        conn.execute("UPDATE complaints SET status='In Progress' WHERE id=?", (c["id"],))
+        if not transition_status(conn, c, 'In Progress'):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "status", (request.form.get("note") or "Work started on the complaint.").strip(), user["id"])
         conn.commit(); flash("Marked In Progress.", "success")
     return redirect(url_for("complaint_detail", code=code))
@@ -480,8 +507,9 @@ def resolve(code):
     elif c["status"] not in ("In Progress", "Acknowledged", "Submitted"):
         flash("Complaint is already resolved or closed.", "warning")
     else:
-        conn.execute("UPDATE complaints SET status='Resolved', resolved_at=? WHERE id=?",
-                     (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), c["id"]))
+        if not transition_status(conn, c, 'Resolved', datetime.now().strftime("%Y-%m-%d %H:%M:%S")):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "status", f"Resolved — {remark}", user["id"])
         conn.commit(); flash("Complaint marked Resolved. The student can now confirm or reopen.", "success")
     return redirect(url_for("complaint_detail", code=code))
@@ -514,9 +542,11 @@ def feedback(code):
     if rating not in ("1", "2", "3", "4", "5"):
         flash("Choose a rating between 1 and 5.", "danger")
         return redirect(url_for("complaint_detail", code=code))
+    if not transition_status(conn, c, 'Closed'):
+        stale_complaint()
+        return redirect(url_for("complaint_detail", code=code))
     conn.execute("INSERT OR REPLACE INTO feedback (complaint_id, rating, comment) VALUES (?,?,?)",
                  (c["id"], int(rating), comment))
-    conn.execute("UPDATE complaints SET status='Closed' WHERE id=?", (c["id"],))
     actor = "Student" if user["role"] == "student" else "Admin"
     log_event(conn, c["id"], "feedback", f"{actor} rated {rating}/5.{(' — ' + comment) if comment else ''}", user["id"])
     log_event(conn, c["id"], "closed", f"{actor} confirmed resolution. Complaint closed.", user["id"])
@@ -544,7 +574,9 @@ def reopen(code):
         except (TypeError, ValueError):
             flash("Resolution time is unavailable or invalid; please contact the administration.", "danger")
             return redirect(url_for("complaint_detail", code=code))
-        conn.execute("UPDATE complaints SET status='In Progress' WHERE id=?", (c["id"],))
+        if not transition_status(conn, c, 'In Progress'):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "reopened", f"Student reopened: {reason}", user["id"])
         conn.commit(); flash("Complaint reopened and returned to the department queue.", "success")
     return redirect(url_for("complaint_detail", code=code))
@@ -588,7 +620,9 @@ def force_close(code):
     if c["status"] != "Resolved":
         flash("Only Resolved complaints can be force-closed.", "warning")
     else:
-        conn.execute("UPDATE complaints SET status='Closed' WHERE id=?", (c["id"],))
+        if not transition_status(conn, c, 'Closed'):
+            stale_complaint()
+            return redirect(url_for("complaint_detail", code=code))
         log_event(conn, c["id"], "closed", "Closed by admin.", user["id"])
         conn.commit(); flash("Complaint force-closed.", "success")
     return redirect(url_for("complaint_detail", code=code))
@@ -667,13 +701,23 @@ def create_officer():
         flash("Name, username and department are required.", "danger")
     elif not conn.execute("SELECT 1 FROM departments WHERE id=?", (dept,)).fetchone():
         flash("Choose a valid department.", "danger")
+    elif len(pw) < 6:
+        flash("Officer password must be at least 6 characters.", "danger")
     elif conn.execute("SELECT 1 FROM users WHERE username=?", (uname,)).fetchone():
         flash("Username already exists.", "danger")
     else:
-        conn.execute(
-            "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
-            (uname, generate_password_hash(pw), name, dept))
-        conn.commit(); flash(f"Officer {uname} created.", "success")
+        try:
+            conn.execute(
+                "INSERT INTO users (role, username, password_hash, full_name, department_id, status) VALUES ('officer',?,?,?,?, 'Active')",
+                (uname, generate_password_hash(pw), name, dept))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            if not conn.execute("SELECT 1 FROM users WHERE username=?", (uname,)).fetchone():
+                raise
+            flash("Username already exists.", "danger")
+        else:
+            flash(f"Officer {uname} created.", "success")
     return redirect(url_for("users"))
 
 
@@ -681,6 +725,8 @@ def create_officer():
 @login_required
 @role_required("admin")
 def toggle_user(uid):
+    if uid > 9223372036854775807:
+        abort(404)
     conn = get_request_conn()
     u = conn.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
     if not u:

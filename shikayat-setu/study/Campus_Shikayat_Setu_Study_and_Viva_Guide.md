@@ -50,7 +50,7 @@ A useful memory map is: **Browser → Flask route → authorization and validati
 2. `app/schema.sql` — defines tables, constraints, relationships and indexes. Start here to understand stored data.
 3. `app/database.py` — opens SQLite connections, enables foreign keys, initializes the schema and inserts demo records if there are no users. The default file is `app/shikayat_setu.db`; environment variable `SHIKAYAT_DB` can change it.
 4. `app/routing.py` — contains `score_category`, `route`, `assign_priority`, `route_text` and the SLA mapping.
-5. `app/app.py` — Flask routes, authorization helpers, submission and status rules. Read `select_category`, `lodge`, `get_for_action`, `resolve`, `feedback` and `reopen` in that order.
+5. `app/app.py` — Flask routes, authorization helpers, submission and status rules. Read `select_category`, `lodge`, `get_for_action`, `resolve`, `feedback` and `reopen` in that order. The category-selection helper delegates to `routing.select_category`, also used during seeding.
 6. `app/templates/` — Jinja pages. Follow `lodge.html`, `complaint_detail.html`, `queue.html`, `console.html` and `reports.html`.
 7. `app/static/js/app.js` and `app/static/css/style.css` — preview, display behavior and styling. JavaScript uses the same-origin `/api/route-preview` endpoint.
 8. `tests/test_app.py` and `tests/test_diagrams.py` — examples of expected behavior and schema/diagram checks. `report/diagrams/` contains editable diagrams.net sources.
@@ -103,7 +103,7 @@ A useful memory map is: **Browser → Flask route → authorization and validati
 
 ![Complaint submission and supported lifecycle transitions](../report/images/fig-activity.png)
 
-Events capture actions such as creation, routing, acknowledgement, resolution, reassignment and reopening. They are stored as database rows and displayed in time/id order. The application mainly inserts events; the schema does not make the event table cryptographically tamper-proof or immutable.
+Status transitions use a conditional update against the observed status, assignment and resolution timestamp, so concurrent duplicate actions do not each create a transition event. Events capture actions such as creation, routing, acknowledgement, resolution, reassignment and reopening. They are stored as database rows and displayed in time/id order. The application mainly inserts events; the schema does not make the event table cryptographically tamper-proof or immutable.
 
 ## 9. Access control and privacy
 
@@ -115,7 +115,7 @@ This is a demo: Flask-WTF checks CSRF tokens on POST forms, but the fallback sec
 
 ## 10. Reports, diagrams and tests
 
-The admin's six printable views are: **department pendency**, **SLA compliance**, **average resolution time by category**, **monthly trend**, **feedback** and **routing**. They are calculated from SQLite queries, not downloaded from an outside analytics service. The pendency query uses `COUNT(c.id)` so empty departments show zero. SLA and average resolution time calculations include complaints currently Resolved or Closed, not reopened In Progress complaints; the stored resolution timestamp is overwritten on the next resolution.
+The fresh demo seed has 37 synthetic complaints, including five clearly labelled historical examples; seeding never overwrites an existing database. The routing summary has two modes, with at least five manual examples listed separately. The admin's six printable views are: **department pendency**, **SLA compliance**, **average resolution time by category**, **monthly trend**, **feedback** and **routing**. They are calculated from SQLite queries, not downloaded from an outside analytics service. The monthly trend groups by submission month and shows current status, not the month of resolution. The pendency query uses `COUNT(c.id)` so empty departments show zero. SLA and average resolution time calculations include complaints currently Resolved or Closed, not reopened In Progress complaints; the stored resolution timestamp is overwritten on the next resolution.
 
 Explain the diagram types: architecture shows request/data layers; ERD shows six tables and foreign keys; use case shows roles and interactions; activity/lifecycle shows submission and allowed transitions; deployment shows a browser and local Flask/SQLite computer; module hierarchy maps actual files. The class/record diagram is conceptual: the project uses SQLite rows, not ORM model classes. Editable `.drawio` sources were programmatically generated and rendered with diagrams.net; do not represent them as manually drawn in another tool.
 

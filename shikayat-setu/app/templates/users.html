@@ -29,8 +29,8 @@
         <select id="off-dept" name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
       <div class="field"><label for="off-user">Username</label><input id="off-user" name="username" required placeholder="e.g. hostel.officer" autocomplete="off"></div>
       <div class="field"><label for="off-pwd">Initial password</label>
-        <div class="pwd-wrap"><input id="off-pwd" name="password" value="officer123" required autocomplete="off">
-          <button class="pwd-toggle" type="button" data-pwd-toggle aria-label="Toggle password visibility">👁</button></div>
+        <div class="pwd-wrap"><input id="off-pwd" type="password" name="password" value="officer123" required minlength="6" autocomplete="new-password">
+          <button class="pwd-toggle" type="button" data-pwd-toggle aria-label="Show password">👁</button></div>
       </div>
       <button class="btn btn-gold" type="submit">Create Officer</button>
     </form>

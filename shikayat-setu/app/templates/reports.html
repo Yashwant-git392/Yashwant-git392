@@ -42,8 +42,9 @@
 
 {% elif which == 'trend' %}
 <div class="card"><h2><span class="h-icon">📈</span> Monthly Complaint Trend</h2>
+<p class="help">Grouped by submission month; resolved counts reflect the current status.</p>
 <div class="table-wrap"><table class="tbl">
-<thead><tr><th>Month</th><th>Lodged</th><th>Resolved</th><th>Net open</th></tr></thead>
+<thead><tr><th>Month</th><th>Lodged</th><th>Currently resolved / closed</th><th>Currently open</th></tr></thead>
 <tbody>{% for r in rows %}
 <tr><td><b>{{ r['month'] }}</b></td><td>{{ r['lodged'] }}</td><td>{{ r['resolved'] }}</td><td><b>{{ r['lodged'] - r['resolved'] }}</b></td></tr>
 {% else %}<tr><td colspan="4" class="help">No data.</td></tr>

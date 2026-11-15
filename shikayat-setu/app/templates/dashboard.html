@@ -56,7 +56,7 @@
   <a class="btn btn-primary" href="{{ url_for('queue') }}">📥 Open full queue</a></div>
 <div class="grid stats">
   <div class="stat"><div class="label">Active assigned</div><div class="value" data-count="{{ assigned }}">{{ assigned }}</div><div class="hint">open in your department</div></div>
-  <div class="stat tone-red"><div class="label">High priority</div><div class="value" data-count="{{ high }}">{{ high }}</div><div class="hint">24-hour SLA</div></div>
+  <div class="stat tone-red"><div class="label">High priority</div><div class="value" data-count="{{ high }}">{{ high }}</div><div class="hint">current priority</div></div>
   <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">{{ overdue }}</div><div class="hint">past SLA deadline</div></div>
 </div>
 <div class="two-col grid">
@@ -103,7 +103,7 @@
   <div class="stat tone-amber"><div class="label">Open</div><div class="value" data-count="{{ open_count }}">{{ open_count }}</div><div class="hint">not yet resolved/closed</div></div>
   <div class="stat tone-red"><div class="label">Overdue</div><div class="value" data-count="{{ overdue }}">{{ overdue }}</div><div class="hint">breaching SLA now</div></div>
   <div class="stat tone-green"><div class="label">Within SLA</div><div class="value">{{ on_time_pct }}%</div><div class="hint">of resolved complaints</div></div>
-  <div class="stat tone-green"><div class="label">Avg ★ rating</div><div class="value">{{ csat if csat is not none else '—' }}</div><div class="hint">from student feedback</div></div>
+  <div class="stat tone-green"><div class="label">Avg ★ rating</div><div class="value">{{ csat if csat is not none else '—' }}</div><div class="hint">from feedback</div></div>
 </div>
 <div class="two-col grid">
   <div class="card">

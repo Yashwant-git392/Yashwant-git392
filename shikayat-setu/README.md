@@ -28,7 +28,7 @@ pip install -r requirements.txt
 python run.py
 ```
 
-Open http://127.0.0.1:5001. The application creates and seeds `app/shikayat_setu.db` on first run. This database is ignored by Git; deleting it resets the local demo data on the next run.
+Open http://127.0.0.1:5001. The application creates and seeds `app/shikayat_setu.db` on first run. This database is ignored by Git. Existing databases are not changed by seed updates; to inspect the refreshed demo safely, set `SHIKAYAT_DB` to a new file instead of deleting your data.
 
 ### Demo accounts
 
@@ -53,7 +53,7 @@ On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_
 python -m pytest tests/ -q
 ```
 
-The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, inactive-account sessions, safe login redirects, the complaint lifecycle and report edge cases. Diagram consistency checks ignore Windows/Linux line-ending differences while still checking the generated contents. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
+The tests use temporary databases and cover the full allowed/blocked transition matrix, role and ownership permissions, seeded report data and calculations, simultaneous submissions, and login, registration, CSRF rejection, connection rollback, routing and its preview, access control, inactive-account sessions, safe login redirects, the complaint lifecycle and report edge cases. The fresh seed contains 37 illustrative complaints, including five clearly labelled synthetic historical cases so the trend, feedback and manual-routing views have representative rows. The routing summary itself has two modes (automatic and manual); the manual detail list has at least five examples. Historical timestamps are relative to the seeding date. See `TESTING.md` for the scope and limits of the in-depth test. Diagram consistency checks ignore Windows/Linux line-ending differences while still checking the generated contents. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
 
 ## Project files
 
