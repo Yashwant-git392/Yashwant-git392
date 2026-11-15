@@ -571,9 +571,9 @@ def ch3(pdf: Report):
     ], [32, 18, 128])
 
     pdf.h2("3.5  Class Diagram", reserve=140)
-    pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3  Conceptual data records and selected module functions; the app does not use ORM classes.")
+    pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3  Conceptual data records and selected associations; the app does not use ORM classes.")
 
-    pdf.h2("3.6  Activity Diagram", reserve=135)
+    pdf.h2("3.6  Activity Diagram", reserve=155)
     pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4  Activity diagram — submission and supported status transitions.")
     pdf.note("Overdue is never stored — it is derived: now > sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
 

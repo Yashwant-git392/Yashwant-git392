@@ -1,6 +1,6 @@
 # Diagram notes — Campus Shikayat Setu
 
-These diagrams describe the current application, not a proposed rewrite. The source is `gen_diagrams.py`; `diagram_data.py` reads the database schema directly. The project review schedule chart remains separate and was not reconstructed as an application diagram.
+These diagrams describe the current application, not a proposed rewrite. The seven editable `.drawio` files in `diagrams/` are native diagrams.net (draw.io) documents. Their layout and labels were generated programmatically by `build_drawio.py` using the project sources, then rendered with the diagrams.net 32.6.10 viewer for the report and slides. They are not StarUML or EdrawMax files and should not be described as manually drawn. `diagram_data.py` reads the SQLite schema directly. The project review schedule chart remains separate and was not reconstructed as an application diagram.
 
 ## Traceability
 
@@ -23,13 +23,15 @@ These diagrams describe the current application, not a proposed rewrite. The sou
 - The database foreign keys do not themselves enforce that `complaints.student_id` points to a user with the student role or that `users.department_id` is populated only for officers. These are application conventions.
 - Use-case groups are a simplified view: the admin routes also permit feedback directly, and signed-in admins can use the tracker without a matching roll number.
 
-## Rebuilding
+## Open and edit in diagrams.net
 
-Install the app requirements and `matplotlib`, then run from `shikayat-setu/`:
+1. Install the free diagrams.net desktop app, or use its online editor at https://app.diagrams.net/.
+2. Choose **File → Open From → Device** and open a `.drawio` file from `report/diagrams/`. Each file is a separate, editable diagram. Save your own changes as `.drawio`.
+3. Text, shapes and lines are separate editable elements; connectors use fixed waypoints, not dynamic attachments. When moving a table or node, select its component shapes together and adjust the connector endpoints and labels as needed. Check relationships against the app/schema afterwards.
+4. Export the edited page as PNG (File → Export as → PNG); save it under the matching `report/images/fig-*.png` name before rebuilding the PDF and presentation. Keep the `.drawio` source and exported image in sync.
 
-```bash
-python report/gen_diagrams.py
-python -m pytest tests/ -q
-```
+## Regenerating the source
 
-The generator checks the schema's eight foreign keys and feedback's unique key before drawing the ERD. After changing diagrams, rebuild the PDF and slides as described in the project README; check their layout and page numbers before submission.
+From `shikayat-setu/`, run `python report/build_drawio.py` to regenerate all seven XML diagrams, then export them using diagrams.net. **This overwrites the `.drawio` sources**, so first save any manual edits elsewhere. The generator checks the schema's eight foreign keys and feedback's unique key. `gen_diagrams.py --schedule` only regenerates the legacy schedule chart; it does not create the application diagrams.
+
+Run `python -m pytest tests/ -q`, then rebuild the PDF and presentation using their respective builders. Inspect the result and page references before submission.
