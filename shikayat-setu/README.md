@@ -58,6 +58,7 @@ The tests use temporary databases and cover login, registration, routing and its
 - `tests/` — automated tests.
 - `report/` — PDF report, diagrams, application screenshots and generators. See `report/diagrams/` for editable diagrams.net files and `report/DIAGRAMS.md` for provenance, editing and traceability.
 - `presentation/` — review slides and their generator.
+- `study/` — deep project breakdown and viva Q&A in PDF, editable DOCX and Markdown; includes a five-minute demo plan and known limitations.
 
 The app uses Flask, SQLite, Jinja templates and vanilla JavaScript. The report and presentation contain screenshots from a fresh seeded demo database. Screenshots show the visible browser viewport; data and dates can differ after a reset. The report and slide generators require additional libraries (`fpdf2`, `matplotlib`, `numpy`, `Pillow` and `python-pptx`); the PDF generator also uses DejaVu fonts from `/usr/share/fonts/truetype/dejavu/`. Initialize the demo database before rebuilding the report. To recapture the screenshots, install Playwright and Chromium (`pip install playwright` and `python -m playwright install chromium`), then run `python report/capture_screens.py`. The capture script uses a temporary database and does not alter local demo data.
 
