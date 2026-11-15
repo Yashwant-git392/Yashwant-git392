@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (108 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (109 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -558,7 +558,11 @@ def ch3(pdf: Report):
     ], [30, 148])
 
     pdf.h2("3.4  Use-Case Diagrams", reserve=140)
-    pdf.figure(f"{IMG}/fig-usecase.png", 178, "Figure 3.2  Use cases — Student, Officer, Administrator and public visitor.")
+    pdf.p("Each actor has a separate use-case diagram. The first three are stored user roles; the public visitor is an external actor, not a database role.")
+    pdf.figure(f"{IMG}/fig-usecase-student.png", 170, "Figure 3.2a  Student use cases.")
+    pdf.figure(f"{IMG}/fig-usecase-officer.png", 170, "Figure 3.2b  Department officer use cases.")
+    pdf.figure(f"{IMG}/fig-usecase-administrator.png", 170, "Figure 3.2c  Administrator use cases.")
+    pdf.figure(f"{IMG}/fig-usecase-public-visitor.png", 170, "Figure 3.2d  Public visitor use case (external actor).")
     pdf.h3("3.4.1  Use-case descriptions (selection)")
     pdf.table(["Use case", "Actor", "Flow"], [
         ["Lodge complaint", "Student", "Fill title+description+location+category → submit → router assigns dept & SLA → code shown on timeline."],
@@ -695,7 +699,7 @@ def ch5(pdf: Report):
         ["TC-11", "Student forbidden from /console (HTTP 403)", "PASS"],
         ["TC-12", "All six registers render for admin (200)", "PASS"],
     ], [14, 142, 22])
-    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The 108-test suite also covers the lifecycle matrix, role and ownership checks, CSRF, rollback, seed data, report calculations, concurrency, privacy and ERD consistency; see TESTING.md.")
+    pdf.note("Command: cd shikayat-setu && python3 -m pytest tests/ -q   —   Original run: 12 passed. The 109-test suite also covers the lifecycle matrix, role and ownership checks, CSRF, rollback, seed data, report calculations, concurrency, privacy and ERD consistency; see TESTING.md.")
 
     pdf.h2("5.3  Acceptance Test Plan — recorded manual scenarios")
     pdf.table(["ID", "Scenario", "Expected", "Actual"], [
@@ -735,7 +739,7 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 108 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 109 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "

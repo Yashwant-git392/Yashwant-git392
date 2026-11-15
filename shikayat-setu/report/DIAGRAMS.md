@@ -8,7 +8,7 @@ These diagrams describe the current application, not a proposed rewrite. The sev
 |---|---|---|
 | Architecture | `run.py`, `app/app.py`, `app/database.py`, `app/routing.py`, templates and static files | Browser, Flask/Jinja and a local SQLite file. |
 | ERD | `app/schema.sql` via SQLite PRAGMA metadata | Six tables and all eight foreign keys, including nullable `users.department_id` and `complaint_events.actor_id`. `feedback.complaint_id` is unique, so a complaint has at most one feedback row. |
-| Use case | Route decorators and handlers in `app/app.py` | Student, officer, administrator and public visitor. Admins can also use officer complaint actions; public tracking normally needs both the complaint code and roll number. |
+| Use case | Route decorators and handlers in `app/app.py` | One file with separate pages for Student, Officer, Administrator and Public visitor. The first three are stored user roles; the visitor is an external actor, not a database role. Admins can also use officer complaint actions; public tracking normally needs both the complaint code and roll number. |
 | Class model | `app/schema.sql`, functions in `app/app.py` and `app/routing.py` | A **conceptual** model of SQLite rows and selected associations. The application does not implement these records as Python/ORM classes. The ERD is authoritative for all foreign keys. |
 | Activity | `lodge`, `acknowledge`, `start_work`, `resolve`, `feedback`, `reopen`, `force_close` in `app/app.py`; category selection delegates to `app/routing.py` | Submission, optional acknowledgement and progress, direct resolution, feedback closure, reopening and admin force-close. |
 | Deployment | `run.py`, `app/database.py` | Flask's development server defaults to port 5001 (configurable with `SHIKAYAT_PORT`) and uses a SQLite file. LAN access depends on local network settings. |
@@ -21,14 +21,14 @@ These diagrams describe the current application, not a proposed rewrite. The sev
 - An officer or admin may start work directly from Submitted, or resolve directly from Submitted or Acknowledged; these steps are not mandatory in sequence.
 - Reopening checks `(now - resolved_at).days > 7`; this uses whole days, not an exact 168-hour cutoff. If the timestamp is missing or cannot be parsed, reopening is rejected with a message. Admin force-close checks for Resolved status but does not enforce a waiting period.
 - The database foreign keys do not themselves enforce that `complaints.student_id` points to a user with the student role or that `users.department_id` is populated only for officers. These are application conventions.
-- Use-case groups are a simplified view: the admin routes also permit feedback directly, and signed-in admins can use the tracker without a matching roll number.
+- The separate use-case pages are a simplified view: the admin routes also permit feedback directly, and signed-in admins can use the tracker without a matching roll number.
 
 ## Open and edit in diagrams.net
 
 1. Install the free diagrams.net desktop app, or use its online editor at https://app.diagrams.net/.
-2. Choose **File → Open From → Device** and open a `.drawio` file from `report/diagrams/`. Each file is a separate, editable diagram. Save your own changes as `.drawio`.
+2. Choose **File → Open From → Device** and open a `.drawio` file from `report/diagrams/`. Each file is editable. `fig-usecase.drawio` has four named page tabs: Student, Officer, Administrator and Public visitor. Save your own changes as `.drawio`.
 3. Text, shapes and lines are separate editable elements; connectors use fixed waypoints, not dynamic attachments. When moving a table or node, select its component shapes together and adjust the connector endpoints and labels as needed. Check relationships against the app/schema afterwards.
-4. Export the edited page as PNG (File → Export as → PNG); save it under the matching `report/images/fig-*.png` name before rebuilding the PDF and presentation. Keep the `.drawio` source and exported image in sync.
+4. Export the edited page as PNG (File → Export as → PNG); save it under the matching `report/images/fig-*.png` name. For the four use-case pages, use `fig-usecase-student.png`, `fig-usecase-officer.png`, `fig-usecase-administrator.png`, and `fig-usecase-public-visitor.png`. Rebuild the standalone use-case PDF with `python report/build_usecase_pdf.py`, then rebuild the project report and presentation. Keep the `.drawio` source and exported image in sync.
 
 ## Regenerating the source
 

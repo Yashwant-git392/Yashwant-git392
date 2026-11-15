@@ -63,7 +63,7 @@ The tests use temporary databases and cover the full allowed/blocked transition 
 - `app/routing.py` — keyword scoring, priority and SLA rules.
 - `app/templates/` and `app/static/` — page templates, CSS and JavaScript.
 - `tests/` — automated tests.
-- `report/` — PDF report, diagrams, application screenshots and generators. See `report/diagrams/` for editable diagrams.net files and `report/DIAGRAMS.md` for provenance, editing and traceability.
+- `report/` — PDF report, diagrams, application screenshots and generators. See `report/diagrams/` for editable diagrams.net files and `report/DIAGRAMS.md` for provenance, editing and traceability. `report/diagrams/fig-usecase.drawio` contains four actor-specific pages; `report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf` is the printable version.
 - `presentation/` — review slides and their generator.
 - `study/` — deep project breakdown and viva Q&A in PDF, editable DOCX and Markdown; includes a five-minute demo plan and known limitations.
 

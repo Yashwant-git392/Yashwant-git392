@@ -6,7 +6,7 @@ Testing used disposable SQLite databases; the existing local application databas
 
 | Area | Checks performed |
 |---|---|
-| Automated suite | `python -m pytest tests/ -q`: **108 passed** in the source checkout. Tests include the previous regression suite, diagram tests and `tests/test_in_depth.py`. |
+| Automated suite | `python -m pytest tests/ -q`: **109 passed** in the source checkout. Tests include the previous regression suite, diagram tests and `tests/test_in_depth.py`. |
 | Access and security | Student/officer/admin page matrix, ownership and department restrictions, CSRF on mutating routes, invalid credentials, deactivation, local redirects, HTML escaping and representative SQL-injection inputs. |
 | Workflow | Allowed and blocked acknowledgement, progress, resolution and force-close transitions for all five statuses; feedback and reopen validation; reassignment and escalation; password changes; full registration-to-closure and reopen cycle. |
 | Concurrency | Small simultaneous-request tests for six complaint submissions, four duplicate registrations, four duplicate officer creations, and repeated lifecycle transitions. The tests check unique records and single transition events; this is **not** load or stress testing. |
@@ -14,7 +14,7 @@ Testing used disposable SQLite databases; the existing local application databas
 | Reports | All six reports, a controlled dataset with expected totals and averages, reopened items, empty departments, and fresh-seed row coverage. Monthly trend groups by **submission** month and shows the current status of those complaints. |
 | Browser | Chromium on Linux, 169 page visits across 320, 390, 768, 1366 and 1920 pixel widths. Registration, student/officer/admin workflows, public tracking, filtering, theme persistence, password visibility, mobile navigation and six A4 PDF renders were checked. No JavaScript errors, unexpected server errors, horizontal page overflow, or external requests were observed in that run. |
 | Print | Six seeded reports rendered to A4 PDFs. Extracted text was checked for the final column headings, and the widest report was visually inspected. Actual printers and other browsers were not tested. |
-| Diagrams and delivery | Diagram XML regeneration, schema relationships and Windows-style CRLF comparison were tested. The rebuilt ZIP was checked for integrity and tested after extraction. This is not a native Windows execution. |
+| Diagrams and delivery | Diagram XML regeneration, schema relationships, four separate editable actor pages and Windows-style CRLF comparison were tested. The rebuilt ZIP was checked for integrity and tested after extraction. This is not a native Windows execution. |
 
 A fresh seed contains 37 illustrative complaints and 11 feedback entries. Five labelled `Demo case` records use synthetic historical dates relative to the seed date, providing at least five trend rows and feedback departments. The routing summary has exactly two modes; its separate manual-detail list has at least five examples. Existing databases are **not** updated automatically.
 

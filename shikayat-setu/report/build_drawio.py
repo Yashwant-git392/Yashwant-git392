@@ -80,24 +80,52 @@ def erd():
     d.save('fig-erd')
 
 def usecase():
-    d=Diagram('Use-case diagram','Roles and representative actions in Campus Shikayat Setu')
-    # Boundary is behind the use-case nodes.
-    d.v(35,220,1330,590,'','rounded=0;fillColor=#ffffff;strokeColor=#187b77;strokeWidth=2;')
-    d.text(460,225,480,40,'CAMPUS SHIKAYAT SETU',19,True,TEAL)
-    groups=[(190,'Student',['Register / sign in','Lodge complaint','View own complaints','Give feedback','Reopen resolved']),
-            (530,'Officer',['Sign in','View department queue','Acknowledge','Start work / resolve','Add remark']),
-            (870,'Administrator',['Sign in / console','Reassign / escalate','Force-close resolved','Manage officers','View / print reports']),
-            (1200,'Public visitor',['Track using code\nand roll number'])]
-    for x,role,uses in groups:
-        d.v(x-23,125,46,75,'','shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;strokeColor=#172b3a;strokeWidth=2;')
-        d.text(x-125,90,250,32,role,18,True)
-        for i,label in enumerate(uses):
-            y=295+i*93
-            # Individual association with routed left-side trunk, not linked ovals.
-            sx=x-140; d.edge(x,200,x-120,y+30,[(x,215),(sx,215),(sx,y+30)],False,color='#8da3a4')
-            d.v(x-120,y,240,60,label,'ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;fontFamily=Arial;fontSize=17;fontColor=#172b3a;')
-    d.note(45,845,1310,68,'Admins can also perform officer complaint actions and submit feedback. Signed-in admins may bypass the roll-number check in tracking.',15)
-    d.save('fig-usecase')
+    """Four separately drawn, editable pages in one diagrams.net document."""
+    groups = [
+        ('Student', 'Stored user role: student', [
+            'Register an account', 'Sign in / sign out', 'Lodge a complaint',
+            'View own complaints', 'Confirm and rate resolution', 'Reopen own resolved complaint',
+            'Change password'],
+         'Students may also use the public tracker. Reopening is subject to the implemented age check.'),
+        ('Officer', 'Stored user role: officer', [
+            'Sign in / sign out', 'View department queue', 'Acknowledge a complaint',
+            'Start work', 'Resolve with a remark', 'Add a remark', 'Change password'],
+         'Officers can access complaints assigned to their own department.'),
+        ('Administrator', 'Stored user role: admin', [
+            'Sign in / sign out', 'View and filter console', 'Manage user accounts',
+            'Reassign department', 'Escalate priority', 'Acknowledge / start / resolve',
+            'Add a remark', 'Submit feedback', 'Force-close resolved complaint',
+            'View and print reports', 'Track without roll check', 'Change password'],
+         'Admin can perform officer actions and submit feedback. Force-close requires Resolved status.'),
+        ('Public visitor', 'External actor: not a stored user role', [
+            'Track with code and roll number'],
+         'Public tracking normally requires both the complaint code and the matching student roll number.'),
+    ]
+    doc = ET.Element('mxfile', host='app.diagrams.net', version='32.6.10', type='device')
+    for number, (role, subtitle, uses, note) in enumerate(groups, 1):
+        d = Diagram(f'Use-case diagram — {role}', subtitle)
+        # Each page is a standalone use-case diagram: actor outside the system boundary.
+        d.v(350, 125, 1000, 820, '', 'rounded=0;fillColor=#ffffff;strokeColor=#187b77;strokeWidth=2;')
+        d.text(620, 136, 460, 36, 'CAMPUS SHIKAYAT SETU', 21, True, TEAL)
+        d.v(85, 400, 100, 155, '', 'shape=umlActor;html=1;outlineConnect=0;strokeColor=#172b3a;strokeWidth=2;')
+        d.text(20, 575, 230, 38, role, 22, True)
+        spacing = 59 if len(uses) > 9 else 88
+        total = 50 + (len(uses) - 1) * spacing
+        top = 200 + (680 - total) / 2
+        for index, label in enumerate(uses):
+            y = round(top + index * spacing)
+            # Straight individual associations fan out from the actor, without shared trunks.
+            d.edge(185, 452, 670, y + 25, arrow=False, color=LINE)
+            d.v(670, y, 520, 50, label,
+                'ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#172b3a;')
+        d.note(40, 970, 1320, 70, note, 16)
+        page = d.doc.find('diagram')
+        page.set('name', role)
+        page.set('id', f'usecase-{number}')
+        doc.append(page)
+    OUT.mkdir(exist_ok=True)
+    ET.indent(doc)
+    ET.ElementTree(doc).write(OUT / 'fig-usecase.drawio', encoding='utf-8', xml_declaration=True)
 
 def activity():
     d=Diagram('Complaint lifecycle','Submission flow and the transitions implemented by app.py')

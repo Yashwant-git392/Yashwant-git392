@@ -60,3 +60,26 @@ def test_erd_relationships_match_schema(tmp_path, monkeypatch):
         assert graph.getroot().tag == "mxfile"
         assert graph.findall(".//mxCell[@vertex='1']")
         assert graph.findall(".//mxCell[@edge='1']")
+
+
+def test_usecase_has_separate_editable_actor_pages():
+    import xml.etree.ElementTree as ET
+    project = Path(__file__).resolve().parent.parent
+    root = ET.parse(project / 'report' / 'diagrams' / 'fig-usecase.drawio').getroot()
+    pages = root.findall('diagram')
+    assert [p.get('name') for p in pages] == ['Student', 'Officer', 'Administrator', 'Public visitor']
+    for page, expected_uses in zip(pages, (7, 7, 12, 1)):
+        cells = page.findall('.//mxCell')
+        actors = [c for c in cells if 'shape=umlActor' in c.get('style', '')]
+        uses = [c for c in cells if c.get('style', '').startswith('ellipse;')]
+        edges = [c for c in cells if c.get('edge') == '1']
+        assert len(actors) == 1 and len(uses) == expected_uses and len(edges) == expected_uses
+        assert all(e.get('style', '').find('endArrow=none') >= 0 for e in edges)
+        # The actor sits outside the system boundary; each use case is inside it.
+        boundary = next(c for c in cells if c.get('style', '').startswith('rounded=0;fillColor=#ffffff;strokeColor=#187b77'))
+        left = float(boundary.find('mxGeometry').get('x'))
+        actor = actors[0].find('mxGeometry')
+        assert float(actor.get('x')) + float(actor.get('width')) < left
+        assert all(float(c.find('mxGeometry').get('x')) > left for c in uses)
+    public_values = [c.get('value', '') for c in pages[-1].findall('.//mxCell')]
+    assert 'External actor: not a stored user role' in public_values

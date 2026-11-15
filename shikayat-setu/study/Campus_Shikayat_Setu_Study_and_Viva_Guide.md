@@ -117,9 +117,9 @@ This is a demo: Flask-WTF checks CSRF tokens on POST forms, but the fallback sec
 
 The fresh demo seed has 37 synthetic complaints, including five clearly labelled historical examples; seeding never overwrites an existing database. The routing summary has two modes, with at least five manual examples listed separately. The admin's six printable views are: **department pendency**, **SLA compliance**, **average resolution time by category**, **monthly trend**, **feedback** and **routing**. They are calculated from SQLite queries, not downloaded from an outside analytics service. The monthly trend groups by submission month and shows current status, not the month of resolution. The pendency query uses `COUNT(c.id)` so empty departments show zero. SLA and average resolution time calculations include complaints currently Resolved or Closed, not reopened In Progress complaints; the stored resolution timestamp is overwritten on the next resolution.
 
-Explain the diagram types: architecture shows request/data layers; ERD shows six tables and foreign keys; use case shows roles and interactions; activity/lifecycle shows submission and allowed transitions; deployment shows a browser and local Flask/SQLite computer; module hierarchy maps actual files. The class/record diagram is conceptual: the project uses SQLite rows, not ORM model classes. Editable `.drawio` sources were programmatically generated and rendered with diagrams.net; do not represent them as manually drawn in another tool.
+Explain the diagram types: architecture shows request/data layers; ERD shows six tables and foreign keys; the use-case file has separate pages for student, officer, administrator and the external public visitor; activity/lifecycle shows submission and allowed transitions; deployment shows a browser and local Flask/SQLite computer; module hierarchy maps actual files. The class/record diagram is conceptual: the project uses SQLite rows, not ORM model classes. Editable `.drawio` sources were programmatically generated and rendered with diagrams.net; do not represent them as manually drawn in another tool.
 
-The test suite has 28 test cases at the time of this guide, including CSRF, rollback, configuration, reopen handling and a diagram/schema consistency test. Coverage includes authentication, registration, routing, preview, permissions, lifecycle, reports and anonymous-event masking. Tests passing is useful evidence, not proof of absence of defects. Run them yourself before the viva.
+The test suite has 109 test cases at the time of this guide, including CSRF, rollback, configuration, reopen handling and a diagram/schema consistency test. Coverage includes authentication, registration, routing, preview, permissions, lifecycle, reports and anonymous-event masking. Tests passing is useful evidence, not proof of absence of defects. Run them yourself before the viva.
 
 # PART B — RUN AND DEMONSTRATE
 
@@ -371,7 +371,7 @@ The report calculates the difference between `resolved_at` and `submitted_at` us
 The pendency report uses `COUNT(c.id)` with a LEFT JOIN, so departments with no complaints show zero rather than counting the unmatched join row.
 
 ### Q67. What tests are included?
-The current suite has 28 test cases, including CSRF, rollback, configuration, reopen handling and schema/diagram consistency. Examples include login, registration, routing, preview, permissions, lifecycle, reports and anonymous actor masking.
+The current suite has 109 test cases, including CSRF, rollback, configuration, reopen handling and schema/diagram consistency. Examples include login, registration, routing, preview, permissions, lifecycle, reports and anonymous actor masking.
 
 ### Q68. Does passing the tests prove there are no bugs?
 No. Tests check selected cases; untested inputs, concurrency, security issues and real-world behavior may still reveal defects.

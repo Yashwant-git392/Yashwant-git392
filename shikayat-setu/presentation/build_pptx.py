@@ -220,7 +220,7 @@ for i, (n, t, d) in enumerate(agenda):
 
 card(s, 0.55, 5.62, 12.23, 1.15)
 txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("108", "automated tests")]
+stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("109", "automated tests")]
 sw = 11.9 / len(stats)
 for i, (v, d) in enumerate(stats):
     x = 0.62 + i * sw
@@ -303,8 +303,12 @@ txt(s, 0.78, 4.90, 3.9, 0.3, [dict(runs=[("ACTOR 3 — ADMINISTRATOR", dict(size
 txt(s, 0.78, 5.22, 3.9, 0.26, [dict(runs=[("The backstop", dict(size=11, bold=True, color=NAVY))])])
 txt(s, 0.78, 5.54, 3.95, 0.72, [dict(runs=[("Console over everything; reassign, escalate to High, force-close resolved complaints; view anonymous identity fields.",
                                              dict(size=9.5, color=INK))], line_spacing=1.12)])
-pic_fit(s, f"{IMG}/fig-usecase.png", 5.25, 1.52, 7.55, 4.9)
-txt(s, 5.6, 6.5, 7.0, 0.3, [dict(runs=[("Use-case diagram — report §3.4; includes public tracking",
+for filename, x, y in [
+    ("student", 5.25, 1.55), ("officer", 9.05, 1.55),
+    ("administrator", 5.25, 3.92), ("public-visitor", 9.05, 3.92),
+]:
+    pic_fit(s, f"{IMG}/fig-usecase-{filename}.png", x, y, 3.55, 2.25)
+txt(s, 5.5, 6.35, 7.0, 0.3, [dict(runs=[("Separate actor diagrams — full size in report §3.4",
                                           dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 
 # ================================================================ SLIDE 6 — Architecture & stack
