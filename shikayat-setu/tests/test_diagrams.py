@@ -3,6 +3,21 @@ import importlib.util
 from pathlib import Path
 
 
+def read_diagram(path):
+    """Compare UTF-8 text with universal newlines across operating systems."""
+    return path.read_text(encoding="utf-8")
+
+
+def test_diagram_comparison_tolerates_windows_line_endings(tmp_path):
+    unix = tmp_path / "unix.drawio"
+    windows = tmp_path / "windows.drawio"
+    unix.write_bytes(b"<mxfile>\n<diagram/>\n</mxfile>")
+    windows.write_bytes(b"<mxfile>\r\n<diagram/>\r\n</mxfile>")
+    assert read_diagram(unix) == read_diagram(windows)
+    windows.write_bytes(b"<mxfile>\r\n<changed/>\r\n</mxfile>")
+    assert read_diagram(unix) != read_diagram(windows)
+
+
 def test_erd_relationships_match_schema(tmp_path, monkeypatch):
     path = Path(__file__).resolve().parent.parent / "report" / "diagram_data.py"
     spec = importlib.util.spec_from_file_location("diagram_data", path)
@@ -40,7 +55,7 @@ def test_erd_relationships_match_schema(tmp_path, monkeypatch):
         build()
     assert len(list(tmp_path.glob("*.drawio"))) == 7
     for output in tmp_path.glob("*.drawio"):
-        assert output.read_bytes() == (report_dir / "diagrams" / output.name).read_bytes()
+        assert read_diagram(output) == read_diagram(report_dir / "diagrams" / output.name)
         graph = ET.parse(output)
         assert graph.getroot().tag == "mxfile"
         assert graph.findall(".//mxCell[@vertex='1']")

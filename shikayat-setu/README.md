@@ -53,7 +53,7 @@ On Windows PowerShell use `$env:SHIKAYAT_SECRET_KEY = "..."` and `$env:SHIKAYAT_
 python -m pytest tests/ -q
 ```
 
-The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, inactive-account sessions, safe login redirects, the complaint lifecycle and report edge cases. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
+The tests use temporary databases and cover login, registration, CSRF rejection, connection rollback, routing and its preview, access control, inactive-account sessions, safe login redirects, the complaint lifecycle and report edge cases. Diagram consistency checks ignore Windows/Linux line-ending differences while still checking the generated contents. Invalid or missing resolution timestamps now prevent reopening; valid timestamps still use the existing whole-day age rule.
 
 ## Project files
 

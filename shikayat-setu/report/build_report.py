@@ -414,7 +414,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (43 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner (44 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
     ], [42, 62, 74])
@@ -733,7 +733,7 @@ def ch6(pdf: Report):
         "<b>L-6  Reopen age check:</b> compares whole days to 7, rejects reopening if the timestamp cannot be parsed, and is not configurable per department.",
         "<b>L-7  Reports are print-tables, not charts:</b> powerful for the register, weak for trend visualisation.",
         "<b>L-8  No pagination:</b> lists render fully; fine at ≤ 10k rows, a must-fix at 100k.",
-        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 43 tests, not on a live semester of usage.",
+        "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 44 tests, not on a live semester of usage.",
     ])
     pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
     pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
