@@ -335,7 +335,25 @@ def test_reports_on_controlled_dataset(env):
         assert (row['n'],row['avg_hours']) == (3, 30.7)
         row = report('trend')['rows'][0]; assert (row['month'],row['lodged'],row['resolved']) == ('2026-01',5,3)
         row = report('feedback')['rows'][0]; assert (row['avg_rating'],row['n']) == (4.0,1)
-        rows = {r['routing']:r['n'] for r in report('routing')['rows']}; assert rows == {'auto':3,'manual':2}
+        routing_report = report('routing')
+        rows = {r['routing']:r['n'] for r in routing_report['rows']}; assert rows == {'auto':3,'manual':2}
+        details = {r['code']: (r['routing'], r['routing_score'], r['dept']) for r in routing_report['details']}
+        assert details == {f'REPORT-{i}': (mode, i, 'Hostel Office') for i, mode in enumerate(('auto','manual','auto','manual','auto'), 1)}
+        assert len({r['code'] for r in routing_report['details']}) == sum(rows.values())
+        html = env.get('/reports?report=routing').get_data(as_text=True)
+        assert 'Complaint-level routing records' in html
+        assert all(f'REPORT-{i}' in html for i in range(1, 6))
+        conn = db.get_conn()
+        conn.execute("UPDATE complaints SET title='<script>alert(1)</script>' WHERE code='REPORT-1'")
+        conn.commit(); conn.close()
+        html = env.get('/reports?report=routing').get_data(as_text=True)
+        assert '<script>alert(1)</script>' not in html and '&lt;script&gt;alert(1)&lt;/script&gt;' in html
+        conn = db.get_conn()
+        conn.execute('DELETE FROM feedback'); conn.execute('DELETE FROM complaint_events'); conn.execute('DELETE FROM complaints')
+        conn.commit(); conn.close()
+        html = env.get('/reports?report=routing').get_data(as_text=True)
+        assert 'No complaints yet.' in html
+        assert report('routing')['details'] == []
 
 
 def test_seed_is_idempotent_and_foreign_keys_enforced(env):
@@ -367,6 +385,8 @@ def test_fresh_seed_populates_report_views(env):
             if report == 'routing':
                 assert {r['routing'] for r in result['rows']} == {'auto','manual'}
                 assert len(result['manual']) >= 5
+                assert len(result['details']) >= 5
+                assert len({r['code'] for r in result['details']}) == len(result['details'])
             else:
                 assert len(result['rows']) >= 5, (report, len(result['rows']))
     conn = db.get_conn()

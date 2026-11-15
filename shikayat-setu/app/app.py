@@ -826,7 +826,11 @@ def reports():
         manual = conn.execute(
             """SELECT c.code, c.title, d.name AS dept FROM complaints c JOIN departments d ON d.id=c.department_id
                WHERE routing='manual' ORDER BY c.submitted_at DESC""").fetchall()
-        ctx["rows"] = rows; ctx["manual"] = manual
+        details = conn.execute(
+            """SELECT c.code, c.title, d.name AS dept, c.routing, c.routing_score
+               FROM complaints c JOIN departments d ON d.id=c.department_id
+               ORDER BY c.submitted_at DESC, c.id DESC""").fetchall()
+        ctx["rows"] = rows; ctx["manual"] = manual; ctx["details"] = details
     return render_template("reports.html", which=which, **ctx)
 
 

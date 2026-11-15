@@ -69,6 +69,10 @@
 <div class="table-wrap"><table class="tbl">
 <thead><tr><th>Routing mode</th><th>Complaints</th><th>Avg keyword score</th></tr></thead>
 <tbody>{% for r in rows %}<tr><td><b>{{ r['routing']|capitalize }}</b></td><td>{{ r['n'] }}</td><td>{{ r['avg_score'] }}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card"><h2><span class="h-icon">📋</span> Complaint-level routing records</h2>
+<p class="help">Current routing mode and assigned department. Manual includes retained category or admin reassignment; the score reflects the original routing decision.</p>
+<div class="table-wrap"><table class="tbl" id="routing-details"><thead><tr><th>Code</th><th>Title</th><th>Final department</th><th>Mode</th><th>Original score</th></tr></thead>
+<tbody>{% for r in details %}<tr><td class="mono">{{ r['code'] }}</td><td>{{ r['title'] }}</td><td>{{ r['dept'] }}</td><td>{{ r['routing']|capitalize }}</td><td>{{ r['routing_score'] }}</td></tr>{% else %}<tr><td colspan="5" class="help">No complaints yet.</td></tr>{% endfor %}</tbody></table></div></div>
 {% if manual %}
 <div class="card"><h2><span class="h-icon">🔀</span> Manual routing: selected category or admin reassignment</h2>
 <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Final department</th></tr></thead>
