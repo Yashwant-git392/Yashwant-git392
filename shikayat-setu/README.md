@@ -86,7 +86,7 @@ The tests use temporary databases and cover the full allowed/blocked transition 
 - `app/templates/` and `app/static/` — page templates, CSS and JavaScript.
 - `tests/` — automated tests.
 - `REVIEW_3_CHECKLIST.md` — evidence and remaining personal/guide checks for the third review.
-- `report/` — PDF report, diagrams, application screenshots and generators. See `report/REPORT_FORMAT.md` for the supplied report sequence, semester/binding questions, font fallback and rebuilding instructions. See `report/diagrams/` for editable diagrams.net files and `report/DIAGRAMS.md` for provenance, editing and traceability. `report/diagrams/fig-usecase.drawio` contains four actor-specific pages; `report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf` is the printable version.
+- `report/` — project report and use-case diagrams in PDF and DOCX, screenshots and generators. See `report/REPORT_FORMAT.md` for format, Word page-field updates, semester/binding questions, font fallback and rebuilding instructions. See `report/diagrams/` for editable diagrams.net files and `report/DIAGRAMS.md` for provenance, editing and traceability. `report/diagrams/fig-usecase.drawio` contains four actor-specific pages.
 - `presentation/` — review slides and their generator.
 - `study/` — deep project breakdown and viva Q&A in PDF, editable DOCX and Markdown; includes a five-minute demo plan and known limitations.
 

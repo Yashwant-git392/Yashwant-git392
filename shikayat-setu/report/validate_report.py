@@ -67,6 +67,8 @@ def main():
         else:
             assert 'APPENDIX ' + number in text, (number, page_no)
     full_text = normalize(' '.join(page.get_text() for page in doc))
+    for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
+        assert forbidden not in full_text.lower(), forbidden
     for n in range(1, 26):
         assert re.search(rf'Figure 10\.{n}(?!\d)', full_text), f'missing manual screenshot {n}'
     print(f'Validated {len(doc)} pages, {len(INDEX_ITEMS)} index entries and {len(figures)} figures with descriptions.')

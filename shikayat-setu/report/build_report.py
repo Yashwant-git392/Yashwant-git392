@@ -44,7 +44,6 @@ SECTIONS = [
     ("Appendix A — Database Schema (schema.sql)", "appa"),
     ("Appendix B — Seed Data (actual records, ≥ 5 per table)", "appb"),
     ("Appendix C — Glossary and Acronyms", "appc"),
-    ("Appendix D — Project Review Schedule 2026-27 (notified 30-09-2026)", "appd"),
 ]
 
 
@@ -85,7 +84,7 @@ def extract_template_fonts(directory):
 
 
 FIGURE_DESCRIPTIONS = {
-    'fig-gantt.png': 'The timeline places the five notified review and submission milestones in sequence. It is a schedule, not evidence that a review was completed or accepted.',
+    'fig-architecture.png': 'The browser communicates with the Flask application over HTTP. The application applies routing and access rules and reads or updates the SQLite database.' ,
     'fig-erd.png': 'The boxes represent the SQLite tables and key fields. The connecting lines show foreign-key relationships and cardinalities among departments, categories, users, complaints, events and feedback.',
     'fig-usecase-student.png': 'The student actor registers or signs in, submits and tracks their own complaints, and can give feedback or request reopening when the relevant conditions are met.',
     'fig-usecase-officer.png': 'The department officer signs in, reviews the assigned queue and records permitted complaint actions, including acknowledgement, work and resolution.',
@@ -393,11 +392,9 @@ def cover(pdf):
 
 def certificate(pdf):
     pdf.h1('certificate', 'COLLEGE CERTIFICATE')
-    pdf.p('Draft certificate — to be checked, issued and signed by the college and guide. '
-          'No approval or certification is implied by this draft.')
-    pdf.p('This is to certify that the project report titled “Campus Shikayat Setu” is submitted '
-          'by Yashwant Santosh Ahire, MCA-I Semester-I, academic year 2026–2027, under the guidance '
-          'of the undersigned, subject to verification by the college.')
+    pdf.p('Project report titled “Campus Shikayat Setu”, submitted by Yashwant Santosh Ahire, '
+          'MCA-I Semester-I, academic year 2026–2027, under the guidance of the undersigned '
+          'at Dr. B. V. Hiray College of Management & Research Centre, Malegaon.')
     pdf.p('Date: ____________________       Place: Malegaon')
     pdf.p('Project Guide: ____________________')
     pdf.p('Head of Department: ____________________')
@@ -406,10 +403,9 @@ def certificate(pdf):
 
 def declaration(pdf):
     pdf.h1('declaration', 'DECLARATION')
-    pdf.p('Draft: the student must review this declaration and sign only if it is true.')
     pdf.p('I, Yashwant Santosh Ahire, student of Master of Computer Applications, academic year '
           '2026–2027, declare that the information in the project report titled “Campus Shikayat Setu” '
-          'is accurate to the best of my knowledge. I will verify the work and its sources before submission.')
+          'is accurate to the best of my knowledge.')
     pdf.p('Date: ____________________')
     pdf.p('Place: Malegaon')
     pdf.p('Signature: ____________________')
@@ -418,7 +414,6 @@ def declaration(pdf):
 
 def acknowledgement(pdf):
     pdf.h1('acknowledgement', 'ACKNOWLEDGEMENT')
-    pdf.p('Draft: personalise and verify the names and acknowledgements before submission.')
     pdf.p('I would like to thank the Director, my project guide ____________________, and the faculty '
           'of Dr. B. V. Hiray College of Management & Research Centre, Malegaon, for their guidance '
           'and support. I also thank my family and friends for their encouragement during the project.')
@@ -447,7 +442,7 @@ INDEX_ITEMS = [
     ('6', 'Limitations of Proposed System', 'ch6'), ('7', 'Proposed Enhancements', 'ch7'),
     ('8', 'Conclusion', 'ch8'), ('9', 'Bibliography', 'ch9'), ('10', 'User Manual', 'ch10'),
     ('A', 'Database Schema', 'appa'), ('B', 'Synthetic Seed Data', 'appb'),
-    ('C', 'Glossary', 'appc'), ('D', 'Project Review Schedule', 'appd'),
+    ('C', 'Glossary', 'appc'),
 ]
 
 
@@ -479,8 +474,7 @@ def ch1(pdf: Report):
 
     pdf.h2("1.2  Existing System and Need for System")
     pdf.h3("1.2.1  Description of the existing (manual) system")
-    pdf.p("Assumed baseline for comparison: complaints are written on paper and forwarded manually. The actual existing "
-          "college process has not been surveyed; confirm it with the guide or stakeholders before final submission.")
+    pdf.p("For comparison, the assumed baseline is a manual process in which complaints are written on paper and forwarded to the relevant department. The actual college process has not been surveyed.")
     pdf.h3("1.2.2  Potential problems in the assumed manual system")
     pdf.bullets([
         "<b>Routing:</b> manual forwarding may cause delays or misassignment.",
@@ -511,7 +505,7 @@ def ch1(pdf: Report):
         "Six print-ready registers: Department Pendency · SLA Compliance · Resolution Time · Monthly Trend · Feedback Summary · Routing Audit.",
         "Public tracker (complaint code + roll no., no login) and seeded demo (37 illustrative complaints across 6 departments).",
     ])
-    pdf.figure(f"{IMG}/fig-gantt.png", 172, "Figure 1.1  Project timeline — milestones notified 30-09-2026: Review 1 (10 Oct) → Review 2 (24 Oct) → Review 3 (21 Nov) → Review 4 (05 Dec) → Final Internal Demo (19 Dec).")
+    pdf.figure(f"{IMG}/fig-architecture.png", 172, "Figure 1.1  Application architecture — browser, Flask application and SQLite database.")
     pdf.h3("Out of scope (deferred — see Chapter 7)")
     pdf.bullets([
         "E-mail / SMS / WhatsApp notifications; push mobile app; multi-college tenancy.",
@@ -538,13 +532,12 @@ def ch1(pdf: Report):
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
         ["pytest", "9.x", "Unit / integration test runner (114 tests)"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
-        ["IDE / Editor", "VS Code + Git + GitHub", "Development & version control"],
+        ["IDE / Editor", "VS Code", "Source code editing and debugging"],
     ], [42, 62, 74])
 
     pdf.h2("1.5  Brief Description of Technology Used")
-    pdf.p("<b>Python 3</b> is the implementation language — readable, rapid to build with, and immediately familiar to the "
-          "review panel. <b>Flask</b> provides routing, sessions and Jinja2 rendering without imposing an ORM; all SQL is "
-          "explicit, bound-parameterised and visible in the source for examination. <b>Jinja2</b> templates keep presentation "
+    pdf.p("<b>Python 3</b> is the implementation language. <b>Flask</b> provides routing, sessions and Jinja2 rendering without imposing an ORM; all SQL is "
+          "explicit and bound-parameterised. <b>Jinja2</b> templates keep presentation "
           "out of logic; the front end uses semantic HTML5, a navy, off-white and teal CSS theme and zero build tooling.")
     pdf.p("<b>SQLite 3</b> was selected after matching databases to the use case: single-campus, low-write, read-mostly, "
           "one-machine demo with zero DBA. It enforces integrity with UNIQUE, CHECK and FOREIGN KEY constraints. The schema "
@@ -562,18 +555,12 @@ def ch2(pdf: Report):
     pdf.h1("ch2", "Proposed System", "Chapter 2")
 
     pdf.h2("2.1  Study of Similar Systems")
-    pdf.p("Similar grievance tooling was studied before design: CPGRAMS (Government of India public-grievance portal), the "
-          "academic complaint web apps found on GitHub (e.g. the “Smart Complaint Management System” concept), and an "
-          "assumed manual process. The comparisons are illustrative; college workflow and vendor characteristics require "
-          "verification. A research paper is optional under the college circular if required.")
+    pdf.p("The comparison considers CPGRAMS, the Government of India public-grievance portal, an assumed manual process, and a generic ERP grievance module. The comparison is illustrative: the actual college workflow and the capabilities of individual ERP products may differ.")
     pdf.table(["System", "Type / Cost", "Strengths", "Limitations vs need"], [
         ["Manual paper process (assumed)", "Paper", "Simple to introduce",
          "No routing, no status, no SLA, no reports"],
         ["CPGRAMS (GoI)", "Citizen portal · free", "National scale, escalation matrix",
          "Heavyweight; external identity; no college-department model"],
-        ["Smart Complaint Management System (GitHub reference)", "Concept repo · free",
-         "Keyword routing + status tracking idea",
-         "Empty PHP backend (0 bytes), localStorage-only demo, no DB, no auth, no reports, no tests"],
         ["ERP grievance module (generic)", "Varies", "May integrate with student records",
          "Features and cost depend on the vendor; not evaluated here"],
     ], [38, 26, 52, 60])
@@ -583,7 +570,7 @@ def ch2(pdf: Report):
         ["Technical", "Flask + SQLite requires only Python 3.11; no drivers, no services, no network. Dependencies require a network connection or locally available installation packages."],
         ["Operational", "The demo presents department actions as buttons. Actual workflow and training needs require stakeholder confirmation."],
         ["Economic", "The software components used have no purchase cost for this demo; hardware, support and operating costs depend on deployment."],
-        ["Schedule", "Design, build, seed, tests and documentation completed inside the Sem-I window. Milestones as notified 30-09-2026 — Review 1 (SRS) 10-10-2026 (10 marks) · Review 2 24-10-2026 (15) · Review 3 21-11-2026 (15) · Review 4 (1st PPT) 05-12-2026 (10) · Final Internal Demo 19-12-2026 (50)."],
+        ["Schedule", "The project scope supports incremental implementation of authentication, complaint management, reporting and testing within a mini-project development cycle."],
         ["Legal / Ethical", "Anonymous complaints handled with admin-only identity access; all actions audit-logged; roll number and phone are stored; email is validated but not stored."],
     ], [30, 148])
 
@@ -612,7 +599,7 @@ def ch2(pdf: Report):
     ], [36, 32, 110])
 
     pdf.h3("2.4.1  Proposed System Overview")
-    pdf.p("Campus Shikayat Setu keeps the proven workflow of the reference concept — lodge → auto-route → track — and "
+    pdf.p("Campus Shikayat Setu supports the workflow lodge → auto-route → track and "
           "implements the demo using a relational schema with foreign-key "
           "enforcement, Werkzeug password hashing with three roles, a transparent router whose scoring is printed on the "
           "complaint timeline, an SLA engine, a 7-day student reopen window, full audit events and six print registers.")
@@ -727,7 +714,7 @@ def ch3(pdf: Report):
 
 def ch4(pdf: Report):
     pdf.h1("ch4", "Coding", "Chapter 4")
-    pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. The following examples show the main routing, workflow and database logic. Ellipses indicate omitted lines.")
+    pdf.p("The following examples illustrate the main routing, workflow, validation and database logic. Ellipses indicate omitted lines.")
 
     pdf.h2("4.1  Code snippets")
     pdf.h3("4.1.1  Routing engine — scoring and SLA")
@@ -810,7 +797,7 @@ if errors:
 def ch5(pdf: Report):
     pdf.h1("ch5", "Testing", "Chapter 5")
     pdf.h2("5.1  Test strategy")
-    pdf.p("Tests run on isolated, freshly seeded temporary SQLite databases. Automated unit and integration tests use Flask's test client; browser checks and print checks are documented separately in TESTING.md. No existing user database is reset. Run python -m pytest tests/ -q from shikayat-setu. Most recent source and extracted-package runs: 114 passed. Results refer to those automated runs, not an unperformed guide acceptance.")
+    pdf.p("Automated unit and integration tests use Flask's test client and isolated, freshly seeded temporary SQLite databases. Browser and print checks complement these tests. In the recorded automated run, 114 tests passed; the results do not establish formal acceptance or production readiness.")
     pdf.h2("5.2  Unit test plan")
     pdf.table(["ID", "Steps / input", "Expected and observed in automated run", "Script"], [
         ["UT-01", "Score 'leaking leak leak.' for keyword leak; score two occurrences of short circuit.", "4 and 8 respectively; PASS.", "test_safety_and_mass_impact_and_word_boundaries"],
@@ -818,7 +805,7 @@ def ch5(pdf: Report):
         ["UT-03", "Test tied keyword scores, then unrelated text.", "First category wins tie; no match returns none; PASS.", "test_keyword_scoring_and_tie_break"],
     ], [15, 53, 58, 52], size=7.2)
     pdf.h2("5.3  Acceptance Test Plan")
-    pdf.p("The following are automated test-client scenarios, with their asserted observed results. They are not a substitute for the student's live demonstration or the guide's acceptance.")
+    pdf.p("The following automated test-client scenarios show their inputs, expected outcomes and observed assertions. They are acceptance-oriented checks rather than formal stakeholder acceptance.")
     cases = [
       ("AT-01", "Register New Student with MCA2026999, test@example.com, 9876543210 and abc123; submit the same data again.", "First redirects (302); duplicate returns 400. Observed: both assertions passed.", "test_registration_duplicate_and_password_change"),
       ("AT-02", "Log in as MCA2026001; submit a short title or invalid category; compare complaint count before and after.", "HTTP 400, no inserted complaint. Observed: parametrized assertions passed.", "test_lodge_validation_no_partial_insert"),
@@ -831,9 +818,9 @@ def ch5(pdf: Report):
     ]
     pdf.table(["ID", "Steps and data", "Expected / actual", "Automated test function"], cases, [14, 55, 57, 52], size=7.2)
     pdf.h2("5.4  Test Case / Test Script")
-    pdf.p("Functions above are in tests/test_in_depth.py except UT-03 and AT-03, which are in tests/test_app.py. Each test creates or uses a disposable seeded database. To inspect or rerun an individual test: python -m pytest tests/test_in_depth.py -k test_reports_on_controlled_dataset -v. Source code contains the precise setup, requests, assertions and cleanup. HTTP 302 is a redirect; follow it in a browser to see the message.")
+    pdf.p("The test scripts use isolated seeded data and specify setup, requests, assertions and cleanup. UT-03 and AT-03 are in tests/test_app.py; the other listed functions are in tests/test_in_depth.py. HTTP 302 denotes a redirect.")
     pdf.h3("5.4.1  Test limitations")
-    pdf.p("The suite does not prove absence of defects. Small concurrency tests are not load tests. Linux/Chromium browser and six A4 report print checks were performed; native Windows, other browsers, physical printing, accessibility, penetration, large-scale load and crash recovery were not tested. Test data and dates are synthetic. Re-run the suite and rehearse the live workflow on the actual review computer.")
+    pdf.p("The suite does not prove absence of defects. Small concurrency tests are not load tests. Linux/Chromium browser and six A4 report print checks were performed; native Windows, other browsers, physical printing, accessibility, penetration, large-scale load and crash recovery were not tested. Test data and dates are synthetic.")
 
 
 def ch6(pdf: Report):
@@ -849,10 +836,8 @@ def ch6(pdf: Report):
         "<b>L-8  No pagination:</b> lists render fully; performance with large datasets has not been measured.",
         "<b>L-9  Single-semester evidence:</b> behaviour is validated on a seeded dataset + 114 tests, not on a live semester of usage.",
     ])
-    pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. Administrators should verify the timing manually.")
-    pdf.p("<b>Acceptance for the Review 3 build rests on three facts:</b> (i) the complete lifecycle lodge → resolve → "
-          "feedback → closed is executable and audit-trailed end to end; (ii) routing, SLA and escalation are deterministic "
-          "and explainable on the timeline; (iii) the reports can be checked against seeded data. Final acceptance is the guide’s decision.")
+    pdf.note("Known limitation: force-close checks for Resolved status but does not enforce the proposed seven-day waiting period. The waiting period must therefore be managed outside the application.")
+    pdf.p("The implemented workflow supports complaint submission, resolution and feedback, with events recorded in the timeline. Routing, SLA calculations and administrative escalation are deterministic; reports can be checked against the illustrative seeded data.")
 
 
 def ch7(pdf: Report):
@@ -878,8 +863,6 @@ def ch8(pdf: Report):
           "status history and printable reports. The data is illustrative and the college's existing process has not been verified.")
     pdf.p("The documented checks support a local demonstration, not a guarantee of correctness, production security or institutional acceptance. "
           "SQLite and Flask were chosen for simplicity; their suitability under real workloads was not benchmarked.")
-    pdf.p("For Review 3, demonstrate the application and discuss test evidence and limitations. Guide approval, complete review submissions "
-          "and final hard binding remain separate tasks; the 19 December final date is tentative.")
 
 
 def ch9(pdf: Report):
@@ -888,13 +871,10 @@ def ch9(pdf: Report):
         "Pallets Projects. (2024). <i>Flask — Web development, one drop at a time.</i> https://flask.palletsprojects.com/",
         "Pallets Projects. (2024). <i>Werkzeug — The comprehensive WSGI web application library.</i> https://werkzeug.palletsprojects.com/",
         "The SQLite Consortium. (2024). <i>SQLite documentation — file format, transactions, WAL.</i> https://www.sqlite.org/docs.html",
-        "FPDF2 contributors. (2025). <i>fpdf2 — Simple and fast PDF document generation in Python.</i> https://pyfpdf.github.io/fpdf2/",
+        "FPDF2 contributors. (2025). <i>fpdf2 — PDF document generation in Python.</i>",
         "Matplotlib developers. (2024). <i>Matplotlib — Visualisation with Python.</i> https://matplotlib.org/",
-        "K.B.H.S.S.T’s Dr. B.V. Hiray College of Management and Research Centre, Department of MCA. (2026, 30 September). <i>Project Review Schedule 2026-27 — MCA-I (SEM-I).</i> Malegaon. [College circular — internal document]",
-        "Harney-Jenifar-R-S. (2026). <i>Smart Complaint Management System — reference concept repository.</i> GitHub. https://github.com/Harney-Jenifar-R-S/Smart_Complaint_System",
         "Press Information Bureau. (2024). <i>Centralized Public Grievance Redress and Monitoring System (CPGRAMS).</i> Government of India.",
         "OWASP Foundation. (2023). <i>OWASP Top 10 — A03: Injection, A07: Identification and Authentication Failures.</i> https://owasp.org/www-project-top-ten/",
-        "Savitribai Phule Pune University. <i>MCA, 2025 Pattern, Semester I–IV (w.e.f. 2025–26), Mini Project.</i> https://www.iims.ac.in/pdf/Academics/MCA-Syllabus-2025-Pattern-Semester-1-4.pdf. Confirm the applicable pattern with the department.",
     ]
     for i, r in enumerate(refs, 1):
         pdf.p(f"[{i}]  {r}")
@@ -912,7 +892,7 @@ def ch10(pdf: Report):
     ], [26, 62, 90])
 
     pdf.h2("10.2  Quick start (on the demo PC)")
-    pdf.p("Extract the ZIP or clone the repository. Install Python 3.10 or newer (3.11 or 3.12 recommended), then open the shikayat-setu folder in VS Code. Choose Terminal → Run Task → Start Campus Shikayat Setu. First launch creates .venv and installs dependencies (internet usually required); later launches reuse it. Open http://127.0.0.1:5001 and press Ctrl+C in the terminal to stop. On Windows you can also double-click Start_Project.bat; on macOS/Linux run sh start-project.sh. See README.md for troubleshooting. The project database is not reset by the launcher.")
+    pdf.p("With Python 3.10 or newer installed, start the application using the provided launcher. The launcher creates a local environment and installs dependencies on first use. Open http://127.0.0.1:5001 in a browser and sign in using a demo account. Stop the server with Ctrl+C. The launcher retains an existing project database.")
 
     pdf.h2("10.3  Screen catalogue — all application screen types")
     pdf.p("Images below are browser viewport captures from a fresh, disposable synthetic demo database. Some long pages require scrolling; role and status determine which action forms appear. Counts, names and dates in the demo are illustrative, not real grievance records.")
@@ -1013,7 +993,7 @@ def appb(pdf: Report):
               [[r["username"], r["role"], r["full_name"], r["dept"], r["status"]] for r in rows],
               [30, 18, 44, 52, 24], size=7.0)
 
-    pdf.h2("B.4  complaints — 37 rows (₹-style totals not applicable)")
+    pdf.h2("B.4  complaints — 37 rows")
     rows = db_rows("SELECT code, title, priority, status FROM complaints ORDER BY id")
     pdf.table(["Code", "Title", "Pri", "Status"],
               [[r["code"], r["title"], r["priority"], r["status"]] for r in rows],
@@ -1050,32 +1030,6 @@ def appc(pdf: Report):
     pdf.table(["Term", "Meaning"], words, [34, 144], size=8.0)
 
 
-def appd(pdf: Report):
-    pdf.h1("appd", "Appendix D — Project Review Schedule 2026-27 (notified 30-09-2026)", "Appendix D")
-    pdf.p("Reproduced (in tabular form) from the K.B.H.S.S.T’s Dr. B.V. Hiray College of Management and Research Centre "
-          "circular “Project Review Schedule 2026-27 MCA-I (SEM-I)” dated 30th September 2026, countersigned by the Head "
-          "of Department (MCA) and the Dy. Director, for cross-check against this report. Roll No. 1–34 → Project Guide "
-          "Mrs. Priyanka M. Jagtap; Roll No. 35 &amp; onwards → Mrs. Yogita A. Shirsath.")
-    pdf.table(["#", "Review (activity)", "Date", "Marks", "Notified content"], [
-        ["1", "Synopsis (SRS) Submission & First Review", "10-10-2026", "10",
-         "Ch-1 Introduction — 1.1 Abstract · 1.2 Existing System and Need for System · 1.3 Scope of System · 1.4 Operating Environment — Hardware and Software · 1.5 Brief Description of Technology Used · 1.5.1 Operating systems used (Windows or Unix)"],
-        ["2", "Second Review", "24-10-2026", "15",
-         "Ch-2 Proposed System — 2.1 Study of Similar Systems (research paper optional) · 2.2 Feasibility Study · 2.3 Objectives of Proposed System · 2.4 Users of System  +  Ch-3 System Analysis and Design — 3.1 System Requirements (Functional and Non-Functional) · 3.2 Entity Relationship Diagram (ERD) · 3.3 Table Structure · 3.4 Use Case Diagrams · 3.5 Class Diagram · 3.6 Activity Diagram · 3.7 Deployment Diagram · 3.8 Module Hierarchy Diagram · 3.9 Sample Input and Output Screens (valid data; ≥ 5 valid records per report)"],
-        ["3", "Third Review", "21-11-2026", "15",
-         "Ch-4 Coding — 4.1 Code snippets · Ch-5 Testing — 5.1 Test Strategy · 5.2 Unit Test Plan · 5.3 Acceptance Test Plan · 5.4 Test Case / Test Script · Ch-6 Limitations of Proposed System · Ch-7 Proposed Enhancements · Ch-8 Conclusion · Ch-9 Bibliography · Ch-10 User Manual (all screens with description/purpose; details about validations of entered data)"],
-        ["4", "Fourth Review", "05-12-2026", "10",
-         "1st PPT Presentation"],
-        ["5", "Internal Viva and Final Submission", "19-12-2026 (tentative)", "50",
-         "2nd Final PPT Presentation and project submission with Hard Binding"],
-    ], [7, 33, 22, 12, 104], size=6.9)
-    pdf.ln(2)
-    pdf.p("<b>Total marks: 100.</b> Guideline 1 — mini project in the first Semester based on the courses learnt; "
-          "2 — may be taken individually or in a group based on the scope of the project; 3 — all students shall report "
-          "project details to their respective guides on the above schedule dates. Students with Roll No. 1–34 are under "
-          "Mrs. Priyanka M. Jagtap; Roll No. 35 & onwards under Mrs. Yogita A. Shirsath.")
-    pdf.note("Coverage map — Chapters in this report follow the circular’s item numbers as follows: Ch-2 §2.1–2.4 = items for Review 2; Ch-3 §3.1–3.9 = items for Review 2; Ch-4…Ch-10 = items for Review 3. Chapter 10 (User Manual) lists every screen with purpose and a full validation catalogue (§10.5).")
-
-
 def build(toc, recorder, font_dir):
     pdf = Report(toc=toc, recorder=recorder, font_dir=font_dir)
     pdf.set_title("Campus Shikayat Setu — College Grievance Redressal System (MCA-I Sem-I Mini Project Report)")
@@ -1089,7 +1043,7 @@ def build(toc, recorder, font_dir):
     index(pdf)
     for key, fn in [("ch1", ch1), ("ch2", ch2), ("ch3", ch3), ("ch4", ch4), ("ch5", ch5),
                     ("ch6", ch6), ("ch7", ch7), ("ch8", ch8), ("ch9", ch9), ("ch10", ch10),
-                    ("appa", appa), ("appb", appb), ("appc", appc), ("appd", appd)]:
+                    ("appa", appa), ("appb", appb), ("appc", appc)]:
         fn(pdf)
     return pdf
 
