@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="32.6.10" type="device">
+  <diagram name="Application architecture" id="page-1">
+    <mxGraphModel dx="1400" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Application architecture" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=28;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="30" y="10" width="1340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Server-rendered Flask application with a local SQLite database" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#536670;" vertex="1" parent="1">
+          <mxGeometry x="30" y="53" width="1340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="70" y="250" width="320" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="Browser" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="78" y="260" width="304" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Forms, local CSS and JavaScript&#10;Optional routing preview" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="82" y="297" width="296" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eaf4f3;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="530" y="250" width="340" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="8" value="Flask application" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="538" y="260" width="324" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="app.py and Jinja templates&#10;routing.py and database.py" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="542" y="297" width="316" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="250" width="320" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="SQLite database" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="1018" y="260" width="304" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="12" value="Local database file&#10;Six related tables" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="1022" y="297" width="296" height="136" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=block;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="345" as="sourcePoint" />
+            <mxPoint x="530" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="14" value="HTTP" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="415" y="300" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=block;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="870" y="345" as="sourcePoint" />
+            <mxPoint x="1010" y="345" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="sqlite3" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="895" y="300" width="90" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="run.py initializes and seeds the database before starting the Flask development server.&#10;The server validates requests and enforces access rules." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e9;strokeColor=#c6a650;fontFamily=Arial;fontSize=16;fontColor=#172b3a;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="150" y="550" width="1100" height="90" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

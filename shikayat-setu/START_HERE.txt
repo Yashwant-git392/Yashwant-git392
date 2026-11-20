@@ -1,0 +1,34 @@
+CAMPUS SHIKAYAT SETU — EASY START
+
+1. Extract the ZIP completely. Install Python 3.10 or newer (3.11 or 3.12
+   recommended). On Windows choose "Add Python to PATH" in the installer.
+2. In VS Code: File > Open Folder > select the shikayat-setu folder.
+3. Select Terminal > Run Task > Start Campus Shikayat Setu.
+4. First time: wait while it creates .venv and installs requirements. You will
+   normally need internet for this first setup. Later runs reuse the environment.
+5. Open http://127.0.0.1:5001 in your browser. Leave the terminal open.
+   Press Ctrl+C in the terminal to stop the server.
+
+WINDOWS ALTERNATIVE
+Double-click Start_Project.bat in the extracted folder, or enter
+.\Start_Project.bat in the VS Code terminal.
+
+MAC/LINUX ALTERNATIVE
+In the VS Code terminal, run: sh start-project.sh
+
+DEMO LOGIN
+Admin:   admin / admin123
+Student: MCA2026001 / student123
+Officer: hostel.officer / officer123
+
+TROUBLESHOOTING
+- If Python is not found, install it and restart VS Code.
+- If setup fails, read the terminal message, check internet and retry.
+- If you moved an environment from another computer and it is broken, close the
+  app, rename ONLY the .venv folder and start again. Do not delete your database.
+- If port 5001 is occupied, stop the other app or set SHIKAYAT_PORT first.
+- The task appears when the shikayat-setu folder itself is open in VS Code.
+
+See README.md for full instructions, troubleshooting, security limitations and
+how to choose the interpreter in VS Code. Native Windows operation has not been
+verified in this test environment; test on the review PC before the review.

@@ -42,7 +42,7 @@
         <tr><td>Location</td><td>{{ c['location'] or '—' }}</td></tr>
         <tr><td>Submitted</td><td>{{ c['submitted_at'] }}</td></tr>
         <tr><td>SLA due</td><td class="{{ 'sla-late' if c['is_overdue'] else 'sla-ok' }}">{{ c['sla_due_at'] }} {% if c['is_overdue'] %}(overdue){% endif %}</td></tr>
-        <tr><td>Routing</td><td>{{ 'Automatic (engine score ' + c['routing_score']|string + ')' if c['routing']=='auto' else 'Manually reassigned by admin' }}</td></tr>
+        <tr><td>Routing</td><td>{{ 'Automatic (engine score ' + c['routing_score']|string + ')' if c['routing']=='auto' else ('Manually reassigned by admin' if c['steps']|selectattr('event_type', 'equalto', 'reassign')|list else 'Selected category retained (manual routing)') }}</td></tr>
       </tbody></table>
       <div style="margin-top:12px"><b>Description</b>
         <p style="margin-top:6px;line-height:1.6">{{ c['description'] }}</p></div>
@@ -78,21 +78,21 @@
       <h2><span class="h-icon">🏛️</span> Department actions</h2>
       <div class="actions" style="flex-direction:column;align-items:stretch">
         {% if c['status'] == 'Submitted' %}
-        <form method="post" action="{{ url_for('acknowledge', code=c['code']) }}">
+        <form method="post" action="{{ url_for('acknowledge', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-primary full" type="submit">✓ Acknowledge</button></form>
         {% endif %}
         {% if c['status'] in ['Acknowledged','Submitted'] %}
-        <form method="post" action="{{ url_for('start_work', code=c['code']) }}">
+        <form method="post" action="{{ url_for('start_work', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="btn btn-primary full" type="submit">🔧 Mark In Progress</button></form>
         {% endif %}
         {% if c['status'] not in ['Resolved','Closed'] %}
-        <form method="post" action="{{ url_for('resolve', code=c['code']) }}">
+        <form method="post" action="{{ url_for('resolve', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="field"><label for="resolve-remark">Resolution remark <span class="help">(min 10 chars)</span></label>
             <textarea id="resolve-remark" name="remark" rows="3" required minlength="10" placeholder="What was done to fix it?"></textarea></div>
           <button class="btn btn-green full" type="submit" style="margin-top:8px">✅ Mark Resolved</button>
         </form>
         {% endif %}
-        <form method="post" action="{{ url_for('add_remark', code=c['code']) }}">
+        <form method="post" action="{{ url_for('add_remark', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="field"><label for="remark-note">Add remark <span class="help">(visible on timeline)</span></label>
             <input id="remark-note" name="note" required minlength="5" placeholder="e.g. Plumber scheduled for tomorrow 10:00"></div>
           <button class="btn btn-ghost full" type="submit" style="margin-top:8px">💬 Add Remark</button>
@@ -104,17 +104,17 @@
     {% if session.get('role') == 'admin' %}
     <div class="card">
       <h2><span class="h-icon">🛡️</span> Admin actions</h2>
-      <form method="post" action="{{ url_for('reassign', code=c['code']) }}">
+      <form method="post" action="{{ url_for('reassign', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field"><label for="reassign-dept">Reassign to department</label>
           <select id="reassign-dept" name="department_id" required>{% for d in depts %}<option value="{{ d['id'] }}">{{ d['name'] }}</option>{% endfor %}</select></div>
         <button class="btn btn-ghost full" type="submit" style="margin-top:8px">🔀 Reassign</button>
       </form>
-      <form method="post" action="{{ url_for('escalate', code=c['code']) }}" style="margin-top:10px">
+      <form method="post" action="{{ url_for('escalate', code=c['code']) }}" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="note" value="Escalated by admin — priority raised to High.">
         <button class="btn btn-red full" type="submit">🔺 Escalate to High priority</button>
       </form>
       {% if c['status'] == 'Resolved' %}
-      <form method="post" action="{{ url_for('force_close', code=c['code']) }}" style="margin-top:10px">
+      <form method="post" action="{{ url_for('force_close', code=c['code']) }}" style="margin-top:10px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="btn btn-ghost full" type="submit">🔒 Force-close resolved complaint</button>
       </form>
       {% endif %}
@@ -124,7 +124,7 @@
     {% if session.get('role') == 'student' and c['status'] == 'Resolved' %}
     <div class="card">
       <h2><span class="h-icon">✅</span> Confirm resolution</h2>
-      <form method="post" action="{{ url_for('feedback', code=c['code']) }}">
+      <form method="post" action="{{ url_for('feedback', code=c['code']) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field"><label>How satisfied are you?</label>
           <div class="star-rate" role="radiogroup" aria-label="Rating from 1 to 5 stars">
             {% for i in [5,4,3,2,1] %}
@@ -138,7 +138,7 @@
           <input id="fb-comment" name="comment" placeholder="What went well / what didn’t"></div>
         <button class="btn btn-green full" type="submit" style="margin-top:10px">✅ Confirm &amp; Close</button>
       </form>
-      <form method="post" action="{{ url_for('reopen', code=c['code']) }}" style="margin-top:12px;border-top:1px solid var(--line-2);padding-top:12px">
+      <form method="post" action="{{ url_for('reopen', code=c['code']) }}" style="margin-top:12px;border-top:1px solid var(--line-2);padding-top:12px"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field"><label for="reopen-reason">Not satisfied? Reopen <span class="help">(min 10 chars)</span></label>
           <input id="reopen-reason" name="reason" required minlength="10" placeholder="The issue persists because…"></div>
         <button class="btn btn-red full" type="submit" style="margin-top:8px">↩️ Reopen Complaint</button>

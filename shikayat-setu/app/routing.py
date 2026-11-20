@@ -4,7 +4,7 @@ Routing rules:
 * every category carries a keyword list; multi-word keywords weigh more;
 * the title is weighted double (it usually carries the intent);
 * mass-impact phrases bump priority one level; catastrophe words force High;
-* if nothing matches, the complaint falls back to General & Administration.
+* the application keeps the selected category when no stronger match exists.
 """
 import re
 
@@ -48,6 +48,17 @@ def route(text: str, categories) -> tuple[object, int]:
         if s > best_score:
             best_cat, best_score = cat, s
     return best_cat, best_score
+
+
+
+def select_category(title, description, chosen, categories):
+    """Use the highest keyword match when it is not weaker than the choice."""
+    text = route_text(title, description)
+    matched, score = route(text, categories)
+    if matched and (matched["id"] == chosen["id"] or
+                    score > score_category(text, chosen["keywords"])):
+        return matched, "auto", score
+    return chosen, "manual", 0
 
 
 def bump_priority(priority: str) -> str:

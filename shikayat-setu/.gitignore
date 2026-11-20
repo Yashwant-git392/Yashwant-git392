@@ -1,0 +1,12 @@
+# Local Python environment and generated cache: recreate these on each machine.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Default local demo data; never upload a populated database by accident.
+app/shikayat_setu.db
+app/shikayat_setu.db-journal
+app/shikayat_setu.db-wal
+app/shikayat_setu.db-shm
+.DS_Store

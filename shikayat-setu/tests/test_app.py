@@ -1,5 +1,7 @@
 """Campus Shikayat Setu — automated test suite."""
 import os
+import re
+import sqlite3
 import sys
 import tempfile
 from datetime import datetime
@@ -25,8 +27,21 @@ def client(tmp_path, monkeypatch):
         yield c
 
 
+def csrf_token(client):
+    response = client.get("/login")
+    match = re.search(rb'name="csrf_token" value="([^"]+)"', response.data)
+    assert match, "login form must include a CSRF token"
+    return match.group(1).decode()
+
+
+def post(client, url, data=None, **kwargs):
+    payload = dict(data or {})
+    payload["csrf_token"] = csrf_token(client)
+    return client.post(url, data=payload, **kwargs)
+
+
 def login(client, username, password):
-    return client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    return post(client, "/login", data={"username": username, "password": password}, follow_redirects=False)
 
 
 def test_01_login_page_loads(client):
@@ -51,7 +66,7 @@ def test_04_admin_dashboard_after_login(client):
 
 
 def test_05_student_self_registration(client):
-    r = client.post("/register", data={
+    r = post(client, "/register", data={
         "full_name": "Test Student", "roll_no": "MCA2026999",
         "email": "test@bvhrcet.ac.in", "phone": "9876500001",
         "password": "test123", "confirm_password": "test123"}, follow_redirects=False)
@@ -61,7 +76,7 @@ def test_05_student_self_registration(client):
 
 
 def test_06_duplicate_roll_rejected(client):
-    r = client.post("/register", data={
+    r = post(client, "/register", data={
         "full_name": "Duplicate", "roll_no": "MCA2026001",
         "email": "dup@bvhrcet.ac.in", "phone": "9876500002",
         "password": "test123", "confirm_password": "test123"})
@@ -70,7 +85,7 @@ def test_06_duplicate_roll_rejected(client):
 
 def test_07_lodge_routes_leak_to_sanitation(client):
     login(client, "MCA2026002", "student123")
-    r = client.post("/lodge", data={
+    r = post(client, "/lodge", data={
         "title": "Tap leaking heavily in hostel washroom",
         "description": "The tap near the hostel washroom is leaking continuously for three days; floor is wet.",
         "location": "Hostel 2F", "category_id": "3"}, follow_redirects=False)
@@ -85,7 +100,7 @@ def test_07_lodge_routes_leak_to_sanitation(client):
 
 def test_08_safety_keyword_forces_high_priority(client):
     login(client, "MCA2026003", "student123")
-    r = client.post("/lodge", data={
+    r = post(client, "/lodge", data={
         "title": "Stray electric shock risk near switchboard",
         "description": "A loose wire near the switchboard is giving mild shock; unsafe for all classmates.",
         "location": "Lab 2", "category_id": "2"}, follow_redirects=False)
@@ -108,22 +123,22 @@ def test_09_officer_sees_only_own_department(client):
 
 def test_10_full_resolution_cycle(client):
     login(client, "MCA2026002", "student123")
-    r = client.post("/lodge", data={
+    r = post(client, "/lodge", data={
         "title": "Dustbin overflowing near canteen",
         "description": "The dustbin near the canteen has not been emptied for two days; very smelly.",
         "location": "Canteen", "category_id": "6"}, follow_redirects=False)
     assert r.status_code == 302
     from database import get_conn
     conn = get_conn(); code = conn.execute("SELECT code FROM complaints ORDER BY id DESC LIMIT 1").fetchone()["code"]; conn.close()
-    client.get("/logout")
+    post(client, "/logout")
     login(client, "maint.officer", "officer123")
-    client.post(f"/complaint/{code}/acknowledge")
-    client.post(f"/complaint/{code}/progress")
-    r = client.post(f"/complaint/{code}/resolve", data={"remark": "Dustbin emptied and replaced with a bigger bin."})
+    post(client, f"/complaint/{code}/acknowledge")
+    post(client, f"/complaint/{code}/progress")
+    r = post(client, f"/complaint/{code}/resolve", data={"remark": "Dustbin emptied and replaced with a bigger bin."})
     assert r.status_code == 302
-    client.get("/logout")
+    post(client, "/logout")
     login(client, "MCA2026002", "student123")
-    r = client.post(f"/complaint/{code}/feedback", data={"rating": "5", "comment": "Thanks!"})
+    r = post(client, f"/complaint/{code}/feedback", data={"rating": "5", "comment": "Thanks!"})
     assert r.status_code == 302
     conn = get_conn(); row = conn.execute("SELECT status FROM complaints WHERE code=?", (code,)).fetchone(); conn.close()
     assert row["status"] == "Closed"
@@ -179,7 +194,7 @@ def test_routing_preview_matches_submitted_complaint(client):
     preview = client.get("/api/route-preview", query_string=data)
     assert preview.status_code == 200
     expected = preview.get_json()
-    assert client.post("/lodge", data=data).status_code == 302
+    assert post(client, "/lodge", data=data).status_code == 302
     conn = db.get_conn()
     actual = conn.execute("""SELECT cat.name AS category, d.name AS department, c.priority, c.routing_score
                              FROM complaints c JOIN categories cat ON cat.id=c.category_id
@@ -197,7 +212,7 @@ def test_routing_preview_uses_selected_category_when_no_keywords_match(client):
     assert preview.status_code == 200
     expected = preview.get_json()
     assert expected["score"] == 0
-    assert client.post("/lodge", data=data).status_code == 302
+    assert post(client, "/lodge", data=data).status_code == 302
     conn = db.get_conn()
     actual = conn.execute("""SELECT cat.name AS category, d.name AS department, c.priority
                              FROM complaints c JOIN categories cat ON cat.id=c.category_id
@@ -223,18 +238,321 @@ def test_anonymous_student_event_actor_hidden_from_officer(client):
     data = {"title": "Leaking tap near washroom",
             "description": "The hostel washroom tap is leaking and the floor is wet.",
             "category_id": "3", "is_anonymous": "on"}
-    assert client.post("/lodge", data=data).status_code == 302
+    assert post(client, "/lodge", data=data).status_code == 302
     conn = db.get_conn()
     row = conn.execute("SELECT code, student_id FROM complaints ORDER BY id DESC LIMIT 1").fetchone()
     student_name = conn.execute("SELECT full_name FROM users WHERE id=?", (row["student_id"],)).fetchone()["full_name"]
     code = row["code"]
     conn.close()
-    client.get("/logout")
+    post(client, "/logout")
     login(client, "maint.officer", "officer123")
     response = client.get(f"/complaint/{code}")
     assert response.status_code == 200
     assert student_name.encode() not in response.data
     assert b"Anonymous" in response.data
-    client.get("/logout")
+    post(client, "/logout")
     login(client, "admin", "admin123")
     assert student_name.encode() in client.get(f"/complaint/{code}").data
+
+
+def test_csrf_rejects_missing_invalid_and_cross_session_tokens(client):
+    from app import app
+    assert client.post('/login', data={'username': 'admin', 'password': 'admin123'}).status_code == 400
+    assert client.post('/register', data={'csrf_token': 'invalid'}).status_code == 400
+    token = csrf_token(client)
+    other = app.test_client()
+    csrf_token(other)
+    assert other.post('/login', data={'username': 'admin', 'password': 'admin123', 'csrf_token': token}).status_code == 400
+    assert login(client, 'admin', 'admin123').status_code == 302
+    conn = db.get_conn()
+    complaint = conn.execute("SELECT code, status FROM complaints WHERE status='Resolved' LIMIT 1").fetchone()
+    conn.close()
+    url = f"/complaint/{complaint['code']}/force-close"
+    assert client.post(url).status_code == 400
+    assert client.post(url, data={'csrf_token': 'invalid'}).status_code == 400
+    conn = db.get_conn()
+    assert conn.execute('SELECT status FROM complaints WHERE code=?', (complaint['code'],)).fetchone()['status'] == 'Resolved'
+    conn.close()
+    assert post(client, url).status_code == 302
+    conn = db.get_conn()
+    assert conn.execute('SELECT status FROM complaints WHERE code=?', (complaint['code'],)).fetchone()['status'] == 'Closed'
+    conn.close()
+    assert client.get('/logout').status_code == 405
+    assert client.post('/logout').status_code == 400
+    assert post(client, '/logout').status_code == 302
+
+
+def test_post_forms_have_csrf_tokens(client):
+    from html.parser import HTMLParser
+
+    class FormParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.forms = []
+            self.current = None
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'form':
+                self.current = {'method': attrs.get('method', 'get').lower(), 'token': False}
+                self.forms.append(self.current)
+            elif tag == 'input' and self.current is not None and attrs.get('name') == 'csrf_token':
+                self.current['token'] = bool(attrs.get('value'))
+        def handle_endtag(self, tag):
+            if tag == 'form':
+                self.current = None
+
+    paths = ['/login', '/register', '/track']
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    code = conn.execute("SELECT code FROM complaints WHERE status='Submitted' LIMIT 1").fetchone()['code']
+    conn.close()
+    paths += ['/dashboard', '/users', '/console', '/change-password', f'/complaint/{code}']
+    for path in paths:
+        response = client.get(path)
+        assert response.status_code == 200, path
+        parser = FormParser()
+        parser.feed(response.get_data(as_text=True))
+        assert all(f['token'] for f in parser.forms if f['method'] == 'post'), path
+    post(client, '/logout')
+    login(client, 'MCA2026001', 'student123')
+    conn = db.get_conn()
+    code = conn.execute("""SELECT c.code FROM complaints c JOIN users u ON c.student_id=u.id
+                           WHERE u.username='MCA2026001' AND c.status='Resolved' LIMIT 1""").fetchone()['code']
+    conn.close()
+    for path in ['/lodge', f'/complaint/{code}']:
+        parser = FormParser()
+        parser.feed(client.get(path).get_data(as_text=True))
+        assert all(f['token'] for f in parser.forms if f['method'] == 'post'), path
+
+
+@pytest.mark.parametrize('timestamp', [None, 'not-a-date'])
+def test_reopen_rejects_invalid_resolution_timestamp(client, timestamp):
+    login(client, 'MCA2026001', 'student123')
+    conn = db.get_conn()
+    code = conn.execute("""SELECT c.code FROM complaints c JOIN users u ON c.student_id=u.id
+                           WHERE u.username='MCA2026001' AND c.status='Resolved' LIMIT 1""").fetchone()['code']
+    conn.execute('UPDATE complaints SET resolved_at=? WHERE code=?', (timestamp, code))
+    conn.commit()
+    before = conn.execute("SELECT COUNT(*) FROM complaint_events WHERE event_type='reopened' AND complaint_id=(SELECT id FROM complaints WHERE code=?)", (code,)).fetchone()[0]
+    conn.close()
+    response = post(client, f'/complaint/{code}/reopen', data={'reason': 'The issue is still present'}, follow_redirects=True)
+    assert b'Resolution time is unavailable or invalid' in response.data
+    conn = db.get_conn()
+    assert conn.execute('SELECT status FROM complaints WHERE code=?', (code,)).fetchone()['status'] == 'Resolved'
+    assert conn.execute("SELECT COUNT(*) FROM complaint_events WHERE event_type='reopened' AND complaint_id=(SELECT id FROM complaints WHERE code=?)", (code,)).fetchone()[0] == before
+    conn.close()
+
+
+def test_reopen_age_valid_and_expired(client):
+    from datetime import timedelta
+    login(client, 'MCA2026001', 'student123')
+    conn = db.get_conn()
+    code = conn.execute("""SELECT c.code FROM complaints c JOIN users u ON c.student_id=u.id
+                           WHERE u.username='MCA2026001' AND c.status='Resolved' LIMIT 1""").fetchone()['code']
+    conn.execute('UPDATE complaints SET resolved_at=? WHERE code=?', ((datetime.now()-timedelta(days=8)).strftime('%Y-%m-%d %H:%M:%S'), code))
+    conn.commit()
+    conn.close()
+    response = post(client, f'/complaint/{code}/reopen', data={'reason': 'The issue is still present'}, follow_redirects=True)
+    assert b'Reopen window' in response.data
+    conn = db.get_conn()
+    assert conn.execute('SELECT status FROM complaints WHERE code=?', (code,)).fetchone()['status'] == 'Resolved'
+    conn.execute('UPDATE complaints SET resolved_at=? WHERE code=?', ((datetime.now()-timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S'), code))
+    conn.commit()
+    conn.close()
+    post(client, f'/complaint/{code}/reopen', data={'reason': 'The issue is still present'})
+    conn = db.get_conn()
+    assert conn.execute('SELECT status FROM complaints WHERE code=?', (code,)).fetchone()['status'] == 'In Progress'
+    conn.close()
+
+
+def test_request_db_rolls_back_and_closes_after_exception(client, monkeypatch):
+    import app as application
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    complaint = conn.execute("SELECT code, status FROM complaints WHERE status='Submitted' LIMIT 1").fetchone()
+    conn.close()
+    token = csrf_token(client)
+    opened = []
+    original_connect = db.get_conn
+    def tracked_connect():
+        conn = original_connect()
+        opened.append(conn)
+        return conn
+    def fail_event(*args, **kwargs):
+        raise RuntimeError('simulated event failure')
+    monkeypatch.setattr(db, 'get_conn', tracked_connect)
+    monkeypatch.setattr(application, 'log_event', fail_event)
+    with pytest.raises(RuntimeError, match='simulated event failure'):
+        client.post(f"/complaint/{complaint['code']}/acknowledge", data={'csrf_token': token})
+    assert len(opened) == 1  # helpers share the same request-scoped connection
+    with pytest.raises(sqlite3.ProgrammingError, match='closed'):
+        opened[0].execute('SELECT 1')
+    check = original_connect()
+    assert check.execute('SELECT status FROM complaints WHERE code=?', (complaint['code'],)).fetchone()['status'] == 'Submitted'
+    check.close()
+
+
+def test_seed_failure_rolls_back_all_seed_inserts(tmp_path, monkeypatch):
+    path = str(tmp_path / 'failed-seed.db')
+    monkeypatch.setattr(db, 'DB_PATH', path)
+    db.init_db()
+    def fail_hash(*args, **kwargs):
+        raise RuntimeError('simulated seed failure')
+    monkeypatch.setattr(db, 'generate_password_hash', fail_hash)
+    with pytest.raises(RuntimeError, match='simulated seed failure'):
+        db.seed_if_empty()
+    conn = db.get_conn()
+    assert conn.execute('SELECT COUNT(*) FROM departments').fetchone()[0] == 0
+    assert conn.execute('SELECT COUNT(*) FROM categories').fetchone()[0] == 0
+    assert conn.execute('SELECT COUNT(*) FROM users').fetchone()[0] == 0
+    conn.close()
+
+
+def test_secret_and_invalid_port_configuration(tmp_path):
+    import subprocess
+    env = os.environ.copy()
+    env['SHIKAYAT_SECRET_KEY'] = 'test-secret-from-environment'
+    env['SHIKAYAT_PORT'] = 'not-a-port'
+    env['SHIKAYAT_DB'] = str(tmp_path / 'config.db')
+    project = os.path.abspath(os.path.join(APP_DIR, '..'))
+    env['PYTHONPATH'] = os.path.abspath(APP_DIR) + os.pathsep + env.get('PYTHONPATH', '')
+    result = subprocess.run([sys.executable, '-c',
+                             "import os; from app import app; assert app.secret_key == os.environ['SHIKAYAT_SECRET_KEY']"],
+                            cwd=project, env=env, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([sys.executable, 'run.py'], cwd=project, env=env, capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'SHIKAYAT_PORT must be an integer between 1 and 65535' in result.stderr
+
+
+def test_empty_department_pendency_count_is_zero(client):
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    conn.execute("INSERT INTO departments (name, head_name, email, location) VALUES ('Empty Department', 'Head', 'dept@example.test', 'Lab')")
+    conn.commit()
+    conn.close()
+    response = client.get('/reports?report=pendency')
+    row = re.search(rb'<tr><td><b>Empty Department</b></td>(.*?)</tr>', response.data, re.S)
+    assert row and b'<td><b>0</b></td>' in row.group(1)
+
+
+def test_reopened_complaint_not_counted_as_currently_resolved(client):
+    from flask import template_rendered
+    from app import app
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    conn.execute("UPDATE complaints SET status='Submitted', resolved_at=NULL")
+    ids = [r[0] for r in conn.execute('SELECT id FROM complaints LIMIT 2')]
+    conn.execute("UPDATE complaints SET status='Resolved', resolved_at='2020-01-01 00:00:00', sla_due_at='2020-01-02 00:00:00' WHERE id=?", (ids[0],))
+    conn.execute("UPDATE complaints SET status='In Progress', resolved_at='2020-01-01 00:00:00', sla_due_at='2020-01-02 00:00:00' WHERE id=?", (ids[1],))
+    conn.commit()
+    conn.close()
+    captured = []
+    def record(sender, template, context, **extra):
+        captured.append(context)
+    with template_rendered.connected_to(record, app):
+        assert client.get('/dashboard').status_code == 200
+        assert captured[-1]['on_time_pct'] == 100.0
+        assert client.get('/reports?report=restime').status_code == 200
+        assert sum(r['n'] for r in captured[-1]['rows']) == 1
+
+
+def test_create_officer_rejects_invalid_department_without_server_error(client):
+    login(client, 'admin', 'admin123')
+    response = post(client, '/users/officer', data={'username':'invalid.officer','full_name':'Test Officer', 'department_id':'999999','password':'test123'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'valid department' in response.data
+    conn = db.get_conn()
+    assert conn.execute("SELECT 1 FROM users WHERE username='invalid.officer'").fetchone() is None
+    conn.close()
+
+
+def test_deactivated_account_loses_existing_session(client):
+    from app import app
+    officer = app.test_client()
+    login(officer, 'hostel.officer', 'officer123')
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    uid = conn.execute("SELECT id FROM users WHERE username='hostel.officer'").fetchone()['id']
+    conn.close()
+    post(client, f'/users/{uid}/toggle')
+    response = officer.get('/queue', follow_redirects=False)
+    assert response.status_code == 302 and '/login' in response.headers['Location']
+    assert officer.get('/dashboard', follow_redirects=False).status_code == 302
+    assert login(officer, 'hostel.officer', 'officer123').status_code == 403
+
+
+def test_missing_account_invalidates_existing_session(client):
+    login(client, 'MCA2026001', 'student123')
+    with client.session_transaction() as session:
+        session['user_id'] = 999999
+    response = client.get('/dashboard', follow_redirects=False)
+    assert response.status_code == 302 and '/login' in response.headers['Location']
+
+
+@pytest.mark.parametrize('target', ['https://example.com/x', '//example.com/x', '/\\example.com', '/%0aexample'])
+def test_login_rejects_external_or_unsafe_next(client, target):
+    response = post(client, '/login?next=' + __import__('urllib.parse', fromlist=['quote']).quote(target, safe=''), data={'username':'admin','password':'admin123'})
+    assert response.status_code == 302 and response.headers['Location'] == '/dashboard'
+
+
+def test_login_allows_local_next(client):
+    response = post(client, '/login?next=%2Fqueue%3Fstatus%3DSubmitted', data={'username':'admin','password':'admin123'})
+    assert response.status_code == 302 and response.headers['Location'] == '/queue?status=Submitted'
+
+
+def test_manual_routing_label_distinguishes_retained_selection_and_reassignment(client):
+    login(client, 'MCA2026001', 'student123')
+    data = {'title':'A puzzling matter', 'description':'Nothing specific can be identified here.', 'category_id':'1'}
+    post(client, '/lodge', data=data)
+    conn = db.get_conn()
+    code = conn.execute('SELECT code FROM complaints ORDER BY id DESC LIMIT 1').fetchone()['code']
+    conn.close()
+    response = client.get('/complaint/' + code)
+    assert b'Selected category' in response.data
+    assert b'Manually reassigned by admin' not in response.data
+    post(client, '/logout')
+    login(client, 'admin', 'admin123')
+    post(client, '/complaint/' + code + '/reassign', data={'department_id':'2'})
+    assert b'Manually reassigned by admin' in client.get('/complaint/' + code).data
+    assert b'Manual routing' in client.get('/reports?report=routing').data
+
+
+def test_admin_feedback_redirect_and_timeline_credit(client):
+    login(client, 'admin', 'admin123')
+    conn = db.get_conn()
+    code = conn.execute("SELECT code FROM complaints WHERE status='Resolved' LIMIT 1").fetchone()['code']
+    conn.close()
+    response = post(client, '/complaint/' + code + '/feedback', data={'rating':'5', 'comment':'Test feedback'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Admin rated 5/5.' in response.data
+    assert b'Admin confirmed resolution.' in response.data
+
+
+def test_officer_dashboard_only_active_and_priority_ordered(client):
+    from flask import template_rendered
+    from app import app
+    conn = db.get_conn()
+    dept = conn.execute("SELECT department_id FROM users WHERE username='hostel.officer'").fetchone()[0]
+    ids = [r[0] for r in conn.execute('SELECT id FROM complaints LIMIT 3')]
+    conn.execute("UPDATE complaints SET department_id=?, status='Closed'", (dept,))
+    conn.execute("UPDATE complaints SET status='Submitted', priority='Low', submitted_at='2026-11-09 10:00:00' WHERE id=?", (ids[0],))
+    conn.execute("UPDATE complaints SET status='Submitted', priority='High', submitted_at='2026-11-08 10:00:00' WHERE id=?", (ids[1],))
+    conn.execute("UPDATE complaints SET status='Resolved', priority='High' WHERE id=?", (ids[2],))
+    conn.commit()
+    conn.close()
+    login(client, 'hostel.officer', 'officer123')
+    captured = []
+    def record(sender, template, context, **extra): captured.append(context)
+    with template_rendered.connected_to(record, app):
+        assert client.get('/dashboard').status_code == 200
+    assert captured[-1]['assigned'] == 2 and captured[-1]['high'] == 1
+    assert [r['priority'] for r in captured[-1]['queue']] == ['High', 'Low']
+
+
+@pytest.mark.parametrize('department', ['²', '9' * 5000])
+def test_unusual_department_filters_do_not_crash(client, department):
+    from urllib.parse import quote
+    login(client, 'admin', 'admin123')
+    for path in ('/queue', '/console'):
+        assert client.get(path + '?department_id=' + quote(department)).status_code == 200

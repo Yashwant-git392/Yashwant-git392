@@ -1,0 +1,243 @@
+#!/usr/bin/env python3
+"""Build an editable Word version from the report's shared content functions.
+
+Word computes pagination itself. PAGEREF fields and page numbers are updated
+when the document is opened/refreshed in a word processor.
+"""
+from pathlib import Path
+import re
+
+from docx import Document
+from docx.enum.section import WD_SECTION
+from docx.enum.table import WD_TABLE_ALIGNMENT, WD_CELL_VERTICAL_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Inches, Mm, Pt, RGBColor
+from PIL import Image
+
+import build_report as source
+
+OUT = source.REPORT_DIR / 'CampusShikayatSetu_MCA-Mini-Project_Report.docx'
+NAVY = RGBColor(22, 36, 61)
+GOLD = RGBColor(190, 146, 47)
+CONTENT_MM = source.CONTENT_W
+
+
+def style_run(run, size=13, bold=False, color=None):
+    run.font.name = 'Times New Roman'
+    run._element.get_or_add_rPr().rFonts.set(qn('w:eastAsia'), 'Times New Roman')
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    if color:
+        run.font.color.rgb = color
+    return run
+
+
+def keep(paragraph, next_=False):
+    paragraph.paragraph_format.keep_together = True
+    paragraph.paragraph_format.keep_with_next = next_
+
+
+def field(paragraph, instruction, cached='—'):
+    run = paragraph.add_run()
+    style_run(run)
+    begin = OxmlElement('w:fldChar'); begin.set(qn('w:fldCharType'), 'begin')
+    begin.set(qn('w:dirty'), 'true')
+    text = OxmlElement('w:instrText'); text.set(qn('xml:space'), 'preserve'); text.text = ' ' + instruction + ' '
+    separate = OxmlElement('w:fldChar'); separate.set(qn('w:fldCharType'), 'separate')
+    value = OxmlElement('w:t'); value.text = cached
+    end = OxmlElement('w:fldChar'); end.set(qn('w:fldCharType'), 'end')
+    for element in (begin, text, separate, value, end):
+        run._r.append(element)
+
+
+def bookmark_name(key):
+    return 'r_' + re.sub('[^a-zA-Z0-9_]', '_', key)
+
+
+def shade(cell, color):
+    tc_pr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd'); shd.set(qn('w:fill'), color); tc_pr.append(shd)
+
+
+class DocxReport:
+    def __init__(self):
+        self.doc = Document()
+        self.bookmark_id = 0
+        self.expected_keys = {key for _, _, key in source.INDEX_ITEMS}
+        self.written_keys = set()
+        normal = self.doc.styles['Normal']
+        normal.font.name = 'Times New Roman'
+        normal._element.rPr.rFonts.set(qn('w:eastAsia'), 'Times New Roman')
+        normal.font.size = Pt(13)
+        normal.paragraph_format.line_spacing = 1.5
+        normal.paragraph_format.space_after = Pt(5)
+        sec = self.doc.sections[0]
+        self.section_layout(sec)
+        settings = self.doc.settings._element
+        update = OxmlElement('w:updateFields'); update.set(qn('w:val'), 'true'); settings.append(update)
+        self.doc.core_properties.title = 'Campus Shikayat Setu — Mini Project Report'
+        self.doc.core_properties.author = 'Yashwant Santosh Ahire'
+
+    def section_layout(self, sec):
+        sec.page_width, sec.page_height = Mm(210), Mm(297)
+        sec.left_margin, sec.right_margin = Inches(2), Inches(1.5)
+        sec.top_margin, sec.bottom_margin = Inches(2), Inches(1.5)
+        sec.header_distance, sec.footer_distance = Mm(29), Mm(23)
+
+    def mark(self, paragraph, key):
+        if key not in self.expected_keys or key in self.written_keys:
+            return
+        self.bookmark_id += 1
+        start = OxmlElement('w:bookmarkStart')
+        start.set(qn('w:id'), str(self.bookmark_id)); start.set(qn('w:name'), bookmark_name(key))
+        end = OxmlElement('w:bookmarkEnd'); end.set(qn('w:id'), str(self.bookmark_id))
+        # Paragraph properties must remain the first child in WordprocessingML.
+        paragraph._p.insert(1 if paragraph._p.pPr is not None else 0, start)
+        paragraph._p.append(end)
+        self.written_keys.add(key)
+
+    def cover(self):
+        blank = self.doc.add_paragraph()
+        blank.paragraph_format.space_after = Pt(0)
+        run = blank.add_run(); run.add_break(WD_BREAK.PAGE); run.add_break(WD_BREAK.PAGE)
+        for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
+            p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_after = Pt(0)
+            style_run(p.add_run(line), 16, True, NAVY)
+        for line in ['Submitted By', 'Yashwant Santosh Ahire', 'MCA-I SEM-I',
+                     'Roll No.: ____________________', 'UNDER THE GUIDANCE OF',
+                     'Project Guide: ____________________', 'In Partial Fulfillment of',
+                     'SAVITRIBAI PHULE PUNE UNIVERSITY', 'MASTER OF COMPUTER APPLICATIONS',
+                     'K.B.H.S.S. Trust’s', 'Dr. B. V. Hiray College of Management & Research Centre']:
+            p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_after = Pt(0); style_run(p.add_run(line))
+        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(0); p.add_run().add_picture(str(source.IMG / 'college-logo.png'), width=Mm(24))
+        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; style_run(p.add_run('2026–2027'))
+        sec = self.doc.add_section(WD_SECTION.NEW_PAGE)
+        self.section_layout(sec)
+        sec.header.is_linked_to_previous = False
+        sec.footer.is_linked_to_previous = False
+        header = sec.header.paragraphs[0]; header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        style_run(header.add_run('Campus Shikayat Setu'), color=NAVY)
+        footer = sec.footer.paragraphs[0]
+        footer.paragraph_format.tab_stops.add_tab_stop(Mm(CONTENT_MM - 4), WD_TAB_ALIGNMENT.RIGHT)
+        style_run(footer.add_run('Dr. B. V. Hiray College of\t'), color=NAVY)
+        field(footer, 'PAGE', '—')
+        style_run(footer.add_run('\nManagement & Research Centre'), color=NAVY)
+
+    def h1(self, key, text, kicker=None):
+        p = self.doc.add_paragraph()
+        p.paragraph_format.page_break_before = key != 'certificate'
+        p.paragraph_format.space_after = Pt(6)
+        keep(p, True)
+        if kicker:
+            style_run(p.add_run(kicker.upper() + '\n'), 16, True, NAVY)
+        style_run(p.add_run(source._plain(text)), 16, True, NAVY)
+        self.mark(p, key)
+
+    def h2(self, text, reserve=20):
+        self.heading(text)
+
+    def h3(self, text, reserve=16):
+        self.heading(text)
+
+    def heading(self, text):
+        p = self.doc.add_paragraph(); keep(p, True)
+        p.paragraph_format.space_after = Pt(4)
+        style_run(p.add_run(source._plain(text)), 15, True, NAVY)
+        self.mark(p, 'section:' + text.split(' ', 1)[0])
+
+    def p(self, text):
+        p = self.doc.add_paragraph(); style_run(p.add_run(source._plain(text)))
+        return p
+
+    def bullets(self, items, indent=6):
+        for item in items:
+            self.p('•  ' + source._plain(item))
+
+    def note(self, text):
+        self.p(text)
+
+    def figure(self, path, width_mm, caption_text, description=None):
+        description = description or source.FIGURE_DESCRIPTIONS.get(Path(path).name)
+        if not description:
+            raise ValueError(f'No description for {path}')
+        with Image.open(path) as image:
+            width, height = image.size
+        image_width = min(width_mm, CONTENT_MM, 116 * width / height)
+        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1
+        keep(p, True); p.add_run().add_picture(str(path), width=Mm(image_width))
+        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_after = Pt(3); keep(p, True)
+        style_run(p.add_run(source._plain(caption_text)), 13, True, NAVY)
+        p = self.p('Description: ' + source._plain(description)); keep(p)
+
+    def table(self, headers, rows, widths, **kwargs):
+        if not rows:
+            self.p('No records.')
+            return
+        if len(headers) == 2:
+            table = self.doc.add_table(rows=1, cols=2)
+            table.alignment = WD_TABLE_ALIGNMENT.CENTER
+            table.autofit = False
+            table.style = 'Table Grid'
+            first = max(29, min(40, CONTENT_MM * widths[0] / sum(widths)))
+            for col, width in zip(table.columns, (first, CONTENT_MM-first)):
+                col.width = Mm(width)
+            for row_index, values in enumerate([headers] + list(rows)):
+                cells = table.rows[0].cells if row_index == 0 else table.add_row().cells
+                for cell, value, width in zip(cells, values, (first, CONTENT_MM-first)):
+                    cell.width = Mm(width); cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
+                    if row_index == 0:
+                        shade(cell, '16243D')
+                    p = cell.paragraphs[0]; p.paragraph_format.space_after = Pt(0)
+                    style_run(p.add_run(source._plain(value)), 13, row_index == 0,
+                              RGBColor(255,255,255) if row_index == 0 else None)
+            self.doc.add_paragraph().paragraph_format.space_after = Pt(0)
+            return
+        for values in rows:
+            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(0)
+            keep(p, True)
+            style_run(p.add_run(source._plain(str(headers[0]) + ': ' + str(values[0]))), 13, True, NAVY)
+            for header, value in zip(headers[1:], values[1:]):
+                p = self.p(str(header) + ': ' + str(value))
+                p.paragraph_format.space_after = Pt(0)
+
+    def code(self, code_text, title=None):
+        if title:
+            self.h3(title)
+        # Preserve whitespace and source lines as editable text.
+        p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(5)
+        style_run(p.add_run(code_text))
+
+    def index(self):
+        self.h1('index', 'INDEX')
+        self.p('Chapter / section — details — page number')
+        for number, title, key in source.INDEX_ITEMS:
+            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(1)
+            style_run(p.add_run(f'{number}   {title}   —   '))
+            field(p, 'PAGEREF ' + bookmark_name(key) + ' \\h')
+
+
+def main():
+    pdf = DocxReport()
+    pdf.cover()
+    source.certificate(pdf)
+    source.declaration(pdf)
+    source.acknowledgement(pdf)
+    pdf.index()
+    for fn in (source.ch1, source.ch2, source.ch3, source.ch4, source.ch5,
+               source.ch6, source.ch7, source.ch8, source.ch9, source.ch10,
+               source.appa, source.appb, source.appc):
+        fn(pdf)
+    assert pdf.written_keys == pdf.expected_keys, ('Missing bookmarks', pdf.expected_keys-pdf.written_keys)
+    pdf.doc.save(OUT)
+    print('Editable report:', OUT)
+
+
+if __name__ == '__main__':
+    main()

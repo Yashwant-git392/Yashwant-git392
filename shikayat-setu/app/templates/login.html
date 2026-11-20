@@ -20,7 +20,7 @@
     <div class="auth-hero-foot">
       <div class="hero-stat"><b>6</b><span>Departments</span></div>
       <div class="hero-stat"><b>15</b><span>Categories</span></div>
-      <div class="hero-stat"><b>32</b><span>Seeded complaints</span></div>
+      <div class="hero-stat"><b>37</b><span>Seeded complaints</span></div>
       <div class="hero-stat"><b>100%</b><span>Audit-trailed</span></div>
     </div>
   </aside>
@@ -28,7 +28,7 @@
     <div class="auth-card">
       <h2>Welcome back</h2>
       <p class="sub">Campus Shikayat Setu — College Grievance Redressal System</p>
-      <form method="post" autocomplete="on">
+      <form method="post" autocomplete="on"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="auth-field">
           <label for="login-user">Roll number / Username</label>
           <input id="login-user" type="text" name="username" placeholder="e.g. MCA2026001 or admin" required autofocus>

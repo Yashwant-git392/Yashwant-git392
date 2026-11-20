@@ -4,7 +4,7 @@
 <div class="page-head"><div><div class="eyebrow">New Grievance</div><h1>Lodge a Complaint</h1><p>Tell us what happened and where. Your complaint will be reviewed and assigned to a department.</p></div></div>
 <div class="card">
   <div class="form-intro"><h2>Complaint details</h2><p>Fields marked required must be completed. Please do not include passwords or other sensitive information.</p></div>
-  <form method="post" id="lodge-form">
+  <form method="post" id="lodge-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
       <div class="field" style="grid-column:1/-1"><label for="lodge-title">Title <span class="help">(required · at least 8 characters)</span></label>
         <input id="lodge-title" name="title" value="{{ form.get('title','') }}" placeholder="e.g. Leaking tap in washroom near Lab 3" required minlength="8" autocomplete="off" aria-describedby="title-hint title-count">

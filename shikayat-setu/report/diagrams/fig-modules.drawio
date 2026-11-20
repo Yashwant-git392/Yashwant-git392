@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="32.6.10" type="device">
+  <diagram name="Module hierarchy" id="page-1">
+    <mxGraphModel dx="1400" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Module hierarchy" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=28;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="30" y="10" width="1340" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="3" value="Project files and responsibilities — logical groups, not Flask blueprints" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#536670;" vertex="1" parent="1">
+          <mxGeometry x="30" y="53" width="1340" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="4" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#eaf4f3;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="530" y="150" width="340" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="5" value="run.py" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="538" y="160" width="324" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="6" value="Initialize, seed, launch" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="542" y="197" width="316" height="71" as="geometry" />
+        </mxCell>
+        <mxCell id="7" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#869c9d;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="275" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="700" y="330" />
+              <mxPoint x="185" y="330" />
+            </Array>
+            <mxPoint x="185" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="8" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="35" y="390" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="9" value="app/app.py" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="43" y="400" width="284" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="10" value="Flask routes and helpers&#10;auth, complaints, queue&#10;console, users, reports" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="47" y="437" width="276" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="11" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#869c9d;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="275" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="700" y="330" />
+              <mxPoint x="530" y="330" />
+            </Array>
+            <mxPoint x="530" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="12" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="380" y="390" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="13" value="app/routing.py" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="388" y="400" width="284" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="14" value="Keyword scoring&#10;Priority and SLA rules" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="392" y="437" width="276" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="15" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#869c9d;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="275" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="700" y="330" />
+              <mxPoint x="875" y="330" />
+            </Array>
+            <mxPoint x="875" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="725" y="390" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="17" value="app/database.py" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="733" y="400" width="284" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="18" value="SQLite connection&#10;Schema setup and demo seed" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="737" y="437" width="276" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="19" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#869c9d;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="275" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="700" y="330" />
+              <mxPoint x="1220" y="330" />
+            </Array>
+            <mxPoint x="1220" y="390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="20" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f6f8fa;strokeColor=#187b77;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="390" width="300" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="21" value="templates/ + static/" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=20;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
+          <mxGeometry x="1078" y="400" width="284" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="22" value="Jinja templates&#10;CSS and vanilla JavaScript" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#344c57;" vertex="1" parent="1">
+          <mxGeometry x="1082" y="437" width="276" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="23" value="run.py imports the application and database modules. app.py imports routing.py; database.py reads schema.sql.&#10;Flask renders templates and serves static assets; tests/ exercises the application." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e9;strokeColor=#c6a650;fontFamily=Arial;fontSize=16;fontColor=#172b3a;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="690" width="1260" height="85" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

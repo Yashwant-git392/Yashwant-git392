@@ -42,8 +42,9 @@
 
 {% elif which == 'trend' %}
 <div class="card"><h2><span class="h-icon">📈</span> Monthly Complaint Trend</h2>
+<p class="help">Grouped by submission month; resolved counts reflect the current status.</p>
 <div class="table-wrap"><table class="tbl">
-<thead><tr><th>Month</th><th>Lodged</th><th>Resolved</th><th>Net open</th></tr></thead>
+<thead><tr><th>Month</th><th>Lodged</th><th>Currently resolved / closed</th><th>Currently open</th></tr></thead>
 <tbody>{% for r in rows %}
 <tr><td><b>{{ r['month'] }}</b></td><td>{{ r['lodged'] }}</td><td>{{ r['resolved'] }}</td><td><b>{{ r['lodged'] - r['resolved'] }}</b></td></tr>
 {% else %}<tr><td colspan="4" class="help">No data.</td></tr>
@@ -68,8 +69,12 @@
 <div class="table-wrap"><table class="tbl">
 <thead><tr><th>Routing mode</th><th>Complaints</th><th>Avg keyword score</th></tr></thead>
 <tbody>{% for r in rows %}<tr><td><b>{{ r['routing']|capitalize }}</b></td><td>{{ r['n'] }}</td><td>{{ r['avg_score'] }}</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="card"><h2><span class="h-icon">📋</span> Complaint-level routing records</h2>
+<p class="help">Current routing mode and assigned department. Manual includes retained category or admin reassignment; the score reflects the original routing decision.</p>
+<div class="table-wrap"><table class="tbl" id="routing-details"><thead><tr><th>Code</th><th>Title</th><th>Final department</th><th>Mode</th><th>Original score</th></tr></thead>
+<tbody>{% for r in details %}<tr><td class="mono">{{ r['code'] }}</td><td>{{ r['title'] }}</td><td>{{ r['dept'] }}</td><td>{{ r['routing']|capitalize }}</td><td>{{ r['routing_score'] }}</td></tr>{% else %}<tr><td colspan="5" class="help">No complaints yet.</td></tr>{% endfor %}</tbody></table></div></div>
 {% if manual %}
-<div class="card"><h2><span class="h-icon">🔀</span> Manually reassigned complaints</h2>
+<div class="card"><h2><span class="h-icon">🔀</span> Manual routing: selected category or admin reassignment</h2>
 <div class="table-wrap"><table class="tbl"><thead><tr><th>Code</th><th>Title</th><th>Final department</th></tr></thead>
 <tbody>{% for r in manual %}<tr><td class="mono">{{ r['code'] }}</td><td>{{ r['title'] }}</td><td>{{ r['dept'] }}</td></tr>{% endfor %}</tbody></table></div></div>
 {% endif %}
