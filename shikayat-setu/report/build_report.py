@@ -5,21 +5,23 @@ Two-pass build: pass 1 records chapter page numbers, pass 2 renders the real ind
 """
 from pathlib import Path
 import os
+import re
+import html
+import tempfile
 import sqlite3
 from datetime import date
 
 from fpdf import FPDF
-from fpdf.fonts import FontFace
 
 REPORT_DIR = Path(__file__).resolve().parent
 IMG = REPORT_DIR / "images"
 DB = Path(os.environ.get("SHIKAYAT_DB", REPORT_DIR.parent / "app" / "shikayat_setu.db"))
 OUT = REPORT_DIR / "CampusShikayatSetu_MCA-Mini-Project_Report.pdf"
 
-D = "/usr/share/fonts/truetype/dejavu/"
-NAVY, NAVY2, GOLD, GOLD_L = (22, 36, 61), (31, 52, 85), (201, 162, 39), (255, 217, 94)
-CREAM, GREY, LT = (247, 245, 239), (107, 114, 128), (232, 237, 247)
-CONTENT_W = 210 - 32
+D = str(REPORT_DIR / "fonts") + os.sep
+LEFT, RIGHT, TOP, BOTTOM = 50.8, 38.1, 50.8, 38.1  # 2, 1.5, 2, 1.5 inches
+CONTENT_W = 210 - LEFT - RIGHT
+LINE_H = 13 * 1.5 * 25.4 / 72
 TODAY = date.today().strftime("%d %B %Y")
 
 SECTIONS = [
@@ -49,290 +51,256 @@ def db_rows(sql):
     return [dict(r) for r in rows]
 
 
+def _plain(text):
+    """The source uses simple emphasis HTML; keep text without HTML markup."""
+    return html.unescape(re.sub(r'</?(?:b|i|em|strong|br)\s*/?>', '', str(text)))
+
+
+def extract_template_fonts(directory):
+    """Use Times New Roman subsets embedded in the supplied template PDF.
+
+    The template provides editable-embedding font subsets; missing characters
+    use the bundled OFL Tinos (a Times-compatible font) and DejaVu fallback.
+    The extracted font files remain temporary, never committed as standalone.
+    """
+    import pymupdf
+    template = pymupdf.open(REPORT_DIR / 'reference' / 'PROJECT_REPORT_Sequence.pdf')
+    regular = bold = None
+    for xref, _, _, name, *_ in template[0].get_fonts():
+        if 'TimesNewRomanPS-BoldMT' in name and bold is None:
+            bold = template.extract_font(xref)[3]
+        elif 'TimesNewRomanPSMT' in name and regular is None:
+            regular = template.extract_font(xref)[3]
+    template.close()
+    if not regular or not bold:
+        raise RuntimeError('The supplied report sequence PDF must contain its embedded Times New Roman fonts.')
+    for name, data in [('regular.ttf', regular), ('bold.ttf', bold)]:
+        (Path(directory) / name).write_bytes(data)
+    return Path(directory) / 'regular.ttf', Path(directory) / 'bold.ttf'
+
+
 class Report(FPDF):
-    def __init__(self, toc=None, recorder=None):
-        super().__init__(orientation="P", unit="mm", format="A4")
+    def __init__(self, toc=None, recorder=None, font_dir=None):
+        super().__init__(orientation='P', unit='mm', format='A4')
         self.toc = toc or {}
         self.recorder = recorder if recorder is not None else {}
-        self.current_section = None
-        self.cover_pages = {1, 2}  # cover + certificate: no header/footer
-        self.add_font("DVS", "", D + "DejaVuSans.ttf")
-        self.add_font("DVS", "B", D + "DejaVuSans-Bold.ttf")
-        self.add_font("DVS", "I", D + "DejaVuSans.ttf")
-        self.add_font("DVS", "BI", D + "DejaVuSans-Bold.ttf")
-        self.add_font("DVM", "", D + "DejaVuSansMono.ttf")
-        self.add_font("DVM", "B", D + "DejaVuSansMono-Bold.ttf")
-        self.set_auto_page_break(auto=True, margin=17)
-        self.set_margins(16, 15, 16)
+        regular, bold = extract_template_fonts(font_dir)
+        self.add_font('DVS', '', str(regular))
+        self.add_font('DVS', 'B', str(bold))
+        # The italic subset in the template contains only a few letters.
+        self.add_font('DVS', 'I', str(regular))
+        self.add_font('DVS', 'BI', str(bold))
+        for style, file in [('', 'Tinos-Regular.ttf'), ('B', 'Tinos-Bold.ttf'),
+                            ('I', 'Tinos-Italic.ttf'), ('BI', 'Tinos-BoldItalic.ttf')]:
+            self.add_font('Tinos', style, str(REPORT_DIR / 'fonts' / file))
+        self.add_font('Symbols', '', D + 'DejaVuSans.ttf')
+        self.add_font('Symbols', 'B', D + 'DejaVuSans-Bold.ttf')
+        self.add_font('Symbols', 'I', D + 'DejaVuSans.ttf')
+        self.add_font('Symbols', 'BI', D + 'DejaVuSans-Bold.ttf')
+        self.set_fallback_fonts(['Tinos', 'Symbols'], exact_match=False)
+        self.set_auto_page_break(auto=True, margin=BOTTOM)
+        self.set_margins(LEFT, TOP, RIGHT)
+        self.set_text_color(0, 0, 0)
 
-    # ---------- full-width safety ----------
-    def cell(self, w, *args, **kwargs):
-        if w == 0:
-            self.set_x(16)
-        return super().cell(w, *args, **kwargs)
-
-    def multi_cell(self, w, *args, **kwargs):
-        if w == 0:
-            self.set_x(16)
-        return super().multi_cell(w, *args, **kwargs)
-
-    # ---------- chrome ----------
     def header(self):
-        if self.page_no() in self.cover_pages:
+        if self.page_no() <= 3:  # two genuinely blank pages and the cover
             return
-        self.set_y(6)
-        self.set_font("DVS", "", 6.6)
-        self.set_text_color(*GREY)
-        self.cell(0, 5, "Campus Shikayat Setu — College Grievance Redressal System  |  SPPU MCA-I (Sem-I) Mini Project  |  2026-27",
-                  align="L")
-        self.set_draw_color(*GOLD)
-        self.set_line_width(0.6)
-        self.line(16, 11.6, 194, 11.6)
-        self.set_y(14.5)
+        self.set_y(29)
+        self.set_x(LEFT)
+        self.set_font('DVS', '', 13)
+        self.cell(CONTENT_W, LINE_H, 'Campus Shikayat Setu', align='R')
+        self.set_y(TOP)
 
     def footer(self):
-        if self.page_no() in self.cover_pages:
+        if self.page_no() <= 3:
             return
-        self.set_y(-12)
-        self.set_draw_color(*GOLD)
-        self.set_line_width(0.6)
-        self.line(16, self.get_y(), 194, self.get_y())
-        self.set_font("DVS", "", 6.6)
-        self.set_text_color(*GREY)
-        self.cell(80, 5, "Dr. B.V. Hiray College of Management and Research Centre, Malegaon", align="L")
-        self.cell(0, 5, f"Page {self.page_no()}", align="R")
+        self.set_y(-23)
+        self.set_x(LEFT)
+        self.set_font('DVS', '', 13)
+        self.cell(CONTENT_W - 15, LINE_H, 'Dr. B. V. Hiray College of', align='L')
+        self.cell(15, LINE_H, str(self.page_no()), align='R')
+        self.set_xy(LEFT, 297 - 23 + LINE_H)
+        self.cell(CONTENT_W, LINE_H, 'Management & Research Centre', align='L')
 
-    # ---------- building blocks ----------
     def h1(self, key, text, kicker=None):
         self.add_page()
-        if kicker:
-            self.set_font("DVS", "B", 8)
-            self.set_text_color(*GOLD)
-            self.cell(0, 5, kicker.upper())
-            self.ln(6)
-        self.set_font("DVS", "B", 16.5)
-        self.set_text_color(*NAVY)
-        self.multi_cell(0, 8, text)
-        self.set_draw_color(*GOLD)
-        self.set_line_width(1.1)
-        y = self.get_y() + 1
-        self.line(16, y, 66, y)
-        self.ln(6)
-        self.set_text_color(30, 30, 30)
         self.recorder[key] = self.page_no()
+        self.set_font('DVS', 'B', 16)
+        if kicker:
+            self.multi_cell(CONTENT_W, LINE_H, kicker.upper(), align='L')
+        self.set_x(LEFT)
+        self.multi_cell(CONTENT_W, LINE_H, text, align='L')
+        self.ln(3)
         self.start_section(text, level=0)
 
     def h2(self, text, reserve=20):
-        if self.get_y() > 280 - reserve:
+        if self.get_y() + min(reserve, 95) > 297 - BOTTOM:
             self.add_page()
-        self.ln(1.5)
-        self.set_font("DVS", "B", 12)
-        self.set_text_color(*NAVY2)
-        self.multi_cell(0, 6.4, text)
-        self.ln(1.2)
-        self.set_text_color(30, 30, 30)
+        self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
+        self.set_font('DVS', 'B', 15)
+        self.multi_cell(CONTENT_W, LINE_H, text, align='L')
+        self.ln(2)
 
     def h3(self, text, reserve=16):
-        if self.get_y() > 280 - reserve:
+        if self.get_y() + min(reserve, 105) > 297 - BOTTOM:
             self.add_page()
-        self.set_font("DVS", "B", 10.5)
-        self.set_text_color(*NAVY2)
-        self.multi_cell(0, 5.6, text)
-        self.ln(0.8)
-        self.set_text_color(30, 30, 30)
+        self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
+        self.set_font('DVS', 'B', 15)
+        self.multi_cell(CONTENT_W, LINE_H, text, align='L')
+        self.ln(2)
 
-    def p(self, html):
-        self.set_font("DVS", "", 9.6)
-        self.set_text_color(30, 30, 30)
-        self.write_html(html)
-        self.ln(2.6)
+    def p(self, text):
+        self.set_x(LEFT)
+        self.set_font('DVS', '', 13)
+        self.multi_cell(CONTENT_W, LINE_H, _plain(text), align='L')
+        self.ln(2)
 
     def bullets(self, items, indent=6):
-        self.set_font("DVS", "", 9.6)
-        self.set_text_color(30, 30, 30)
         for item in items:
-            x = self.get_x()
-            self.set_x(16 + indent)
-            self.write_html(f"<b>•</b>  {item}")
-            self.ln(1.7)
-        self.ln(1.2)
+            self.p('•  ' + _plain(item))
 
     def caption(self, text):
-        self.set_font("DVS", "I", 8.2)
-        self.set_text_color(*GREY)
-        self.multi_cell(0, 4.4, text, align="C")
-        self.ln(1.6)
+        self.set_x(LEFT)
+        self.set_font('DVS', '', 13)
+        self.multi_cell(CONTENT_W, LINE_H, _plain(text), align='C')
+        self.ln(2)
 
     def figure(self, path, width_mm, caption_text):
-        from PIL import Image as _Img
-        w_px, h_px = _Img.open(path).size
-        h_mm = width_mm * h_px / w_px
-        if self.get_y() + h_mm + 11 > 281:
+        from PIL import Image
+        with Image.open(path) as image:
+            width, height = image.size
+        w = min(width_mm, CONTENT_W)
+        h = w * height / width
+        max_height = 297 - TOP - BOTTOM - 25
+        if h > max_height:
+            w *= max_height / h
+            h = max_height
+        if self.get_y() + h + LINE_H * 3 > 297 - BOTTOM:
             self.add_page()
-        self.image(path, w=width_mm, x=(210 - width_mm) / 2)
-        self.ln(1.5)
+        self.set_x(LEFT)
+        self.image(str(path), x=LEFT + (CONTENT_W - w) / 2, w=w)
+        self.ln(2)
         self.caption(caption_text)
 
-    def table(self, headers, rows, widths, aligns=None, size=8.2, header_fill=NAVY,
-              header_color=GOLD_L, zebra=True, row_height=None):
-        aligns = aligns or ["L"] * len(headers)
-        head_face = FontFace(emphasis="BOLD", fill_color=header_fill, color=(header_color[0], header_color[1], header_color[2]))
-        # neutralise ambient graphics state so body cells render white with hairline gold borders
-        self.set_fill_color(255, 255, 255)
-        self.set_draw_color(*GOLD)
-        self.set_line_width(0.45)
-        self.set_font("DVS", "", size)
-        line_h = row_height or (size * 0.52)
-        with super().table(col_widths=widths, line_height=line_h,
-                        headings_style=head_face,
-                        borders_layout="ALL") as t:
-            row = t.row()
-            for htext in headers:
-                row.cell(htext)
-            for i, r in enumerate(rows):
-                row = t.row()
-                for j, cell in enumerate(r):
-                    row.cell(str(cell))
-        self.ln(3)
+    def table(self, headers, rows, widths, **kwargs):
+        # Large mandated margins make multi-column 13-point tables illegible.
+        # Preserve every value as clearly labelled records in the same order.
+        for row in rows:
+            for header, value in zip(headers, row):
+                self.p(str(header) + ': ' + str(value))
+            self.ln(1)
 
     def code(self, code_text, title=None):
-        est_h = (code_text.count("\n") + 1) * 3.95 + (6.2 if title else 0) + 4
-        # only reserve a new page when the block cannot fit at all; very tall blocks flow naturally
-        if self.get_y() + min(est_h, 55) > 281:
-            self.add_page()
         if title:
-            self.set_font("DVM", "B", 7.6)
-            self.set_text_color(255, 255, 255)
-            self.set_fill_color(*NAVY2)
-            self.multi_cell(0, 5.2, f"  {title}", fill=True)
-        self.set_font("DVM", "", 7.0)
-        self.set_text_color(32, 32, 32)
-        self.set_fill_color(245, 244, 238)
-        self.multi_cell(0, 3.9, code_text, fill=True)
-        self.ln(2.4)
+            self.h3(title)
+        self.set_font('DVS', '', 13)
+        for line in code_text.splitlines():
+            self.set_x(LEFT)
+            if not line:
+                self.ln(LINE_H)
+                continue
+            self.multi_cell(CONTENT_W, LINE_H, line, wrapmode='CHAR')
+        self.ln(2)
 
-    def note(self, html):
-        self.set_fill_color(255, 250, 229)
-        self.set_draw_color(*GOLD)
-        self.set_font("DVS", "", 8.8)
-        self.set_text_color(93, 74, 10)
-        self.multi_cell(0, 5.0, "  " + html.replace("\n", " "), fill=True)
-        self.ln(2.4)
-        self.set_text_color(30, 30, 30)
+    def note(self, text):
+        self.p(text)
 
 
-# =====================================================================
-def cover(pdf: Report):
+def blank_pages(pdf):
     pdf.add_page()
-    pdf.recorder["cover"] = pdf.page_no()
-    pdf.set_fill_color(*NAVY)
-    pdf.rect(0, 0, 210, 297, style="F")
-    pdf.set_fill_color(*GOLD)
-    pdf.rect(0, 22, 210, 1.6, style="F")
-    pdf.rect(0, 275, 210, 1.6, style="F")
-
-    def line(y, h, text, font="DVS", size=10, color=(255, 255, 255), style="", align="C"):
-        pdf.set_y(y)
-        pdf.set_font(font, style, size)
-        pdf.set_text_color(*color)
-        pdf.cell(0, h, text, align=align)
-
-    line(30, 6, "K.B.H.S.S.T's  ·  ESTABLISHED 1988", "DVS", 7.2, GOLD_L, "B")
-    # crest: double gold ring with initials
-    pdf.set_draw_color(*GOLD)
-    pdf.set_line_width(2.4)
-    pdf.ellipse(80.5, 46, 49, 49)
-    pdf.set_line_width(1.0)
-    pdf.ellipse(85.5, 51, 39, 39)
-    line(60, 6, "K.B.H.S.S.T's", "DVS", 8.5, GOLD_L, "B")
-    line(67.5, 11, "MCA", "DVS", 20, (255, 255, 255), "B")
-    line(80, 6, "SPPU  ·  2026-27", "DVS", 6.2, GOLD_L, "B")
-
-    line(105, 9, "DR. B.V. HIRAY COLLEGE OF", "DVS", 21.5, (255, 255, 255), "B")
-    line(115.5, 9, "MANAGEMENT AND RESEARCH CENTRE", "DVS", 21.5, (255, 255, 255), "B")
-    line(129, 5, "Malegaon Camp, Malegaon — Affiliated to Savitribai Phule Pune University, Pune (SPPU)", "DVS", 8.2, (205, 210, 224))
-    line(135, 5, "Approved by AICTE, New Delhi  ·  NAAC Accredited", "DVS", 8.2, (205, 210, 224))
-    pdf.set_draw_color(*GOLD); pdf.set_line_width(1.6); pdf.line(70, 145, 140, 145)
-    line(150, 6, "M I N I   P R O J E C T   R E P O R T", "DVS", 8.5, GOLD_L, "B")
-    line(160, 15, "CAMPUS SHIKAYAT SETU", "DVS", 27, (255, 255, 255), "B")
-    line(177, 8, "College Grievance Redressal System", "DVS", 14.5, GOLD_L, "B")
-    line(188, 5, "Full-stack web application for complaint lodging, automatic department routing,", "DVS", 9.2, (205, 210, 224))
-    line(194, 5, "SLA-bound resolution and print-ready administrative registers", "DVS", 9.2, (205, 210, 224))
-    pdf.set_draw_color(*GOLD); pdf.set_line_width(1.2); pdf.line(78, 205, 132, 205)
-
-    line(212, 6.2, "Course:  Application Development  (Mini Project — Semester I)", "DVS", 9.2, (255, 255, 255))
-    line(218.5, 6.2, "Program:  Master of Computer Applications (MCA)  ·  Sem-I", "DVS", 9.2, (255, 255, 255))
-    line(225, 6.2, "Academic Year:  2026–27", "DVS", 9.2, (255, 255, 255))
-
-    line(236, 6.0, "Submitted by", "DVS", 10, GOLD_L, "B")
-    line(242.5, 6.0, "Yashwant Santosh Ahire   ·   Roll No.: ____________________", "DVS", 9.6, (255, 255, 255))
-    line(253, 6.0, "Under the guidance of", "DVS", 10, GOLD_L, "B")
-    line(259.5, 6.0, "Project Guide: ____________________", "DVS", 9.6, (255, 255, 255))
-
-    line(268.5, 5.4, "SPPU MCA-I (SEM-I)  ·  Application Development  ·  AY 2026–27  ·  November 2026", "DVS", 6.8, (160, 164, 178))
-
-
-def certificate(pdf: Report):
     pdf.add_page()
-    pdf.recorder["certificate"] = pdf.page_no()
-    pdf.start_section("Certificate", level=0)
-    pdf.set_draw_color(*GOLD); pdf.set_line_width(1.2); pdf.rect(12, 12, 186, 273, style="D")
-    pdf.set_y(20)
-    pdf.set_font("DVS", "B", 15); pdf.set_text_color(*NAVY)
-    pdf.cell(0, 8, "CERTIFICATE", align="C")
-    pdf.set_draw_color(*GOLD); pdf.set_line_width(0.9); pdf.line(80, pdf.get_y() + 1, 130, pdf.get_y() + 1)
-    pdf.ln(8)
-    pdf.set_font("DVS", "", 10.5); pdf.set_text_color(30, 30, 30)
-    pdf.multi_cell(0, 6.2,
-        "This is to certify that the Mini Project entitled “CAMPUS SHIKAYAT SETU — College Grievance Redressal "
-        "System” is a bona fide work carried out by Mr. Yashwant Santosh Ahire, student of MCA-I (Semester-I), "
-        "Dr. B.V. Hiray College of Management and Research Centre, Malegaon, under the SPPU MCA curriculum "
-        "(Course: Application Development), during the academic year 2026–27.")
+
+
+def cover(pdf):
+    pdf.add_page()
+    pdf.recorder['cover'] = pdf.page_no()
+    pdf.set_font('DVS', 'B', 16)
+    for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
+        pdf.set_x(LEFT)
+        pdf.multi_cell(CONTENT_W, LINE_H, line, align='C')
     pdf.ln(2)
-    pdf.multi_cell(0, 6.2,
-        "Draft certificate for guide review and signature. Completion and acceptance must be confirmed by the institution. The project is submitted in partial fulfilment of the requirements "
-        "of the Mini Project Review schedule issued by the Department of MCA on 30-09-2026 — First Review "
-        "(10-10-2026), Second Review (24-10-2026), Third Review (21-11-2026), Fourth Review (05-12-2026) and the "
-        "Final Internal Demo with project submission (19-12-2026).")
-    pdf.ln(2)
-    pdf.multi_cell(0, 6.2,
-        "Any originality declaration must be checked and approved by the student and guide before signing. This draft does not itself certify authorship or acceptance.")
-    pdf.ln(14)
-    pdf.set_font("DVS", "", 9.5)
-    pdf.cell(0, 6, "Date: ____________________"); pdf.ln(6)
-    pdf.cell(0, 6, "Place: Malegaon"); pdf.ln(6)
-
-    def sig_block(y, left, right, role_l, role_r, bold=True, size=9):
-        pdf.set_xy(18, y); pdf.set_font("DVS", "", 9); pdf.set_text_color(30, 30, 30)
-        pdf.cell(90, 6, "_________________________"); pdf.set_xy(118, y); pdf.cell(74, 6, "_________________________")
-        pdf.set_xy(18, y + 6); pdf.set_font("DVS", "B" if bold else "", size); pdf.set_text_color(*NAVY); pdf.cell(90, 6, left)
-        pdf.set_xy(118, y + 6); pdf.cell(74, 6, right)
-        pdf.set_xy(18, y + 11.5); pdf.set_font("DVS", "", 7.6); pdf.set_text_color(30, 30, 30); pdf.cell(90, 6, role_l)
-        pdf.set_xy(118, y + 11.5); pdf.cell(74, 6, role_r)
-
-    sig_block(188, "________________________", "________________________", "Project Guide", "Head of Department (MCA)")
-    sig_block(226, "________________________", "________________________", "Principal / Dy. Director", "External Examiner")
-    pdf.ln(6)
+    pdf.set_font('DVS', '', 13)
+    for line in ['Submitted By', 'Yashwant Santosh Ahire', 'MCA-I SEM-I',
+                 'Roll No.: ____________________', 'UNDER THE GUIDANCE OF',
+                 'Project Guide: ____________________', 'In Partial Fulfillment of',
+                 'SAVITRIBAI PHULE PUNE UNIVERSITY', 'MASTER OF COMPUTER APPLICATIONS',
+                 "K.B.H.S.S. Trust’s", 'Dr. B. V. Hiray College of Management & Research Centre']:
+        pdf.set_x(LEFT)
+        pdf.multi_cell(CONTENT_W, LINE_H, line, align='C')
+    logo = IMG / 'college-logo.png'
+    pdf.image(str(logo), x=LEFT + (CONTENT_W - 24) / 2, w=24)
+    pdf.set_x(LEFT)
+    pdf.multi_cell(CONTENT_W, LINE_H, '2026–2027', align='C')
 
 
-def index(pdf: Report):
-    pdf.add_page()
-    pdf.recorder["index"] = pdf.page_no()
-    pdf.set_y(18)
-    pdf.set_font("DVS", "B", 17); pdf.set_text_color(*NAVY)
-    pdf.cell(0, 9, "INDEX", align="L")
-    pdf.set_draw_color(*GOLD); pdf.set_line_width(1.2); pdf.line(16, pdf.get_y() + 1, 62, pdf.get_y() + 1)
-    pdf.ln(6)
-    pdf.set_font("DVS", "", 9.3); pdf.set_text_color(30, 30, 30)
-    for title, key in SECTIONS:
-        pg = pdf.toc.get(key, "•")
-        pdf.set_font("DVS", "", 9.3)
-        pdf.cell(160, 6.4, "  " + title)
-        pdf.set_font("DVS", "B", 9.3); pdf.cell(0, 6.4, str(pg), align="R")
-        pdf.ln(6.4)
-    pdf.ln(3)
-    pdf.set_font("DVS", "I", 7.6); pdf.set_text_color(*GREY)
-    pdf.multi_cell(0, 4.2, "List of Figures and Tables is maintained in-line within each chapter. Screen images are screenshots of the current application using seeded demo data; counts and dates may change when the database is reset.")
+def certificate(pdf):
+    pdf.h1('certificate', 'COLLEGE CERTIFICATE')
+    pdf.p('Draft certificate — to be checked, issued and signed by the college and guide. '
+          'No approval or certification is implied by this draft.')
+    pdf.p('This is to certify that the project report titled “Campus Shikayat Setu” is submitted '
+          'by Yashwant Santosh Ahire, MCA-I Semester-I, academic year 2026–2027, under the guidance '
+          'of the undersigned, subject to verification by the college.')
+    pdf.p('Date: ____________________       Place: Malegaon')
+    pdf.p('Project Guide: ____________________')
+    pdf.p('Head of Department: ____________________')
+    pdf.p('Director / College authority: ____________________')
+
+
+def declaration(pdf):
+    pdf.h1('declaration', 'DECLARATION')
+    pdf.p('Draft: the student must review this declaration and sign only if it is true.')
+    pdf.p('I, Yashwant Santosh Ahire, student of Master of Computer Applications, academic year '
+          '2026–2027, declare that the information in the project report titled “Campus Shikayat Setu” '
+          'is accurate to the best of my knowledge. I will verify the work and its sources before submission.')
+    pdf.p('Date: ____________________')
+    pdf.p('Place: Malegaon')
+    pdf.p('Signature: ____________________')
+    pdf.p('Yashwant Santosh Ahire')
+
+
+def acknowledgement(pdf):
+    pdf.h1('acknowledgement', 'ACKNOWLEDGEMENT')
+    pdf.p('Draft: personalise and verify the names and acknowledgements before submission.')
+    pdf.p('I would like to thank the Director, my project guide ____________________, and the faculty '
+          'of Dr. B. V. Hiray College of Management & Research Centre, Malegaon, for their guidance '
+          'and support. I also thank my family and friends for their encouragement during the project.')
+    pdf.p('Date: ____________________')
+    pdf.p('Place: Malegaon')
+    pdf.p('Yashwant Santosh Ahire')
+
+
+INDEX_ITEMS = [
+    ('1', 'Introduction', 'ch1'),
+    ('1.1', 'Abstract', 'section:1.1'), ('1.2', 'Existing System and Need for System', 'section:1.2'),
+    ('1.3', 'Scope of System', 'section:1.3'), ('1.4', 'Operating Environment — Hardware and Software', 'section:1.4'),
+    ('1.5', 'Brief Description of Technology Used', 'section:1.5'),
+    ('1.5.1', 'Operating Systems Used', 'section:1.5.1'), ('1.5.2', 'Database Used', 'section:1.5.2'),
+    ('2', 'Proposed System', 'ch2'), ('2.1', 'Study of Similar Systems', 'section:2.1'),
+    ('2.2', 'Feasibility Study', 'section:2.2'), ('2.3', 'Objectives of Proposed System', 'section:2.3'),
+    ('2.4', 'Users of System', 'section:2.4'), ('3', 'System Analysis and Design', 'ch3'),
+    ('3.1', 'System Requirements', 'section:3.1'), ('3.2', 'Entity Relationship Diagram', 'section:3.2'),
+    ('3.3', 'Table Structure', 'section:3.3'), ('3.4', 'Use-Case Diagrams', 'section:3.4'),
+    ('3.5', 'Class Diagram', 'section:3.5'), ('3.6', 'Activity Diagram', 'section:3.6'),
+    ('3.7', 'Deployment Diagram', 'section:3.7'), ('3.8', 'Module Hierarchy Diagram', 'section:3.8'),
+    ('3.9', 'Sample Input and Output Screens', 'section:3.9'), ('4', 'Coding', 'ch4'),
+    ('4.1', 'Code Snippets', 'section:4.1'), ('5', 'Testing', 'ch5'),
+    ('5.1', 'Test Strategy', 'section:5.1'), ('5.2', 'Unit Test Plan', 'section:5.2'),
+    ('5.3', 'Acceptance Test Plan', 'section:5.3'), ('5.4', 'Test Case / Test Script', 'section:5.4'),
+    ('6', 'Limitations of Proposed System', 'ch6'), ('7', 'Proposed Enhancements', 'ch7'),
+    ('8', 'Conclusion', 'ch8'), ('9', 'Bibliography', 'ch9'), ('10', 'User Manual', 'ch10'),
+    ('A', 'Database Schema', 'appa'), ('B', 'Synthetic Seed Data', 'appb'),
+    ('C', 'Glossary', 'appc'), ('D', 'Project Review Schedule', 'appd'),
+]
+
+
+def index(pdf):
+    pdf.h1('index', 'INDEX')
+    pdf.p('Chapter / section — details — PDF page number')
+    for number, title, key in INDEX_ITEMS:
+        # Fixed-width number text avoids changes in wrapping between passes.
+        page = str(pdf.toc.get(key, '000')).zfill(3)
+        pdf.p(f'{number}   {title}   —   {page}')
+
 # =====================================================================
 def ch1(pdf: Report):
     pdf.h1("ch1", "Introduction", "Chapter 1")
@@ -428,6 +396,8 @@ def ch1(pdf: Report):
           "anonymous identity fields and student event actors are hidden from officers, but free text may reveal identity; status changes write event records. POST forms use CSRF tokens.")
     pdf.h3("1.5.1  Operating systems used")
     pdf.p("Development and automated testing were executed on GNU/Linux. The app is intended to work on Windows with Python and dependencies, but native Windows testing remains outstanding.")
+    pdf.h3("1.5.2  RDBMS used for the database")
+    pdf.p("SQLite 3 is the relational database used by the application. It stores the project data in a local database file and enforces defined keys and constraints. MySQL and Oracle are not used by this implementation.")
 
 
 def ch2(pdf: Report):
@@ -483,7 +453,7 @@ def ch2(pdf: Report):
          "View current status and timeline of one complaint; no names, e-mails or other records exposed"],
     ], [36, 32, 110])
 
-    pdf.h2("2.5  Proposed System Overview")
+    pdf.h3("2.4.1  Proposed System Overview")
     pdf.p("Campus Shikayat Setu keeps the proven workflow of the reference concept — lodge → auto-route → track — and "
           "implements the demo using a relational schema with foreign-key "
           "enforcement, Werkzeug password hashing with three roles, a transparent router whose scoring is printed on the "
@@ -495,7 +465,7 @@ def ch2(pdf: Report):
         "<b>Report layer:</b> six Ctrl+P print-ready registers; routing has two summary modes and a separate complaint-level record table.",
     ])
 
-    pdf.h2("2.6  Modules Identified")
+    pdf.h3("2.4.2  Modules Identified")
     pdf.table(["Module", "Responsibility"], [
         ["Auth & Profile", "Login (username or roll no.), logout, student self-registration, change password, account activation/deactivation."],
         ["Lodging", "Category picker, validation (title ≥ 8 chars, description ≥ 20), anonymous flag, preview of routing score."],
@@ -589,7 +559,7 @@ def ch3(pdf: Report):
     pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (fresh-seed filterable register).")
     pdf.figure(f"{IMG}/screen-timeline.png", 148, "Figure 3.11  Sample output — Complaint detail: SLA clock, stepper and timeline.")
 
-    pdf.h2("3.10  Constraints and Assumptions")
+    pdf.h3("3.9.1  Constraints and Assumptions")
     pdf.bullets([
         "One campus, one server process, SQLite file in the app directory; contention and capacity depend on workload and have not been load-tested.",
         "Keyword lists are curated per domain; sarcasm/vindication requires admin reassignment (Chapter 6, L-2).",
@@ -601,7 +571,8 @@ def ch4(pdf: Report):
     pdf.h1("ch4", "Coding", "Chapter 4")
     pdf.p("Full source is in the repository under <b>shikayat-setu/</b>. The following examples show the main routing, workflow and database logic. Ellipses indicate omitted lines.")
 
-    pdf.h2("4.1  Routing engine — scoring and SLA")
+    pdf.h2("4.1  Code snippets")
+    pdf.h3("4.1.1  Routing engine — scoring and SLA")
     pdf.code('''def score_category(text: str, keywords: str) -> int:
     score = 0
     low = text.lower()
@@ -622,7 +593,7 @@ def assign_priority(default_priority, title, description):
         p = bump_priority(p)
     return p''', title="routing.py — keyword scorer & priority resolver")
 
-    pdf.h2("4.2  Selecting a routing category")
+    pdf.h3("4.1.2  Selecting a routing category")
     pdf.code('''def select_category(title, description, chosen, categories):
     text = route_text(title, description)
     matched, score = route(text, categories)
@@ -632,7 +603,7 @@ def assign_priority(default_priority, title, description):
     return chosen, "manual", 0''',
         title="routing.py — selection shared by submission, preview and seed")
 
-    pdf.h2("4.3  Resolution workflow — status transitions")
+    pdf.h3("4.1.3  Resolution workflow — status transitions")
     pdf.code('''@app.route("/complaint/<code>/resolve", methods=["POST"])
 @login_required
 @role_required("officer", "admin")
@@ -649,7 +620,7 @@ def resolve(code):
         log_event(conn, c["id"], "status", f"Resolved — {remark}", user["id"])
         conn.commit()''', title="app.py — resolve() excerpt")
 
-    pdf.h2("4.4  SLA compliance report — SQL")
+    pdf.h3("4.1.4  SLA compliance report — SQL")
     pdf.code('''SELECT d.name AS dept,
        COUNT(c.id) AS resolved_total,
        SUM(CASE WHEN c.resolved_at IS NOT NULL
@@ -661,13 +632,13 @@ FROM departments d
 LEFT JOIN complaints c ON c.department_id=d.id AND c.status IN ('Resolved','Closed')
 GROUP BY d.id ORDER BY pct DESC NULLS LAST;''', title="app.py — reports() SLA compliance query")
 
-    pdf.h2("4.5  Sample of schema constraints in force")
+    pdf.h3("4.1.5  Sample of schema constraints in force")
     pdf.code('''status   TEXT NOT NULL DEFAULT 'Submitted'
          CHECK (status IN ('Submitted','Acknowledged','In Progress','Resolved','Closed')),
 routing  TEXT NOT NULL DEFAULT 'auto' CHECK (routing IN ('auto','manual')),
 priority TEXT NOT NULL CHECK (priority IN ('High','Medium','Low')),
 rating   INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5)  -- feedback''', title="schema.sql — CHECK constraints (integrity at the database layer)")
-    pdf.h2("4.6  Server-side complaint validation")
+    pdf.h3("4.1.6  Server-side complaint validation")
     pdf.p("The following checks run on submission. The form's browser-side checks assist users but do not replace these server-side checks. A rejected submission is not inserted.")
     pdf.code('''if len(title) < 8: errors.append("Title must be at least 8 characters.")
 if len(desc) < 20: errors.append("Description must be at least 20 characters — help the department.")
@@ -688,7 +659,7 @@ def ch5(pdf: Report):
         ["UT-02", "Set default Low and enter a fire keyword; check SLA constants.", "High priority; High 24h, Medium 72h, Low 168h; PASS.", "test_safety_and_mass_impact_and_word_boundaries"],
         ["UT-03", "Test tied keyword scores, then unrelated text.", "First category wins tie; no match returns none; PASS.", "test_keyword_scoring_and_tie_break"],
     ], [15, 53, 58, 52], size=7.2)
-    pdf.h2("5.3  Acceptance-oriented integration test plan")
+    pdf.h2("5.3  Acceptance Test Plan")
     pdf.p("The following are automated test-client scenarios, with their asserted observed results. They are not a substitute for the student's live demonstration or the guide's acceptance.")
     cases = [
       ("AT-01", "Register New Student with MCA2026999, test@example.com, 9876543210 and abc123; submit the same data again.", "First redirects (302); duplicate returns 400. Observed: both assertions passed.", "test_registration_duplicate_and_password_change"),
@@ -701,9 +672,9 @@ def ch5(pdf: Report):
       ("AT-08", "Check acknowledgement, work, resolve and force-close from each of five statuses.", "Only allowed transitions change status and add one event. Observed: matrix assertions passed.", "test_state_transition_matrix"),
     ]
     pdf.table(["ID", "Steps and data", "Expected / actual", "Automated test function"], cases, [14, 55, 57, 52], size=7.2)
-    pdf.h2("5.4  Test scripts and traceability")
+    pdf.h2("5.4  Test Case / Test Script")
     pdf.p("Functions above are in tests/test_in_depth.py except UT-03 and AT-03, which are in tests/test_app.py. Each test creates or uses a disposable seeded database. To inspect or rerun an individual test: python -m pytest tests/test_in_depth.py -k test_reports_on_controlled_dataset -v. Source code contains the precise setup, requests, assertions and cleanup. HTTP 302 is a redirect; follow it in a browser to see the message.")
-    pdf.h2("5.5  Test limitations")
+    pdf.h3("5.4.1  Test limitations")
     pdf.p("The suite does not prove absence of defects. Small concurrency tests are not load tests. Linux/Chromium browser and six A4 report print checks were performed; native Windows, other browsers, physical printing, accessibility, penetration, large-scale load and crash recovery were not tested. Test data and dates are synthetic. Re-run the suite and rehearse the live workflow on the actual review computer.")
 
 
@@ -767,9 +738,8 @@ def ch9(pdf: Report):
         "OWASP Foundation. (2023). <i>OWASP Top 10 — A03: Injection, A07: Identification and Authentication Failures.</i> https://owasp.org/www-project-top-ten/",
         "Savitribai Phule Pune University. <i>MCA, 2025 Pattern, Semester I–IV (w.e.f. 2025–26), Mini Project.</i> https://www.iims.ac.in/pdf/Academics/MCA-Syllabus-2025-Pattern-Semester-1-4.pdf. Confirm the applicable pattern with the department.",
     ]
-    pdf.set_font("DVS", "", 9.6); pdf.set_text_color(30, 30, 30)
     for i, r in enumerate(refs, 1):
-        pdf.write_html(f"<b>[{i}]</b>  {r}<br/><br/>")
+        pdf.p(f"[{i}]  {r}")
 # =====================================================================
 def ch10(pdf: Report):
     pdf.h1("ch10", "User Manual", "Chapter 10")
@@ -949,13 +919,16 @@ def appd(pdf: Report):
     pdf.note("Coverage map — Chapters in this report follow the circular’s item numbers as follows: Ch-2 §2.1–2.4 = items for Review 2; Ch-3 §3.1–3.9 = items for Review 2; Ch-4…Ch-10 = items for Review 3. Chapter 10 (User Manual) lists every screen with purpose and a full validation catalogue (§10.5).")
 
 
-def build(toc, recorder):
-    pdf = Report(toc=toc, recorder=recorder)
+def build(toc, recorder, font_dir):
+    pdf = Report(toc=toc, recorder=recorder, font_dir=font_dir)
     pdf.set_title("Campus Shikayat Setu — College Grievance Redressal System (MCA-I Sem-I Mini Project Report)")
     pdf.set_author("Yashwant Santosh Ahire — Dr. B.V. Hiray College of Management and Research Centre, Malegaon (SPPU)")
     pdf.set_creator("Campus Shikayat Setu report generator (build_report.py)")
+    blank_pages(pdf)
     cover(pdf)
     certificate(pdf)
+    declaration(pdf)
+    acknowledgement(pdf)
     index(pdf)
     for key, fn in [("ch1", ch1), ("ch2", ch2), ("ch3", ch3), ("ch4", ch4), ("ch5", ch5),
                     ("ch6", ch6), ("ch7", ch7), ("ch8", ch8), ("ch9", ch9), ("ch10", ch10),
@@ -965,11 +938,13 @@ def build(toc, recorder):
 
 
 if __name__ == "__main__":
-    # Pass 1 — placeholder TOC page numbers (same line count ⇒ identical pagination)
-    rec1 = {}
-    build({k: "00" for _, k in SECTIONS}, rec1)
-    # Pass 2 — real index
-    pdf = build(rec1, {})
-    pdf.output(OUT)
-    print("PDF written:", OUT)
-    print("Sections → pages:", {k: rec1[k] for _, k in SECTIONS})
+    with tempfile.TemporaryDirectory(prefix="shikayat-report-fonts-") as font_dir:
+        rec1 = {}
+        build({}, rec1, font_dir)
+        rec2 = {}
+        pdf = build(rec1, rec2, font_dir)
+        if rec1 != rec2:
+            raise RuntimeError(f"Report pagination differs between passes: {rec1} != {rec2}")
+        pdf.output(OUT)
+        print("PDF written:", OUT)
+        print("Pages:", pdf.page_no(), "sections:", {k: rec1[k] for _, k in SECTIONS})
