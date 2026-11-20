@@ -1,6 +1,6 @@
 # Project report: format and submission checklist
 
-The report follows the supplied `reference/PROJECT_REPORT_Sequence.pdf`: two blank pages, cover, college certificate, declaration, acknowledgement, index, Chapters 1–10, and then supporting appendices. The index gives PDF page numbers, including the two blank sheets. Wide tables are presented as labelled records to keep text readable within the prescribed margins.
+The report follows the supplied `reference/PROJECT_REPORT_Sequence.pdf`: two blank pages, cover, college certificate, declaration, acknowledgement, index, Chapters 1–10, and then supporting appendices. The index gives PDF page numbers, including the two blank sheets. It preserves the earlier report's substantive material and reuses its navy-and-gold visual hierarchy within the required dimensions; the earlier report supplied for comparison is in `reference/CampusShikayatSetu_Previous_Report.pdf`. Two-column tables use a structured table layout; wider tables are adapted to labelled records so they remain readable within the prescribed margins. Every numbered figure has an explanation directly beneath its caption.
 
 ## Before printing or submission
 
@@ -25,4 +25,4 @@ python report/validate_report.py
 
 On Windows PowerShell set `$env:SHIKAYAT_DB` to an unused path and `$env:PYTHONPATH = "app"` before running the same Python commands. The generator also reads the template PDF for its embedded font subsets, the bundled fallback fonts, and existing report screenshots/diagrams. Do not delete or overwrite a real database to create demo data. The output overwrites `CampusShikayatSetu_MCA-Mini-Project_Report.pdf`, so make a backup first if needed. Seed dates vary at creation time; the examples are illustrative.
 
-`validate_report.py` checks the blank pages, required front matter and index entries, approximate text bounds and expected screenshot captions. It does not replace a visual proofread or college approval.
+`validate_report.py` checks the blank pages, required front matter and index entries, typography sizes and approximate page bounds, plus the numbered figures and their accompanying descriptions. It does not replace a visual proofread or college approval.

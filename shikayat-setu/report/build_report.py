@@ -12,6 +12,7 @@ import sqlite3
 from datetime import date
 
 from fpdf import FPDF
+from fpdf.enums import MethodReturnValue
 
 REPORT_DIR = Path(__file__).resolve().parent
 IMG = REPORT_DIR / "images"
@@ -22,6 +23,10 @@ D = str(REPORT_DIR / "fonts") + os.sep
 LEFT, RIGHT, TOP, BOTTOM = 50.8, 38.1, 50.8, 38.1  # 2, 1.5, 2, 1.5 inches
 CONTENT_W = 210 - LEFT - RIGHT
 LINE_H = 13 * 1.5 * 25.4 / 72
+NAVY = (22, 36, 61)
+NAVY2 = (31, 52, 85)
+GOLD = (190, 146, 47)
+LIGHT = (245, 247, 250)
 TODAY = date.today().strftime("%d %B %Y")
 
 SECTIONS = [
@@ -79,6 +84,25 @@ def extract_template_fonts(directory):
     return Path(directory) / 'regular.ttf', Path(directory) / 'bold.ttf'
 
 
+FIGURE_DESCRIPTIONS = {
+    'fig-gantt.png': 'The timeline places the five notified review and submission milestones in sequence. It is a schedule, not evidence that a review was completed or accepted.',
+    'fig-erd.png': 'The boxes represent the SQLite tables and key fields. The connecting lines show foreign-key relationships and cardinalities among departments, categories, users, complaints, events and feedback.',
+    'fig-usecase-student.png': 'The student actor registers or signs in, submits and tracks their own complaints, and can give feedback or request reopening when the relevant conditions are met.',
+    'fig-usecase-officer.png': 'The department officer signs in, reviews the assigned queue and records permitted complaint actions, including acknowledgement, work and resolution.',
+    'fig-usecase-administrator.png': 'The administrator manages users and complaints across departments, can reassign or escalate eligible complaints, and views the management reports.',
+    'fig-usecase-public-visitor.png': 'A visitor without a login can use the public tracker with a complaint code and the matching roll number to view the corresponding status and timeline.',
+    'fig-class.png': 'The conceptual record types and associations illustrate the data represented by the application. They describe the relational design rather than Python ORM classes.',
+    'fig-activity.png': 'The flow begins with complaint submission and routing, then shows the supported officer and student actions and status transitions. Overdue status is calculated rather than stored.',
+    'fig-deployment.png': 'A browser communicates with the Flask application, which uses the local SQLite database. The diagram represents a single-node demo, with optional access from a LAN peer.',
+    'fig-modules.png': 'The hierarchy groups the project into authentication, complaint workflow, routing, database, reports and presentation modules, and maps responsibilities to the implemented files.',
+    'screen-login.png': 'A student, officer or administrator enters a username or roll number and password. The page also links to student registration and the public tracker.',
+    'screen-dashboard.png': 'The student dashboard summarises that student’s own complaints by status. The student can open a listed complaint or start a new submission.',
+    'screen-lodge.png': 'The student enters the complaint title, description and category, with optional location and anonymous flag. Routing preview is advisory; submission validates and saves the complaint.',
+    'screen-console.png': 'The administrator filters the complaint register by department, status or priority and opens an entry to inspect it or perform permitted administrative actions.',
+    'screen-timeline.png': 'The complaint detail page presents its current status, assigned department, deadline, routing details and chronological events for an authorised viewer.',
+}
+
+
 class Report(FPDF):
     def __init__(self, toc=None, recorder=None, font_dir=None):
         super().__init__(orientation='P', unit='mm', format='A4')
@@ -108,7 +132,13 @@ class Report(FPDF):
         self.set_y(29)
         self.set_x(LEFT)
         self.set_font('DVS', '', 13)
+        self.set_text_color(*NAVY)
+        self.set_fill_color(*NAVY)
         self.cell(CONTENT_W, LINE_H, 'Campus Shikayat Setu', align='R')
+        self.set_draw_color(*GOLD)
+        self.set_line_width(0.3)
+        self.line(LEFT, 40, LEFT + CONTENT_W, 40)
+        self.set_text_color(0, 0, 0)
         self.set_y(TOP)
 
     def footer(self):
@@ -116,7 +146,12 @@ class Report(FPDF):
             return
         self.set_y(-23)
         self.set_x(LEFT)
+        self.set_draw_color(*GOLD)
+        self.set_line_width(0.3)
+        self.line(LEFT, 272, LEFT + CONTENT_W, 272)
         self.set_font('DVS', '', 13)
+        self.set_text_color(*NAVY)
+        self.set_fill_color(*NAVY)
         self.cell(CONTENT_W - 15, LINE_H, 'Dr. B. V. Hiray College of', align='L')
         self.cell(15, LINE_H, str(self.page_no()), align='R')
         self.set_xy(LEFT, 297 - 23 + LINE_H)
@@ -126,11 +161,17 @@ class Report(FPDF):
         self.add_page()
         self.recorder[key] = self.page_no()
         self.set_font('DVS', 'B', 16)
+        self.set_text_color(*NAVY)
+        self.set_fill_color(*NAVY)
         if kicker:
             self.multi_cell(CONTENT_W, LINE_H, kicker.upper(), align='L')
         self.set_x(LEFT)
         self.multi_cell(CONTENT_W, LINE_H, text, align='L')
-        self.ln(3)
+        self.set_draw_color(*GOLD)
+        self.set_line_width(0.7)
+        self.line(LEFT, self.get_y() + 1, LEFT + 30, self.get_y() + 1)
+        self.ln(4)
+        self.set_text_color(0, 0, 0)
         self.start_section(text, level=0)
 
     def h2(self, text, reserve=20):
@@ -138,7 +179,11 @@ class Report(FPDF):
             self.add_page()
         self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
         self.set_font('DVS', 'B', 15)
+        self.set_text_color(*NAVY2)
+        self.set_fill_color(*NAVY2)
+        self.set_x(LEFT)
         self.multi_cell(CONTENT_W, LINE_H, text, align='L')
+        self.set_text_color(0, 0, 0)
         self.ln(2)
 
     def h3(self, text, reserve=16):
@@ -146,12 +191,18 @@ class Report(FPDF):
             self.add_page()
         self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
         self.set_font('DVS', 'B', 15)
+        self.set_text_color(*NAVY2)
+        self.set_fill_color(*NAVY2)
+        self.set_x(LEFT)
         self.multi_cell(CONTENT_W, LINE_H, text, align='L')
+        self.set_text_color(0, 0, 0)
         self.ln(2)
 
     def p(self, text):
         self.set_x(LEFT)
         self.set_font('DVS', '', 13)
+        self.set_text_color(0, 0, 0)
+        self.set_fill_color(0, 0, 0)
         self.multi_cell(CONTENT_W, LINE_H, _plain(text), align='L')
         self.ln(2)
 
@@ -161,39 +212,139 @@ class Report(FPDF):
 
     def caption(self, text):
         self.set_x(LEFT)
-        self.set_font('DVS', '', 13)
+        self.set_font('DVS', 'B', 13)
+        self.set_text_color(*NAVY)
+        self.set_fill_color(*NAVY)
         self.multi_cell(CONTENT_W, LINE_H, _plain(text), align='C')
-        self.ln(2)
+        self.set_text_color(0, 0, 0)
+        self.ln(1)
 
-    def figure(self, path, width_mm, caption_text):
+    def figure(self, path, width_mm, caption_text, description=None):
         from PIL import Image
+        if description is None:
+            description = FIGURE_DESCRIPTIONS.get(Path(path).name)
+        if not description:
+            raise ValueError(f'Missing explanatory description for {path}')
+        caption_text = _plain(caption_text)
+        description = 'Description: ' + _plain(description)
+        self.set_font('DVS', 'B', 13)
+        cap_lines = self.multi_cell(CONTENT_W, LINE_H, caption_text, align='C',
+                                    dry_run=True, output=MethodReturnValue.LINES)
+        self.set_font('DVS', '', 13)
+        desc_lines = self.multi_cell(CONTENT_W, LINE_H, description, align='L',
+                                     dry_run=True, output=MethodReturnValue.LINES)
+        # Keep every image, its caption and its explanation on the same page.
+        text_height = (len(cap_lines) + len(desc_lines)) * LINE_H + 8
+        max_height = 297 - TOP - BOTTOM - text_height - 2
+        if max_height <= 25:
+            raise ValueError(f'Explanation too long to fit with {path}')
         with Image.open(path) as image:
             width, height = image.size
         w = min(width_mm, CONTENT_W)
         h = w * height / width
-        max_height = 297 - TOP - BOTTOM - 25
         if h > max_height:
             w *= max_height / h
             h = max_height
-        if self.get_y() + h + LINE_H * 3 > 297 - BOTTOM:
+        if self.get_y() + h + text_height > 297 - BOTTOM:
             self.add_page()
         self.set_x(LEFT)
         self.image(str(path), x=LEFT + (CONTENT_W - w) / 2, w=w)
         self.ln(2)
         self.caption(caption_text)
+        self.p(description)
 
     def table(self, headers, rows, widths, **kwargs):
-        # Large mandated margins make multi-column 13-point tables illegible.
-        # Preserve every value as clearly labelled records in the same order.
-        for row in rows:
-            for header, value in zip(headers, row):
-                self.p(str(header) + ': ' + str(value))
-            self.ln(1)
+        # The specified 121 mm content width cannot hold the original four-
+        # and five-column tables legibly at 13 pt. Display their records as
+        # structured cards with navy title rows; use true tables where possible.
+        self.set_font('DVS', '', 13)
+        if not rows:
+            self.p('No records.')
+            return
+        if len(headers) == 2:
+            col1 = max(29, min(40, CONTENT_W * widths[0] / sum(widths)))
+            max_lines = 0
+            for row in [headers] + list(rows):
+                for value, width in zip(row, (col1, CONTENT_W-col1)):
+                    lines = self.multi_cell(width - 3, LINE_H, _plain(value),
+                                            dry_run=True, output=MethodReturnValue.LINES)
+                    max_lines = max(max_lines, len(lines))
+            # Oversized rows must flow as cards instead of breaking inside a table row.
+            if max_lines * LINE_H < (297 - TOP - BOTTOM - 3 * LINE_H):
+                widths_mm = (col1, CONTENT_W - col1)
+
+                def draw_row(values, is_header=False):
+                    self.set_font('DVS', 'B' if is_header else '', 13)
+                    lines = [self.multi_cell(width - 3, LINE_H, _plain(value), align='L',
+                                             dry_run=True, output=MethodReturnValue.LINES)
+                             for value, width in zip(values, widths_mm)]
+                    height = max(map(len, lines)) * LINE_H + 2
+                    y = self.get_y()
+                    self.set_draw_color(190, 190, 190)
+                    self.set_line_width(0.2)
+                    text_color = (255, 255, 255) if is_header else (0, 0, 0)
+                    self.set_text_color(*text_color)
+                    x = LEFT
+                    for text_lines, width in zip(lines, widths_mm):
+                        self.set_fill_color(*(NAVY if is_header else LIGHT))
+                        self.rect(x, y, width, height, style='DF')
+                        # fpdf's fallback-font switches must not be wrapped in
+                        # separate q/Q blocks for each line; equal fill/text colours.
+                        self.set_fill_color(*text_color)
+                        self.set_xy(x + 1, y + 1)
+                        self.multi_cell(width - 3, LINE_H, '\n'.join(text_lines), align='L')
+                        x += width
+                    self.set_y(y + height)
+                    self.set_x(LEFT)
+                    self.set_text_color(0, 0, 0)
+                    return height
+
+                def row_height(values, bold=False):
+                    self.set_font('DVS', 'B' if bold else '', 13)
+                    return max(len(self.multi_cell(width - 3, LINE_H, _plain(value), align='L',
+                                                   dry_run=True, output=MethodReturnValue.LINES))
+                               for value, width in zip(values, widths_mm)) * LINE_H + 2
+
+                heading_height = row_height(headers, True)
+                if self.get_y() + heading_height + row_height(rows[0]) > 297 - BOTTOM:
+                    self.add_page()
+                draw_row(headers, True)
+                for values in rows:
+                    if self.get_y() + row_height(values) > 297 - BOTTOM:
+                        self.add_page()
+                        draw_row(headers, True)
+                    draw_row(values)
+                self.ln(3)
+                return
+        for values in rows:
+            label = _plain(str(headers[0]) + ': ' + str(values[0]))
+            self.set_font('DVS', 'B', 13)
+            lines = self.multi_cell(CONTENT_W, LINE_H, label, align='L',
+                                    dry_run=True, output=MethodReturnValue.LINES)
+            height = len(lines) * LINE_H
+            if self.get_y() + height + LINE_H > 297 - BOTTOM:
+                self.add_page()
+            y = self.get_y()
+            self.set_fill_color(*NAVY2)
+            self.rect(LEFT, y, CONTENT_W, height, style='F')
+            self.set_fill_color(255, 255, 255)
+            self.set_text_color(255, 255, 255)
+            self.set_x(LEFT)
+            self.multi_cell(CONTENT_W, LINE_H, label, align='L')
+            self.set_text_color(0, 0, 0)
+            self.set_fill_color(0, 0, 0)
+            for header, value in zip(headers[1:], values[1:]):
+                self.set_x(LEFT)
+                self.set_font('DVS', '', 13)
+                self.multi_cell(CONTENT_W, LINE_H, _plain(str(header) + ': ' + str(value)), align='L')
+            self.ln(3)
 
     def code(self, code_text, title=None):
         if title:
             self.h3(title)
         self.set_font('DVS', '', 13)
+        self.set_text_color(0, 0, 0)
+        self.set_fill_color(0, 0, 0)
         for line in code_text.splitlines():
             self.set_x(LEFT)
             if not line:
@@ -215,10 +366,17 @@ def cover(pdf):
     pdf.add_page()
     pdf.recorder['cover'] = pdf.page_no()
     pdf.set_font('DVS', 'B', 16)
+    pdf.set_text_color(*NAVY)
+    pdf.set_fill_color(*NAVY)
     for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
         pdf.set_x(LEFT)
         pdf.multi_cell(CONTENT_W, LINE_H, line, align='C')
-    pdf.ln(2)
+    pdf.set_draw_color(*GOLD)
+    pdf.set_line_width(0.7)
+    pdf.line(LEFT + 35, pdf.get_y() + 1, LEFT + CONTENT_W - 35, pdf.get_y() + 1)
+    pdf.ln(3)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_fill_color(0, 0, 0)
     pdf.set_font('DVS', '', 13)
     for line in ['Submitted By', 'Yashwant Santosh Ahire', 'MCA-I SEM-I',
                  'Roll No.: ____________________', 'UNDER THE GUIDANCE OF',
@@ -787,8 +945,7 @@ def ch10(pdf: Report):
     ]
     for i, (title, filename, description) in enumerate(screens, 1):
         pdf.h3(f"10.3.{i}  {title}", reserve=132)
-        pdf.p(description)
-        pdf.figure(f"{IMG}/screen-{filename}.png", 162, f"Figure 10.{i}  {title} — synthetic demo.")
+        pdf.figure(f"{IMG}/screen-{filename}.png", 162, f"Figure 10.{i}  {title} — synthetic demo.", description)
 
     pdf.h2("10.4  Frequently asked questions")
     pdf.bullets([
