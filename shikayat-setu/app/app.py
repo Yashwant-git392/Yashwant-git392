@@ -1,7 +1,7 @@
 """
 Campus Shikayat Setu — College Grievance Redressal System
 SPPU MCA-I (Sem-I) Mini Project  |  Dr. B.V. Hiray College of Management and Research Centre, Malegaon
-Creator: Yashwant Santosh Ahire  |  Guide: Mrs. Priyanka M. Jagtap
+Creator: Yashwant Santosh Ahire
 
 Roles: student (lodge/track/feedback/reopen) · officer (acknowledge/progress/resolve) · admin (route/escalate/reports/users)
 Run:  python run.py            → http://127.0.0.1:5001
