@@ -1,583 +1,361 @@
 #!/usr/bin/env python3
-"""Build CampusShikayatSetu_MCA-Mini-Project_Review.pptx — 16 slides, 16:9.
+"""Create the editable 16:9 Campus Shikayat Setu presentation.
 
-Design system matches the project report: NAVY / GOLD / CREAM, Georgia display serif.
-All figures are the real generated assets from ../report/images/.
+Uses python-pptx's Office-compatible base template with a custom indigo/coral
+corporate theme. All infographic elements and slide text are PowerPoint shapes;
+application screenshots remain raster images. No network resources are used.
 """
 from pathlib import Path
+import os
+import tempfile
+import zipfile
+import xml.etree.ElementTree as ET
 
 from PIL import Image
 from pptx import Presentation
-from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.oxml.ns import qn
+from pptx.enum.shapes import MSO_CONNECTOR, MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.util import Inches, Pt
 
-PROJECT_DIR = Path(__file__).resolve().parent.parent
-IMG = PROJECT_DIR / "report" / "images"
-OUT = PROJECT_DIR / "presentation" / "CampusShikayatSetu_MCA-Mini-Project_Review.pptx"
+ROOT = Path(__file__).resolve().parent.parent
+IMG = ROOT / 'report' / 'images'
+OUT = ROOT / 'presentation' / 'CampusShikayatSetu_MCA-Mini-Project_Review.pptx'
 
-NAVY   = RGBColor(0x16, 0x24, 0x3D)
-NAVY2  = RGBColor(0x2B, 0x4A, 0x73)
-NAVY3  = RGBColor(0x1F, 0x34, 0x55)
-GOLD   = RGBColor(0xC9, 0xA2, 0x27)
-GOLD_L = RGBColor(0xFF, 0xD9, 0x5E)
-CREAM  = RGBColor(0xF7, 0xF5, 0xEF)
-WHITE  = RGBColor(0xFF, 0xFF, 0xFF)
-GREY   = RGBColor(0x6B, 0x72, 0x80)
-GREY_L = RGBColor(0xE8, 0xED, 0xF7)
-GREEN  = RGBColor(0x1E, 0x7A, 0x46)
-RED    = RGBColor(0xB3, 0x37, 0x2E)
-INK    = RGBColor(0x20, 0x20, 0x20)
-
-SERIF = "Georgia"
-MONO  = "Courier New"
-
-prs = Presentation()
-prs.slide_width  = Inches(13.333)
-prs.slide_height = Inches(7.5)
-BLANK = prs.slide_layouts[6]
-
+# Neutral corporate template: dark ink, porcelain, indigo and a coral accent.
+INK = RGBColor.from_string('20263A')
+MUTED = RGBColor.from_string('5E6980')
+DEEP = RGBColor.from_string('1F2242')
+INDIGO = RGBColor.from_string('4B4B98')
+VIOLET = RGBColor.from_string('7267B4')
+CORAL = RGBColor.from_string('DF6D5D')
+PALE = RGBColor.from_string('F5F6FA')
+PALE_PURPLE = RGBColor.from_string('EDEBFA')
+PALE_CORAL = RGBColor.from_string('FAEAE6')
+WHITE = RGBColor.from_string('FFFFFF')
+BORDER = RGBColor.from_string('DEE2EC')
+GREEN = RGBColor.from_string('397968')
+FONT = 'Arial'
+SLIDE_W, SLIDE_H = 13.333333, 7.5
 TOTAL = 16
 
+prs = Presentation()  # PowerPoint-compatible Office base template
+prs.slide_width = Inches(SLIDE_W); prs.slide_height = Inches(SLIDE_H)
+BLANK = prs.slide_layouts[6]
+prs.core_properties.title = 'Campus Shikayat Setu — Project Presentation'
+prs.core_properties.subject = 'College grievance redressal system'
+prs.core_properties.author = 'Yashwant Santosh Ahire'
 
-# ---------------------------------------------------------------- helpers
-def add_slide():
-    return prs.slides.add_slide(BLANK)
 
-def set_bg(slide, color):
-    slide.background.fill.solid()
-    slide.background.fill.fore_color.rgb = color
-
-def rect(slide, x, y, w, h, fill=None, line=None, line_w=None, round_=False, radius=0.10, shadow=False):
-    shp = slide.shapes.add_shape(
-        MSO_SHAPE.ROUNDED_RECTANGLE if round_ else MSO_SHAPE.RECTANGLE,
-        Inches(x), Inches(y), Inches(w), Inches(h))
-    if round_:
-        try:
-            shp.adjustments[0] = radius
-        except Exception:
-            pass
-    if fill is None:
-        shp.fill.background()
+def shape(slide, x, y, w, h, color, radius=False, stroke=None):
+    item = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE if radius else MSO_SHAPE.RECTANGLE,
+                                  Inches(x), Inches(y), Inches(w), Inches(h))
+    if radius:
+        item.adjustments[0] = 0.07
+    item.fill.solid(); item.fill.fore_color.rgb = color
+    if stroke is None:
+        item.line.fill.background()
     else:
-        shp.fill.solid(); shp.fill.fore_color.rgb = fill
-    if line is None:
-        shp.line.fill.background()
+        item.line.color.rgb = stroke; item.line.width = Pt(0.9)
+    return item
+
+
+def circle(slide, x, y, d, fill, outline=None):
+    item = slide.shapes.add_shape(MSO_SHAPE.OVAL, Inches(x), Inches(y), Inches(d), Inches(d))
+    item.fill.solid(); item.fill.fore_color.rgb = fill
+    if outline:
+        item.line.color.rgb = outline; item.line.width = Pt(1.1)
     else:
-        shp.line.color.rgb = line; shp.line.width = Pt(line_w or 1.0)
-    shp.shadow.inherit = False
-    return shp
-
-def txt(slide, x, y, w, h, paras, anchor=MSO_ANCHOR.TOP, wrap=True):
-    """paras: list of dicts {runs:[(text, style)], align, space_after, line_spacing}"""
-    tb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
-    tf = tb.text_frame
-    tf.word_wrap = wrap
-    tf.vertical_anchor = anchor
-    tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
-    for i, p in enumerate(paras):
-        par = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        par.alignment = p.get("align", PP_ALIGN.LEFT)
-        if p.get("space_after") is not None: par.space_after = Pt(p["space_after"])
-        if p.get("space_before") is not None: par.space_before = Pt(p["space_before"])
-        par.line_spacing = p.get("line_spacing", 1.12)
-        for text, st in p["runs"]:
-            r = par.add_run(); r.text = text
-            r.font.name = st.get("font", SERIF)
-            r.font.size = Pt(st.get("size", 12))
-            r.font.bold = st.get("bold", False)
-            r.font.italic = st.get("italic", False)
-            r.font.color.rgb = st.get("color", INK)
-    return tb
-
-def kicker(slide, text, x=0.55, y=0.32, w=9.5, color=GOLD):
-    txt(slide, x, y, w, 0.3, [dict(runs=[(text, dict(font=SERIF, size=10.5, bold=True, color=color))])])
-
-def title(slide, text, x=0.55, y=0.55, w=12.3, size=25, color=NAVY):
-    txt(slide, x, y, w, 0.62, [dict(runs=[(text, dict(font=SERIF, size=size, bold=True, color=color))])])
-
-def gold_rule(slide, x=0.55, y=1.22, w=1.6, weight=3.2):
-    ln = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(x), Inches(y), Inches(w), Pt(weight))
-    ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
-
-def header(slide, kick, ttl, size=25):
-    set_bg(slide, CREAM)
-    kicker(slide, kick)
-    title(slide, ttl, size=size)
-    gold_rule(slide)
-
-def footer(slide, n):
-    ln = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.55), Inches(7.06), Inches(12.23), Pt(0.9))
-    ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
-    txt(slide, 0.55, 7.13, 9.6, 0.3,
-        [dict(runs=[("Campus Shikayat Setu — College Grievance Redressal System  ·  SPPU MCA-I (Sem-I) Application Development  ·  2026-27",
-                     dict(size=7.5, color=GREY))])])
-    txt(slide, 10.6, 7.13, 2.18, 0.3,
-        [dict(runs=[(f"{n} / {TOTAL}", dict(size=8.5, bold=True, color=NAVY))], align=PP_ALIGN.RIGHT)])
-
-def chip(slide, x, y, w, text, fill=NAVY, tc=GOLD_L, size=8.5, bold=True):
-    c = rect(slide, x, y, w, 0.28, fill=fill, round_=True, radius=0.5)
-    tf = c.text_frame; tf.word_wrap = False
-    tf.margin_left = tf.margin_right = Inches(0.02); tf.margin_top = tf.margin_bottom = Inches(0.0)
-    tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    p = tf.paragraphs[0]; p.alignment = PP_ALIGN.CENTER; p.line_spacing = 1.0
-    r = p.add_run(); r.text = text
-    r.font.name = SERIF; r.font.bold = bold; r.font.size = Pt(size); r.font.color.rgb = tc
-    return c
-
-def card(slide, x, y, w, h, fill=WHITE, line=GOLD, line_w=1.15, radius=0.055):
-    return rect(slide, x, y, w, h, fill=fill, line=line, line_w=line_w, round_=True, radius=radius)
-
-def pic_fit(slide, path, x, y, max_w, max_h, card_bg=None):
-    """Insert picture preserving AR, centered in the (x,y,max_w,max_h) box. Returns placed rect."""
-    iw, ih = Image.open(path).size
-    ar = iw / ih
-    w = max_w; h = w / ar
-    if h > max_h:
-        h = max_h; w = h * ar
-    px = x + (max_w - w) / 2; py = y + (max_h - h) / 2
-    slide.shapes.add_picture(path, Inches(px), Inches(py), Inches(w), Inches(h))
-    return px, py, w, h
-
-def bullets(slide, x, y, w, h, items, size=12.5, gap=4, color=INK, marker="—  ", mcolor=GOLD, line_spacing=1.12):
-    """items: list of (bold_lead, rest) or plain strings."""
-    paras = []
-    for it in items:
-        runs = []
-        if isinstance(it, tuple):
-            lead, rest = it
-            runs.append((marker, dict(size=size, bold=True, color=mcolor)))
-            runs.append((lead, dict(size=size, bold=True, color=NAVY)))
-            if rest:
-                runs.append((rest, dict(size=size, color=color)))
-        else:
-            runs.append((marker, dict(size=size, bold=True, color=mcolor)))
-            runs.append((it, dict(size=size, color=color)))
-        paras.append(dict(runs=runs, space_after=gap, line_spacing=line_spacing))
-    txt(slide, x, y, w, h, paras)
+        item.line.fill.background()
+    return item
 
 
-# ================================================================ SLIDE 1 — Title
-s = add_slide(); set_bg(s, NAVY)
-# notice-board glyph (drawn, right side)
-bx, by = 10.62, 1.55
-rect(s, bx, by, 1.66, 2.34, fill=NAVY3, round_=True, radius=0.09)
-rect(s, bx + 0.22, by + 0.24, 1.22, 0.16, fill=GOLD)
-rect(s, bx + 0.22, by + 0.56, 1.22, 0.075, fill=RGBColor(0x8F, 0xA3, 0xC4))
-rect(s, bx + 0.22, by + 0.74, 1.22, 0.075, fill=RGBColor(0x8F, 0xA3, 0xC4))
-rect(s, bx + 0.22, by + 0.92, 0.85, 0.075, fill=RGBColor(0x8F, 0xA3, 0xC4))
-rect(s, bx + 0.22, by + 1.38, 0.9, 0.34, fill=GOLD)
-ln = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(bx + 0.32), Inches(by + 1.455), Inches(0.10), Inches(0.15))
-ln.fill.solid(); ln.fill.fore_color.rgb = RGBColor(0x3D, 0x2E, 0x00); ln.line.fill.background(); ln.shadow.inherit = False
-rect(s, bx + 0.22, by + 1.86, 1.22, 0.10, fill=GOLD_L)
-ln = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0.42), Inches(13.333), Pt(1.6))
-ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
-ln = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(7.08), Inches(13.333), Pt(1.6))
-ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
+def text(slide, x, y, w, h, value, size=18, color=INK, bold=False,
+         align=PP_ALIGN.LEFT, valign=MSO_ANCHOR.TOP):
+    box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+    frame = box.text_frame; frame.clear(); frame.word_wrap = True
+    frame.margin_left = frame.margin_right = frame.margin_top = frame.margin_bottom = 0
+    frame.vertical_anchor = valign
+    for i, line in enumerate(value.split('\n')):
+        p = frame.paragraphs[0] if i == 0 else frame.add_paragraph()
+        p.alignment = align; p.line_spacing = 1.08; p.space_after = Pt(0)
+        r = p.add_run(); r.text = line; r.font.name = FONT; r.font.size = Pt(size)
+        r.font.bold = bold; r.font.color.rgb = color
+    return box
 
-txt(s, 0.75, 0.72, 9.4, 0.35, [dict(runs=[("SAVITRIBAI PHULE PUNE UNIVERSITY  ·  MCA-I (SEM-I)  ·  APPLICATION DEVELOPMENT  ·  2026-27",
-                                          dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.75, 1.28, 9.6, 1.55, [dict(runs=[("Campus Shikayat Setu", dict(size=58, bold=True, color=WHITE))], line_spacing=0.98)])
-txt(s, 0.75, 2.55, 9.4, 0.6, [dict(runs=[("College Grievance Redressal System", dict(size=26, bold=True, color=GOLD_L))])])
-rect(s, 0.78, 3.35, 1.7, 0.037, fill=GOLD)
-txt(s, 0.75, 3.55, 9.2, 0.75,
-    [dict(runs=[("A demo grievance workflow with status history and SLA deadlines —",
-                 dict(size=14, italic=True, color=CREAM))], line_spacing=1.15),
-     dict(runs=[("lodge · auto-route · track · resolve — with a paper trail for every step.", dict(size=14, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
-txt(s, 0.75, 5.0, 8.6, 1.6,
-    [dict(runs=[("Yashwant Santosh Ahire", dict(size=17.5, bold=True, color=WHITE))], space_after=2),
-     dict(runs=[("Guide: confirm according to roll number", dict(size=11.5, color=CREAM))], space_after=2),
-     dict(runs=[("Dr. B.V. Hiray College of Management and Research Centre, Malegaon (Nashik)", dict(size=10.5, color=RGBColor(0x9F,0xAD,0xC8)))])])
-txt(s, 10.35, 5.28, 2.45, 1.35,
-    [dict(runs=[("REVIEW 3", dict(size=9, bold=True, color=GOLD))], space_after=1),
-     dict(runs=[("21 November 2026", dict(size=13, bold=True, color=WHITE))], space_after=8),
-     dict(runs=[("FINAL VIVA", dict(size=9, bold=True, color=GOLD))], space_after=1),
-     dict(runs=[("19 December 2026", dict(size=13, bold=True, color=WHITE))])])
 
-# ================================================================ SLIDE 2 — Agenda & at a glance
-s = add_slide(); header(s, "AGENDA", "What we will walk through — in ten minutes"); footer(s, 2)
-agenda = [
-    ("01", "The problem", "an assumed manual-process baseline"),
-    ("02", "Objectives & scope", "v1.0 goals, in/out of scope"),
-    ("03", "Users & use cases", "student · officer · admin · public"),
-    ("04", "Architecture & data", "Flask + SQLite, ERD, constraints"),
-    ("05", "Modules & routing rules", "keyword engine · SLA · audit timeline"),
-    ("06", "Live demo", "dashboard, console, timeline"),
-    ("07", "Reports", "six registers, ≥ 5 valid records each"),
-    ("08", "Testing evidence", "114 automated tests + browser checks"),
-    ("09", "Timeline & deliverables", "review track, effort, artefacts"),
-    ("10", "Future work & Q&A", "enhancements E-1 … E-10"),
-]
-col_y = 1.52
-for i, (n, t, d) in enumerate(agenda):
-    col = i // 5; row = i % 5
-    x = 0.55 + col * 6.35; y = col_y + row * 0.78
-    txt(s, x, y, 0.55, 0.5, [dict(runs=[(n, dict(size=15, bold=True, color=GOLD))])])
-    txt(s, x + 0.52, y - 0.015, 5.35, 0.35, [dict(runs=[(t, dict(size=13, bold=True, color=NAVY))])])
-    txt(s, x + 0.52, y + 0.185, 5.35, 0.3, [dict(runs=[(d, dict(size=8.5, color=GREY))])])
+def line(slide, x1, y1, x2, y2, color=BORDER, width=1.6):
+    item = slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT, Inches(x1), Inches(y1), Inches(x2), Inches(y2))
+    item.line.color.rgb = color; item.line.width = Pt(width)
+    return item
 
-card(s, 0.55, 5.62, 12.23, 1.15)
-txt(s, 0.75, 5.74, 3.0, 0.3, [dict(runs=[("AT A GLANCE", dict(size=9, bold=True, color=GOLD))])])
-stats = [("6", "departments"), ("15", "categories"), ("15", "users seeded"), ("37", "complaints"), ("135", "audit events"), ("114", "automated tests")]
-sw = 11.9 / len(stats)
-for i, (v, d) in enumerate(stats):
-    x = 0.62 + i * sw
-    txt(s, x, 6.02, sw - 0.15, 0.5, [dict(runs=[(v, dict(size=21, bold=True, color=NAVY))])])
-    txt(s, x, 6.42, sw - 0.15, 0.3, [dict(runs=[(d, dict(size=7.5, color=GREY))])])
 
-# ================================================================ SLIDE 3 — The problem
-s = add_slide(); header(s, "01 · CONTEXT", "Potential problems with manual tracking"); footer(s, 3)
-txt(s, 0.55, 1.5, 7.1, 0.35, [dict(runs=[("Illustrative assumptions — confirm with college", dict(size=13, bold=True, color=NAVY))])])
-bullets(s, 0.55, 1.95, 7.0, 4.0, [
-    ("A locked wooden box — ", "paper-based complaints can be hard to track."),
-    ("No routing, no owner — ", "manual forwarding may introduce delays or misassignment."),
-    ("No status, ever — ", "students may need to ask staff for updates."),
-    ("Sensitive topics go unsaid — ", "sensitive complaints need careful privacy handling."),
-    ("Zero data — ", "manual records may make trend reporting difficult."),
-], size=12, gap=8)
-card(s, 8.15, 1.5, 4.62, 4.42, fill=NAVY, line=None)
-txt(s, 8.45, 1.78, 4.1, 0.35, [dict(runs=[("WHY NOT THE USUAL ANSWERS?", dict(size=10, bold=True, color=GOLD))])])
-bullets(s, 8.45, 2.25, 4.15, 3.5, [
-    ("CPGRAMS — ", "national portal designed for public grievances, not this demo."),
-    ("Excel registers — ", "manual spreadsheets need access controls and maintenance."),
-    ("ERP add-ons — ", "features and costs depend on the vendor."),
-], size=10, gap=7, color=CREAM, mcolor=GOLD_L)
-txt(s, 8.45, 4.72, 4.1, 1.1,
-    [dict(runs=[("Right-sized answer: ", dict(size=10.5, bold=True, color=GOLD_L)),
-                ("a focused, self-hosted web app that runs on the college PC — SLA-bound, with event history and optional anonymity.", dict(size=10.5, color=CREAM))], line_spacing=1.22)])
-rect(s, 0.55, 6.12, 12.23, 0.5, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.85, 6.24, 11.7, 0.3, [dict(runs=[("Scope fixed for Sem-I: student · officer · admin roles, feedback & reopen loop — nothing more, nothing hidden.",
-                                           dict(size=9.5, italic=True, color=NAVY3))])])
+def arrow(slide, x, y, w=0.34, color=CORAL):
+    return text(slide, x, y, w, 0.42, '→', 24, color, True, PP_ALIGN.CENTER)
 
-# ================================================================ SLIDE 4 — Objectives & scope
-s = add_slide(); header(s, "02 · OBJECTIVES & SCOPE", "What v1.0 sets out to do"); footer(s, 4)
-txt(s, 0.55, 1.5, 4.6, 0.32, [dict(runs=[("OBJECTIVES", dict(size=10, bold=True, color=GOLD))])])
-objectives = [
-    "One-page complaint lodging with title/description guard rails",
-    "Keyword scoring suggests a category; selected category may be retained",
-    "SLA engine: High 24 h · Medium 72 h · Low 7 days, stamped at lodge time",
-    "Application records complaint actions in a timeline",
-    "Anonymous lodging hides identity fields from officers",
-    "Six print-ready registers + public tracker (code + roll no.)",
-]
-for i, o in enumerate(objectives):
-    y = 1.92 + i * 0.62
-    chip(s, 0.55, y, 0.42, f"O{i+1}", fill=NAVY, tc=GOLD_L, size=10)
-    txt(s, 1.12, y + 0.015, 4.6, 0.6, [dict(runs=[(o, dict(size=9.2, color=INK))], line_spacing=1.08)])
 
-card(s, 6.15, 1.5, 6.6, 2.32)
-txt(s, 6.4, 1.66, 3.0, 0.3, [dict(runs=[("IN SCOPE — v1.0", dict(size=9.5, bold=True, color=GREEN))])])
-bullets(s, 6.4, 2.05, 6.15, 1.7, [
-    "Register & login; password hashes; CSRF tokens",
-    "Keyword routing with explainable scores (title weighted ×2)",
-    "Optional acknowledge / progress → resolve; feedback closes; reopen uses whole-day age",
-    "Officer department queue; admin console (reassign/escalate/force-close)",
-    "Print CSS registers; public tracker without login",
-], size=9.2, gap=3, marker="•  ", mcolor=GREEN)
-card(s, 6.15, 4.02, 6.6, 2.35)
-txt(s, 6.4, 4.18, 4.5, 0.3, [dict(runs=[("OUT OF SCOPE — v1.0 (each maps to an enhancement)", dict(size=9.5, bold=True, color=RED))])])
-bullets(s, 6.4, 4.57, 6.15, 1.75, [
-    "E-mail / SMS / WhatsApp notifications (E-1, E-2)",
-    "Photo evidence upload (E-3)",
-    "Category admin UI & MySQL migration (E-4, E-5)",
-    "Nightly SLA-breach cron + auto-escalation (E-6)",
-    "Marathi / Hindi UI (E-9) · ERP roll-no bridge (E-10)",
-], size=9.2, gap=3, marker="•  ", mcolor=RED)
+def pill(slide, x, y, w, label, color=PALE_PURPLE, foreground=INDIGO):
+    shape(slide, x, y, w, 0.36, color, radius=True)
+    text(slide, x+0.06, y, w-0.12, 0.36, label, 10, foreground, True,
+         PP_ALIGN.CENTER, MSO_ANCHOR.MIDDLE)
 
-# ================================================================ SLIDE 5 — Users & use cases
-s = add_slide(); header(s, "03 · USERS & USE CASES", "Three logged-in roles, one public door"); footer(s, 5)
-card(s, 0.55, 1.5, 4.35, 1.5)
-txt(s, 0.78, 1.62, 3.9, 0.3, [dict(runs=[("ACTOR 1 — STUDENT (COMPLAINANT)", dict(size=9, bold=True, color=GOLD))])])
-txt(s, 0.78, 1.94, 3.9, 0.26, [dict(runs=[("The aggrieved", dict(size=11, bold=True, color=NAVY))])])
-txt(s, 0.78, 2.26, 3.95, 0.72, [dict(runs=[("Lodges complaints (optionally anonymous), tracks by code, rates resolutions, reopens subject to a whole-day age check.",
-                                             dict(size=9.5, color=INK))], line_spacing=1.15)])
-card(s, 0.55, 3.14, 4.35, 1.5)
-txt(s, 0.78, 3.26, 3.9, 0.3, [dict(runs=[("ACTOR 2 — OFFICER (DEPARTMENT)", dict(size=9, bold=True, color=GOLD))])])
-txt(s, 0.78, 3.58, 3.9, 0.26, [dict(runs=[("The resolver", dict(size=11, bold=True, color=NAVY))])])
-txt(s, 0.78, 3.90, 3.95, 0.72, [dict(runs=[("Sees only own-department queue; acknowledges, works, resolves with a mandatory remark.",
-                                             dict(size=9.5, color=INK))], line_spacing=1.15)])
-card(s, 0.55, 4.78, 4.35, 1.5)
-txt(s, 0.78, 4.90, 3.9, 0.3, [dict(runs=[("ACTOR 3 — ADMINISTRATOR", dict(size=9, bold=True, color=GOLD))])])
-txt(s, 0.78, 5.22, 3.9, 0.26, [dict(runs=[("The backstop", dict(size=11, bold=True, color=NAVY))])])
-txt(s, 0.78, 5.54, 3.95, 0.72, [dict(runs=[("Console over everything; reassign, escalate to High, force-close resolved complaints; view anonymous identity fields.",
-                                             dict(size=9.5, color=INK))], line_spacing=1.12)])
-for filename, x, y in [
-    ("student", 5.25, 1.55), ("officer", 9.05, 1.55),
-    ("administrator", 5.25, 3.92), ("public-visitor", 9.05, 3.92),
-]:
-    pic_fit(s, f"{IMG}/fig-usecase-{filename}.png", x, y, 3.55, 2.25)
-txt(s, 5.5, 6.35, 7.0, 0.3, [dict(runs=[("Separate actor diagrams — full size in report §3.4",
-                                          dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
 
-# ================================================================ SLIDE 6 — Architecture & stack
-s = add_slide(); header(s, "04 · ARCHITECTURE", "Flask and SQLite architecture"); footer(s, 6)
-pic_fit(s, f"{IMG}/fig-architecture.png", 5.15, 1.5, 7.65, 3.6)
-txt(s, 5.5, 5.22, 7.0, 0.3, [dict(runs=[("Three tiers on one machine — scale-out path: gunicorn + nginx + MySQL (E-5 / E-10)",
-                                          dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-txt(s, 0.55, 1.5, 4.3, 0.32, [dict(runs=[("WHY THIS STACK", dict(size=10, bold=True, color=GOLD))])])
-bullets(s, 0.55, 1.95, 4.35, 3.05, [
-    ("Flask 3.x — ", "server-rendered Jinja; zero build step; the demo never depends on the network."),
-    ("SQLite — ", "one file = whole DB; FK/CHECK/UNIQUE enforced; backup = copy file."),
-    ("Vanilla JS — ", "length/roll sanity mirrors server validation; no framework."),
-    ("Print CSS — ", "registers file straight to the principal’s tray, A4, no truncation."),
-], size=10, gap=6)
-chip(s, 0.55, 5.32, 1.05, "Python", fill=NAVY, tc=GOLD_L)
-chip(s, 1.72, 5.32, 1.15, "Flask 3.x", fill=NAVY, tc=GOLD_L)
-chip(s, 2.99, 5.32, 1.0, "Jinja", fill=NAVY, tc=GOLD_L)
-chip(s, 4.11, 5.32, 1.15, "SQLite 3", fill=NAVY, tc=GOLD_L)
-chip(s, 0.55, 5.72, 1.5, "vanilla JS", fill=NAVY2, tc=WHITE)
-chip(s, 2.17, 5.72, 1.05, "pytest", fill=NAVY2, tc=WHITE)
-chip(s, 3.34, 5.72, 1.6, "print CSS", fill=NAVY2, tc=WHITE)
-chip(s, 5.06, 5.72, 1.15, "hashing", fill=NAVY2, tc=WHITE)
+def panel(slide, x, y, w, h, fill=WHITE, stroke=BORDER):
+    return shape(slide, x, y, w, h, fill, radius=True, stroke=stroke)
 
-# ================================================================ SLIDE 7 — ERD & constraints
-s = add_slide(); header(s, "04 · DATA MODEL", "Six tables, no cleverness"); footer(s, 7)
-pic_fit(s, f"{IMG}/fig-erd.png", 0.55, 1.5, 6.6, 4.35)
-txt(s, 0.75, 5.9, 6.2, 0.3, [dict(runs=[("ERD — report §3.2; actual SQLite foreign keys and cardinalities", dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-tables = [
-    ("departments", "name UNIQUE · head_name · email · location"),
-    ("categories", "FK→departments · default_priority CHECK · keywords TEXT"),
-    ("users", "role CHECK(student|officer|admin) · username UNIQUE · roll_no UNIQUE"),
-    ("complaints", "code UNIQUE (CMP-YYYY-NNNN) · priority/routing/status CHECKs · sla_due_at"),
-    ("complaint_events", "append-only audit log · FK ON DELETE CASCADE · actor NULL for system"),
-    ("feedback", "complaint_id UNIQUE · rating CHECK(1..5)"),
-]
-for i, (t, d) in enumerate(tables):
-    y = 1.5 + i * 0.72
-    card(s, 7.5, y, 5.28, 0.6, radius=0.14)
-    txt(s, 7.72, y + 0.05, 4.9, 0.26, [dict(runs=[(t, dict(font=MONO, size=9.5, bold=True, color=NAVY))])])
-    txt(s, 7.72, y + 0.28, 4.9, 0.3, [dict(runs=[(d, dict(size=7.4, color=INK))], line_spacing=1.05)])
-bullets(s, 7.5, 5.95, 5.3, 1.1, [
-    ("Overdue never stored — ", "derived: now > sla_due_at AND status ∉ (Resolved, Closed)."),
-], size=9, gap=3)
 
-# ================================================================ SLIDE 8 — Module hierarchy
-s = add_slide(); header(s, "05 · MODULES", "Project files and responsibilities"); footer(s, 8)
-pic_fit(s, f"{IMG}/fig-modules.png", 0.55, 1.48, 7.3, 4.35)
-txt(s, 0.75, 5.88, 6.9, 0.3, [dict(runs=[("Module hierarchy — report §3.8; actual application files",
-                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-routes = [
-    ("auth", "/login · /logout · /register · /change-password"),
-    ("student", "/lodge · /my-complaints · /complaint/<code>/feedback|reopen"),
-    ("officer", "/queue · /complaint/<code>/acknowledge|progress|resolve|remark"),
-    ("admin", "/console · /complaint/<code>/reassign|escalate|force-close · /users"),
-    ("public", "/track — complaint code + roll no., no login"),
-    ("reports", "/reports?report=pendency|sla|restime|trend|feedback|routing"),
-]
-for i, (m, r) in enumerate(routes):
-    y = 1.55 + i * 0.78
-    rect(s, 8.15, y, 0.09, 0.62, fill=GOLD)
-    txt(s, 8.38, y, 4.4, 0.28, [dict(runs=[(m, dict(font=MONO, size=10, bold=True, color=NAVY))])])
-    txt(s, 8.38, y + 0.215, 4.4, 0.5, [dict(runs=[(r, dict(size=7.9, color=GREY))], line_spacing=1.05)])
+def slide(title, section, number, subtitle=None):
+    s = prs.slides.add_slide(BLANK)
+    s.background.fill.solid(); s.background.fill.fore_color.rgb = PALE
+    shape(s, 0, 0, 0.13, SLIDE_H, DEEP)
+    text(s, 0.58, 0.26, 9.0, 0.25, section.upper(), 10, INDIGO, True)
+    text(s, 0.58, 0.63, 11.95, 0.62, title, 31, DEEP, True)
+    if subtitle:
+        text(s, 0.60, 1.26, 11.9, 0.45, subtitle, 15, MUTED)
+    line(s, 0.58, 6.99, 12.78, 6.99, BORDER, 0.8)
+    text(s, 0.60, 7.10, 9.5, 0.20, 'CAMPUS SHIKAYAT SETU  /  MCA MINI PROJECT', 9, MUTED, True)
+    text(s, 11.78, 7.09, 0.95, 0.22, f'{number:02d} / {TOTAL:02d}', 10, MUTED,
+         align=PP_ALIGN.RIGHT)
+    return s
 
-# ================================================================ SLIDE 9 — Business rules
-s = add_slide(); header(s, "05 · BUSINESS RULES", "The rules are the product"); footer(s, 9)
-kpis = [("24h", "High\npriority SLA"), ("72h", "Medium\npriority SLA"), ("7d", "Low priority SLA\n& reopen window"), ("×2", "title keyword\nweighting")]
-kw = 2.98
-for i, (v, d) in enumerate(kpis):
-    x = 0.55 + i * (kw + 0.14)
-    card(s, x, 1.5, kw, 1.28)
-    txt(s, x, 1.62, kw, 0.75, [dict(runs=[(v, dict(size=40, bold=True, color=NAVY))], align=PP_ALIGN.CENTER)])
-    for j, line in enumerate(d.split("\n")):
-        txt(s, x, 2.26 + j * 0.19, kw, 0.2, [dict(runs=[(line, dict(size=8, bold=True, color=GOLD))], align=PP_ALIGN.CENTER)])
-txt(s, 0.55, 3.06, 5.0, 0.3, [dict(runs=[("ROUTING — EXPLAINABLE, ALWAYS", dict(size=9.5, bold=True, color=GOLD))])])
-bullets(s, 0.55, 3.4, 4.9, 1.85, [
-    "Weight = 2 per word of keyword; title scores ×2",
-    "SAFETY_WORDS (ragging, shock, fire…) force High",
-    "MASS_IMPACT (“entire”, “all students”) bumps one level",
-    "No keyword match → selected category is retained",
-], size=9.2, gap=3, marker="→  ", mcolor=GOLD)
-txt(s, 0.55, 5.3, 4.6, 0.3, [dict(runs=[("RESOLUTION LOOP", dict(size=9.5, bold=True, color=GOLD))])])
-bullets(s, 0.55, 5.64, 4.6, 1.3, [
-    ("resolve — ", "remark ≥ 10 chars, status → Resolved"),
-    ("close — ", "student rates ★1–5 → Closed"),
-    ("reopen — ", "whole-day check → back to In Progress"),
-], size=9.2, gap=3, marker="→  ", mcolor=GOLD)
-pic_fit(s, f"{IMG}/fig-activity.png", 5.55, 2.9, 7.25, 3.35)
-txt(s, 5.75, 6.33, 6.8, 0.28, [dict(runs=[("Submission and permitted status transitions — report §3.6",
-                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-# ================================================================ SLIDE 10 — Demo: student view
-s = add_slide(); header(s, "06 · LIVE DEMO (1/2)", "Student view — lodge, track, confirm"); footer(s, 10)
-pic_fit(s, f"{IMG}/screen-dashboard.png", 5.3, 1.5, 7.5, 4.55)
-txt(s, 5.55, 6.12, 7.0, 0.28, [dict(runs=[("Student dashboard — screenshot with seeded demo data",
-                                           dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-txt(s, 0.55, 1.55, 4.4, 0.3, [dict(runs=[("WHAT TO NOTICE", dict(size=10, bold=True, color=GOLD))])])
-bullets(s, 0.55, 2.0, 4.6, 3.9, [
-    ("Signed in as MCA2026001 — ", "dashboard shows only your own complaints, KPIs counted live."),
-    ("Lodge in one page — ", "title ≥ 8 · description ≥ 20; router confirms or overrides the picked category, score printed on the timeline."),
-    ("Feedback closes; reopen uses whole days — ", "if the fix failed, a reason is required to return it to In Progress."),
-    ("Public tracker — ", "CMP code + roll number, no login: great for the demo queue."),
-], size=10.5, gap=8)
 
-# ================================================================ SLIDE 11 — Demo: admin/console + audit timeline
-s = add_slide(); header(s, "06 · LIVE DEMO (2/2)", "Admin view — console & audit trail"); footer(s, 11)
-pic_fit(s, f"{IMG}/screen-console.png", 0.55, 1.5, 6.05, 3.6)
-txt(s, 0.75, 5.18, 5.8, 0.28, [dict(runs=[("Admin console — screenshot with seeded demo data",
-                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-pic_fit(s, f"{IMG}/screen-timeline.png", 6.9, 1.5, 5.9, 3.6)
-txt(s, 7.1, 5.18, 5.5, 0.28, [dict(runs=[("Complaint detail — screenshot with seeded demo data",
-                                            dict(size=8, italic=True, color=GREY))], align=PP_ALIGN.CENTER)])
-card(s, 0.55, 5.55, 12.23, 0.85, fill=NAVY, line=None)
-txt(s, 0.8, 5.68, 11.8, 0.3, [dict(runs=[("ILLUSTRATIVE DEMO DATA", dict(size=9, bold=True, color=GOLD))])])
-txt(s, 0.8, 5.95, 11.8, 0.3, [dict(runs=[("Fresh seed: 37 complaints, 135 events, 11 feedback rows. Five historical examples are synthetic; dates are relative.",
-                                            dict(size=9.5, color=CREAM))])])
+def note(s, content):
+    s.notes_slide.notes_text_frame.text = content
 
-# ================================================================ SLIDE 12 — Reports
-s = add_slide(); header(s, "07 · REPORTS", "Six print registers, straight from SQL"); footer(s, 12)
-tbl_shape = s.shapes.add_table(7, 3, Inches(0.55), Inches(1.5), Inches(12.23), Inches(3.6)).table
-tbl_shape.columns[0].width = Inches(0.55); tbl_shape.columns[1].width = Inches(5.4); tbl_shape.columns[2].width = Inches(6.28)
-rows = [
-    ("#", "Register", "What it proves"),
-    ("1", "Department pendency", "Open workload per department + overdue count (derives from SLA)"),
-    ("2", "SLA compliance", "% resolved within deadline per department — ROUND over COUNT"),
-    ("3", "Avg resolution time", "Hours per category, julianday arithmetic on timestamps"),
-    ("4", "Monthly trend", "Submission month and current resolved status — last 6 months"),
-    ("5", "Feedback / ratings", "Average ★ per department + latest 10 comments"),
-    ("6", "Routing quality", "two-mode summary plus complaint-level routing records"),
-]
-tbl_shape.rows[0].height = Inches(0.42)
-for i, row in enumerate(rows):
-    for j, val in enumerate(row):
-        cell = tbl_shape.cell(i, j); cell.text = val
-        if i == 0:
-            cell.fill.solid(); cell.fill.fore_color.rgb = NAVY
-            p = cell.text_frame.paragraphs[0]; p.line_spacing = 1.0
-            r = p.runs[0]; r.font.name = SERIF; r.font.bold = True; r.font.size = Pt(10); r.font.color.rgb = GOLD_L
-        else:
-            cell.fill.solid(); cell.fill.fore_color.rgb = WHITE if i % 2 else RGBColor(0xFB, 0xFA, 0xF6)
-            p = cell.text_frame.paragraphs[0]; p.line_spacing = 1.05
-            r = p.runs[0]; r.font.name = SERIF; r.font.size = Pt(9)
-            r.font.color.rgb = INK if j != 0 else NAVY
-            r.font.bold = (j == 0)
-rect(s, 0.55, 5.35, 12.23, 0.62, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 5.47, 12, 0.3, [dict(runs=[("Fresh seed: at least five rows per report; routing has 37 complaint-level rows and two mode totals.",
-                                          dict(size=9.5, italic=True, color=NAVY3))])])
-bullets(s, 0.55, 6.12, 12.2, 0.6, [
-    ("Print-ready — ", "Ctrl+P: chrome vanishes via @media print; A4 portrait; headers repeat per page."),
-], size=9.5, gap=2)
 
-# ================================================================ SLIDE 13 — Testing
-s = add_slide(); header(s, "08 · TESTING", "Evidence, not adjectives"); footer(s, 13)
-card(s, 0.55, 1.5, 6.0, 3.3)
-txt(s, 0.8, 1.66, 5.5, 0.3, [dict(runs=[("TRACK A — AUTOMATED (pytest)", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 0.8, 2.05, 5.5, 0.6, [dict(runs=[("114 passing · isolated temp DB", dict(size=15, bold=True, color=GREEN))])])
-bullets(s, 0.8, 2.72, 5.6, 1.6, [
-    "Auth: login page · wrong password → 401 · anonymous → /login",
-    "Register: happy path · duplicate roll no. → 400",
-    "Routing: washroom-tap text → Sanitation · “shock” → High",
-    "Flow: lodge → acknowledge → resolve → ★5 → Closed",
-], size=8.6, gap=3, marker="•  ", mcolor=GOLD)
-rect(s, 0.8, 4.6, 5.5, 0.42, fill=NAVY, round_=True, radius=0.5)
-txt(s, 0.95, 4.71, 5.2, 0.24, [dict(runs=[("$ python -m pytest tests/ -q", dict(font=MONO, size=9.5, color=GOLD_L))])])
+def picture(s, filename, x, y, w, h):
+    path = IMG / filename
+    with Image.open(path) as im:
+        iw, ih = im.size
+    scale = min(w/iw, h/ih)
+    pw, ph = iw*scale, ih*scale
+    s.shapes.add_picture(str(path), Inches(x+(w-pw)/2), Inches(y+(h-ph)/2), Inches(pw), Inches(ph))
 
-card(s, 6.8, 1.5, 6.0, 3.3)
-txt(s, 7.05, 1.66, 5.5, 0.3, [dict(runs=[("TRACK B — BROWSER & PRINT CHECKS", dict(size=10, bold=True, color=GOLD))])])
-txt(s, 7.05, 2.05, 5.5, 0.6, [dict(runs=[("Linux / Chromium · see TESTING.md", dict(size=15, bold=True, color=GREEN))])])
-bullets(s, 7.05, 2.72, 5.6, 1.6, [
-    "Student, officer and admin workflows exercised",
-    "Role access and department scoping checked",
-    "Anonymous identity fields hidden from officers",
-    "Six A4 report views rendered for inspection",
-], size=8.6, gap=3, marker="•  ", mcolor=GOLD)
-rect(s, 7.05, 4.6, 5.5, 0.42, fill=NAVY, round_=True, radius=0.5)
-txt(s, 7.2, 4.71, 5.2, 0.24, [dict(runs=[("POST forms now require CSRF tokens", dict(font=MONO, size=9.5, color=GOLD_L))])])
 
-txt(s, 0.55, 5.06, 12.2, 0.3, [dict(runs=[("DEFECTS FOUND & FIXED DURING TESTING", dict(size=9.5, bold=True, color=GOLD))])])
-bullets(s, 0.55, 5.4, 12.3, 0.95, [
-    ("Earlier fixes — ", "(1) seed NOT NULL crash on complaints.code — placeholder + UPDATE · (2) minute-overflow in seed times · (3) officer dashboard Row vs dict is_overdue KeyError."),
-    ("Regression — ", "114 automated tests pass; no test suite proves absence of defects."),
-], size=9.5, gap=3)
+def ncard(s, x, y, w, h, number, title, detail, accent=INDIGO):
+    panel(s, x, y, w, h)
+    circle(s, x+0.23, y+0.23, 0.44, PALE_PURPLE if accent != CORAL else PALE_CORAL)
+    text(s, x+0.23, y+0.23, 0.44, 0.44, number, 12, accent, True, PP_ALIGN.CENTER, MSO_ANCHOR.MIDDLE)
+    text(s, x+0.23, y+0.86, w-0.46, 0.44, title, 19, DEEP, True)
+    text(s, x+0.23, y+1.39, w-0.46, h-1.50, detail, 15, MUTED)
 
-# ================================================================ SLIDE 14 — Timeline & deliverables
-s = add_slide(); header(s, "09 · TIMELINE", "Five notified review milestones"); footer(s, 14)
-pic_fit(s, f"{IMG}/fig-gantt.png", 0.55, 1.42, 12.23, 2.5)
-milestones = [
-    ("PROJECT\nPreparation", "schema · engine · console · reports · tests", "done"),
-    ("REVIEW 1\n10-10-2026", "SRS + Ch-1 · 10 marks", "done"),
-    ("REVIEW 2\n24-10-2026", "Ch-2 Proposed System + Ch-3 design · 15 marks", "done"),
-    ("REVIEW 3 — NEXT UP\n21-11-2026", "working build + this demo + report · 15 marks", "today"),
-    ("REVIEW 4\n05-12-2026", "1st PPT presentation · 10 marks", "next"),
-    ("FINAL VIVA\n19-12-2026 (tentative)", "2nd PPT + hard-bound report · 50 marks", "next"),
-]
-mw = 1.93
-gap = (12.23 - 6 * mw) / 5
-for i, (r, d, st) in enumerate(milestones):
-    x = 0.55 + i * (mw + gap)
-    card(s, x, 4.08, mw, 1.78, fill=(NAVY if st == "today" else WHITE), line=GOLD)
-    txt(s, x + 0.12, 4.2, mw - 0.24, 0.52, [dict(runs=[(r, dict(size=7.3, bold=True, color=(GOLD_L if st == "today" else GOLD)))], line_spacing=1.12)])
-    txt(s, x + 0.12, 4.8, mw - 0.24, 1.0, [dict(runs=[(d, dict(size=6.4, color=(CREAM if st == "today" else INK)))], line_spacing=1.15)])
-rect(s, 0.55, 6.05, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.15, 12, 0.26, [dict(runs=[("Artefacts: report (4 appendices) · this deck · app + tests · README — schedule as notified 30-09-2026",
-                                           dict(size=9, color=NAVY3))])])
 
-# ================================================================ SLIDE 15 — Future work
-s = add_slide(); header(s, "10 · FUTURE WORK", "From a tool to a managed service"); footer(s, 15)
-phases = [
-    ("v1.x — EXTEND THE DESK", "ships on the current monolith", [
-        ("E-1", "E-mail + SMS on status change (SMTP/SMS gateway)", "2 wks"),
-        ("E-2", "WhatsApp deep-link tracker — wa.me with prefilled code", "3 days"),
-        ("E-3", "Photo evidence upload — MIME + size ≤ 2 MB guard", "1 wk"),
-        ("E-4", "Admin category management UI — add/retire keywords", "1 wk"),
-    ]),
-    ("v1.3–1.5 — OPERATE IT", "infrastructure & visibility", [
-        ("E-5", "MySQL migration — adapt schema and queries", "3 days"),
-        ("E-6", "Nightly SLA-breach cron — 50%/100% auto-escalate", "2 days"),
-        ("E-7", "Charts dashboard — pendency, trend, SLA %", "2 wks"),
-        ("E-8", "Public board in the admin corridor — live counts", "1 wk"),
-    ]),
-    ("FUTURE RESEARCH", "longer-term ideas", [
-        ("E-9", "Marathi / Hindi UI toggle — ~120 gettext keys", "2 wks"),
-        ("E-10", "ERP bridge — roll-no ↔ ERP student master sync", "3 wks"),
-    ]),
-]
-pw = 3.94
-for i, (ph, sub, items) in enumerate(phases):
-    x = 0.55 + i * (pw + 0.205)
-    card(s, x, 1.5, pw, 4.6)
-    txt(s, x + 0.2, 1.66, pw - 0.4, 0.3, [dict(runs=[(ph, dict(size=11, bold=True, color=NAVY))])])
-    txt(s, x + 0.2, 1.95, pw - 0.4, 0.25, [dict(runs=[(sub, dict(size=8, italic=True, color=GREY))])])
-    yy = 2.35
-    for eid, d, t in items:
-        chip(s, x + 0.2, yy, 0.52, eid, fill=NAVY, tc=GOLD_L, size=9)
-        txt(s, x + 0.82, yy + 0.01, pw - 1.75, 0.75, [dict(runs=[(d, dict(size=8.0, color=INK))], line_spacing=1.08)])
-        txt(s, x + pw - 0.85, yy + 0.01, 0.68, 0.3, [dict(runs=[(t, dict(size=7.5, bold=True, color=GOLD))], align=PP_ALIGN.RIGHT)])
-        yy += 0.88 if len(items) > 2 else 0.78
-rect(s, 0.55, 6.3, 12.23, 0.42, fill=GREY_L, round_=True, radius=0.5)
-txt(s, 0.82, 6.41, 12, 0.24, [dict(runs=[("Ideas and effort values are estimates; implementation, security review and testing are still required.",
-                                           dict(size=9, italic=True, color=NAVY3))])])
+# 01 / cover
+s = prs.slides.add_slide(BLANK)
+s.background.fill.solid(); s.background.fill.fore_color.rgb = DEEP
+shape(s, 0, 0, 0.17, 7.5, CORAL)
+text(s, 0.68, 0.55, 7.5, 0.3, 'MCA MINI PROJECT  /  2026–27', 11, RGBColor.from_string('C8C6EE'), True)
+text(s, 0.68, 1.30, 7.9, 1.4, 'Campus\nShikayat Setu', 48, WHITE, True)
+text(s, 0.70, 3.16, 7.4, 0.48, 'College Grievance Redressal System', 22, RGBColor.from_string('DCDDEF'))
+shape(s, 0.70, 4.00, 1.10, 0.06, CORAL)
+text(s, 0.70, 4.37, 7.0, 0.36, 'Yashwant Santosh Ahire', 20, WHITE, True)
+text(s, 0.70, 4.86, 7.45, 0.73, 'MCA-I  ·  Semester I  ·  SPPU\nDr. B. V. Hiray College of Management & Research Centre', 14, RGBColor.from_string('D3D7E8'))
+text(s, 0.70, 6.03, 7.8, 0.36, 'Roll No.: ____________     Guide: ____________________', 13, RGBColor.from_string('D3D7E8'))
+# Editable abstract workflow motif.
+shape(s, 9.12, 1.22, 3.33, 4.74, RGBColor.from_string('303353'), radius=True)
+for j, (n, label, detail) in enumerate([('01','LODGE','Capture a grievance'),('02','ROUTE','Assign a department'),('03','RESOLVE','Track the outcome')]):
+    yy = 1.62 + j*1.28
+    circle(s, 9.47, yy, 0.52, CORAL if j == 0 else VIOLET)
+    text(s, 9.47, yy, 0.52, 0.52, n, 12, WHITE, True, PP_ALIGN.CENTER, MSO_ANCHOR.MIDDLE)
+    text(s, 10.18, yy+0.02, 1.85, 0.28, label, 14, WHITE, True)
+    text(s, 10.18, yy+0.35, 1.92, 0.28, detail, 11, RGBColor.from_string('D5D8E7'))
+    if j<2: line(s, 9.73, yy+0.56, 9.73, yy+1.24, RGBColor.from_string('898BB0'), 1.3)
+note(s, 'Introduce the project as a local mini-project demo for complaint submission, department routing, tracking, resolution and administrative reporting. The semester remains as in the project report.')
 
-# ================================================================ SLIDE 16 — Thanks / Q&A
-s = add_slide(); set_bg(s, NAVY)
-ln = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0.42), Inches(13.333), Pt(1.6))
-ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
-ln = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(7.08), Inches(13.333), Pt(1.6))
-ln.fill.solid(); ln.fill.fore_color.rgb = GOLD; ln.line.fill.background(); ln.shadow.inherit = False
-txt(s, 0.85, 0.78, 6.0, 0.35, [dict(runs=[("QUESTIONS & ANSWERS", dict(size=12, bold=True, color=GOLD))])])
-txt(s, 0.85, 1.18, 8.2, 1.5, [dict(runs=[("Thank you.", dict(size=72, bold=True, color=WHITE))], line_spacing=0.98)])
-rect(s, 0.88, 2.78, 1.7, 0.034, fill=GOLD)
-txt(s, 0.85, 3.02, 6.4, 0.35, [dict(runs=[("If you remember three things", dict(size=13, bold=True, color=GOLD_L))])])
-bullets(s, 0.85, 3.45, 6.1, 2.2, [
-    ("Boring works — ", "Flask + SQLite + seeded data: the college can maintain it."),
-    ("Tests — ", "114 automated checks; see TESTING.md for scope and limits."),
-    ("Every complaint gets a trail — ", "lodge to close with application-recorded events."),
-], size=11, gap=8, color=CREAM, mcolor=GOLD_L)
-card(s, 8.35, 1.18, 4.15, 4.6, fill=NAVY3, line=GOLD, line_w=1.3, radius=0.07)
-txt(s, 8.62, 1.38, 3.6, 0.3, [dict(runs=[("TRY IT YOURSELF", dict(size=9.5, bold=True, color=GOLD))])])
-txt(s, 8.62, 1.78, 3.7, 0.32, [dict(runs=[("git clone https://github.com/", dict(font=MONO, size=9, color=GOLD_L))])])
-txt(s, 8.62, 2.06, 3.7, 0.32, [dict(runs=[("Yashwant-git392/Yashwant-git392.git", dict(font=MONO, size=9, color=GOLD_L))])])
-txt(s, 8.62, 2.4, 3.7, 0.32, [dict(runs=[("cd Yashwant-git392/shikayat-setu", dict(font=MONO, size=9, color=CREAM))])])
-txt(s, 8.62, 2.68, 3.7, 0.32, [dict(runs=[("pip install -r requirements.txt", dict(font=MONO, size=9, color=CREAM))])])
-txt(s, 8.62, 2.96, 3.7, 0.32, [dict(runs=[("python run.py", dict(font=MONO, size=9, color=CREAM))])])
-rect(s, 8.62, 3.4, 3.6, 0.015, fill=GOLD)
-txt(s, 8.62, 3.55, 3.7, 0.3, [dict(runs=[("http://127.0.0.1:5001", dict(font=MONO, size=10.5, bold=True, color=WHITE))])])
-txt(s, 8.62, 3.9, 3.7, 0.3, [dict(runs=[("admin / admin123 · MCA2026001 / student123", dict(font=MONO, size=8.2, bold=True, color=GOLD_L))])])
-txt(s, 8.62, 4.35, 3.7, 1.3,
-    [dict(runs=[("Report — Ch. 1–10 + Appendices A–D", dict(size=9, color=CREAM))], space_after=3),
-     dict(runs=[("Yashwant Santosh Ahire · MCA-I (Sem-I) · 2026-27", dict(size=9, color=RGBColor(0x9F,0xAD,0xC8)))])])
-txt(s, 0.85, 6.35, 12.0, 0.35,
-    [dict(runs=[("Campus Shikayat Setu — because every grievance deserves a paper trail.", dict(size=11, italic=True, color=RGBColor(0xC9,0xD2,0xE4)))])])
+# 02 / context
+s = slide('Why a grievance system?', 'Context', 2, 'An illustrative manual-process baseline — not a verified description of the college.')
+for i,(num,heading,desc) in enumerate([
+    ('01','Visibility','Paper-based progress can be difficult to track.'),
+    ('02','Ownership','Manual forwarding can delay department assignment.'),
+    ('03','Insights','Aggregating status and trends takes additional effort.')]):
+    ncard(s, 0.62+i*4.12, 1.90, 3.88, 3.05, num, heading, desc, CORAL if i==1 else INDIGO)
+shape(s, 0.62, 5.35, 12.12, 0.83, DEEP, radius=True)
+text(s, 0.91, 5.55, 11.55, 0.38, 'A focused workflow connects submission, ownership and status history.', 19, WHITE, True)
+note(s, 'The manual baseline is an assumption used for comparison; the current college process has not been surveyed. Explain the potential problems, not unverified claims about the institution.')
 
-prs.save(OUT)
-print("Saved:", OUT, "| slides:", len(prs.slides._sldIdLst))
+# 03 / overview
+s = slide('A complete grievance workflow', 'Solution overview', 3, 'Four capabilities, one local web application.')
+for i,(n,t,d) in enumerate([
+    ('01','Submit','Validated complaint with optional anonymity.'),
+    ('02','Assign','Keyword scoring and department routing.'),
+    ('03','Resolve','Officer actions and an event timeline.'),
+    ('04','Review','Feedback and six administrative reports.')]):
+    ncard(s, 0.62+i*3.07, 1.92, 2.84, 3.38, n, t, d, CORAL if i==2 else INDIGO)
+for i in range(3): arrow(s, 3.47+i*3.07, 3.15, 0.20, CORAL)
+pill(s, 0.66, 5.72, 2.32, '3 SIGNED-IN ROLES')
+pill(s, 3.11, 5.72, 2.32, 'PUBLIC TRACKING')
+pill(s, 5.57, 5.72, 2.23, '6 PRINT REPORTS')
+text(s, 8.15, 5.78, 4.3, 0.30, 'Designed as a single-campus demo', 15, MUTED, align=PP_ALIGN.RIGHT)
+note(s, 'Summarise the implemented workflow, not a production deployment. Privacy is role-dependent and the free text of an anonymous complaint can reveal identity.')
+
+# 04 / users
+s = slide('Who uses the system?', 'Actors', 4, 'Three stored roles plus a public visitor.')
+actors = [
+ ('STUDENT','Lodge, track, rate or reopen own complaints.'),
+ ('OFFICER','Review the assigned department queue and resolve.'),
+ ('ADMINISTRATOR','Manage users, routing, priorities and reports.'),
+ ('PUBLIC VISITOR','Track a complaint with code and matching roll number.')]
+for i,(title_,detail) in enumerate(actors):
+    x=0.62+(i%2)*6.14; y=1.92+(i//2)*1.95
+    panel(s,x,y,5.91,1.68)
+    shape(s,x+0.23,y+0.26,0.07,1.12,CORAL if i==3 else INDIGO,radius=True)
+    text(s,x+0.51,y+0.26,4.95,0.34,title_,16,DEEP,True)
+    text(s,x+0.51,y+0.75,4.95,0.67,detail,16,MUTED)
+note(s, 'Students see their own complaints; officers are scoped to their department; administrators have college-wide access. A public visitor is an external actor, not a stored role. Signed-in admins can track without a roll match.')
+
+# 05 / lifecycle
+s = slide('From submission to closure', 'Complaint lifecycle', 5, 'Acknowledgement and progress can be skipped when resolving a complaint.')
+stages=[('01','Submitted'),('02','Acknowledged'),('03','In Progress'),('04','Resolved'),('05','Closed')]
+for i,(n,t) in enumerate(stages):
+    x=0.62+i*2.46
+    panel(s,x,2.25,2.22,1.76, fill=DEEP if i==4 else WHITE, stroke=DEEP if i==4 else BORDER)
+    text(s,x+0.15,2.49,1.92,0.32,n,13,CORAL if i==4 else INDIGO,True,PP_ALIGN.CENTER)
+    text(s,x+0.12,3.02,1.98,0.50,t,17,WHITE if i==4 else DEEP,True,PP_ALIGN.CENTER)
+    if i<4: arrow(s,x+2.24,2.89,0.20,CORAL)
+shape(s,0.65,4.47,12.07,0.89,PALE_PURPLE,radius=True)
+text(s,0.91,4.64,11.55,0.53,'Acknowledgement and progress are optional; eligible students can reopen a resolved complaint.',16,INDIGO,True)
+text(s,0.69,5.72,11.75,0.49,'Complaint events are recorded in the application timeline.',17,MUTED)
+note(s, 'A department officer can acknowledge, start work directly from Submitted, or resolve directly from Submitted or Acknowledged as allowed by the application. Feedback closes a resolved complaint. Reopen uses the resolution timestamp and a whole-day age check. Admin force-close is available only for a Resolved complaint; a waiting period is not enforced.')
+
+# 06 / routing
+s=slide('How automatic routing works','Routing engine',6,'Deterministic keyword scoring — not machine learning.')
+for i,(n,t,d) in enumerate([
+ ('01','Read the text','The title is counted twice alongside the description.'),
+ ('02','Score keywords','Category keyword hits receive weighted scores.'),
+ ('03','Select category','Keep the chosen category unless a stronger match exists.')]):
+    ncard(s,0.62+i*4.12,1.90,3.88,3.18,n,t,d,CORAL if i==2 else INDIGO)
+for i in range(2): arrow(s,4.53+i*4.12,3.19,0.18,CORAL)
+shape(s,0.62,5.48,12.12,0.78,DEEP,radius=True)
+text(s,0.92,5.67,11.55,0.38,'Safety terms can set High priority; mass-impact phrases can raise it one level.',16,WHITE,True)
+note(s,'The router checks category keyword lists with boundary-aware matching. Multi-word keywords carry greater weight and the title is duplicated before scoring. If another category does not have a stronger score, the student-selected category is retained. Safety and mass-impact phrases affect priority separately.')
+
+# 07 / SLA
+s=slide('Priority determines the deadline','SLA rules',7,'The deadline is stamped when the complaint is submitted.')
+for i,(label,time,sub,col) in enumerate([('HIGH','24','hours',CORAL),('MEDIUM','72','hours',INDIGO),('LOW','168','hours · 7 days',GREEN)]):
+ x=0.62+i*4.12;panel(s,x,1.93,3.87,3.32);pill(s,x+0.24,2.20,1.30,label,PALE_CORAL if i==0 else PALE_PURPLE,col)
+ text(s,x+0.24,2.85,2.95,1.02,time,50,DEEP,True);text(s,x+0.28,4.10,3.08,0.38,sub,17,MUTED)
+text(s,0.68,5.68,11.9,0.57,'Overdue is calculated from the deadline; escalation does not recalculate the stored SLA.',16,INDIGO,True)
+note(s,'High, medium and low priority map to 24, 72 and 168 hours. The deadline is set at submission. Escalation can raise priority to High but does not change the stored deadline. The interface derives overdue status rather than storing an overdue flag.')
+
+# 08 / architecture
+s=slide('Simple three-layer architecture','Architecture',8,'A server-rendered application with a local relational database.')
+arch=[('BROWSER','HTML · CSS · JavaScript','Forms and routing preview'),('FLASK APP','Python · Jinja2','Validation, routing and roles'),('SQLITE','Local database file','Six related tables')]
+for i,(a,b,c) in enumerate(arch):
+ x=0.66+i*4.08;panel(s,x,2.03,3.65,2.67)
+ circle(s,x+0.26,2.32,0.58,PALE_PURPLE);text(s,x+0.26,2.32,0.58,0.58,str(i+1),15,INDIGO,True,PP_ALIGN.CENTER,MSO_ANCHOR.MIDDLE)
+ text(s,x+0.26,3.11,3.1,0.39,a,19,DEEP,True);text(s,x+0.26,3.62,3.1,0.35,b,15,INDIGO,True);text(s,x+0.26,4.08,3.1,0.35,c,14,MUTED)
+ if i<2:arrow(s,x+3.73,3.10,0.28,CORAL)
+text(s,0.70,5.32,11.8,0.60,'Browser requests are validated by the application before database operations.',17,MUTED)
+note(s,'The browser communicates over HTTP with a Flask/Jinja application. The application checks access and validates requests, calls the keyword router, and reads or writes the SQLite file. The Flask development server is for a local demo, not production.')
+
+# 09 / data
+s=slide('Six tables support the workflow','Data model',9,'Simplified view of the implemented SQLite schema.')
+nodes=[('DEPARTMENTS','Responsible teams'),('CATEGORIES','Keywords + default priority'),('USERS','Students, officers, admins'),('COMPLAINTS','Code, status, SLA, routing'),('EVENTS','Action history'),('FEEDBACK','Rating + comment')]
+for i,(t,d) in enumerate(nodes):
+ x=0.62+(i%3)*4.12;y=1.92+(i//3)*1.73
+ panel(s,x,y,3.88,1.48,fill=WHITE);shape(s,x,y,0.08,1.48,CORAL if i==3 else INDIGO,radius=True)
+ text(s,x+0.26,y+0.23,3.35,0.34,t,17,DEEP,True);text(s,x+0.26,y+0.79,3.35,0.46,d,15,MUTED)
+text(s,0.69,5.80,11.9,0.45,'Foreign keys link categories, complaints and events; each complaint has at most one feedback record.',15,INDIGO,True)
+note(s,'The six tables are departments, categories, users, complaints, complaint_events and feedback. Complaint records reference student, category and assigned department. Event actors may be nullable. The feedback complaint key is unique. The full ERD is in the project report.')
+
+# 10 / student screens
+s=slide('Student experience','Application screens',10,'A guided submission and an overview of the student’s own complaints.')
+for i,(file,title_,desc) in enumerate([('screen-lodge.png','LODGE A COMPLAINT','Enter details, select a category and submit.'),('screen-dashboard.png','STUDENT DASHBOARD','See status counts and open a complaint.')]):
+ x=0.62+i*6.14;panel(s,x,1.78,5.90,4.72);text(s,x+0.20,1.98,5.5,0.30,title_,15,INDIGO,True)
+ picture(s,file,x+0.18,2.40,5.54,2.90)
+ text(s,x+0.20,5.57,5.48,0.64,desc,15,MUTED)
+note(s,'These are application screenshots using illustrative seed data. A student enters a title, description and category; location and anonymous flag are optional. The preview is advisory and routing is recalculated on submission. The dashboard shows the signed-in student’s own complaints.')
+
+# 11 / staff screens
+s=slide('Department and administrator views','Application screens',11,'Officers work assigned complaints; administrators manage the wider queue.')
+for i,(file,title_,desc) in enumerate([('screen-queue.png','OFFICER QUEUE','Review complaints assigned to the department.'),('screen-console.png','ADMIN CONSOLE','Filter the register and open a complaint.')]):
+ x=0.62+i*6.14;panel(s,x,1.78,5.90,4.72);text(s,x+0.20,1.98,5.5,0.30,title_,15,INDIGO,True)
+ picture(s,file,x+0.18,2.40,5.54,2.90)
+ text(s,x+0.20,5.57,5.48,0.64,desc,15,MUTED)
+note(s,'Officers see their department queue and may take permitted actions. Administrators can reassign departments, escalate priority and force-close a Resolved complaint. These screens show synthetic data.')
+
+# 12 / reports
+s=slide('Six printable management reports','Reporting',12,'A compact view of workload, service levels and outcomes.')
+reports=[('01','Department pendency','Open status and overdue'),('02','SLA compliance','On-time resolution by department'),('03','Resolution time','Average hours by category'),('04','Monthly trend','Submissions and current status'),('05','Feedback summary','Ratings and recent comments'),('06','Routing audit','Mode totals and complaint details')]
+for i,(n,t,d) in enumerate(reports):
+ x=0.62+(i%3)*4.12;y=1.88+(i//3)*1.81
+ panel(s,x,y,3.88,1.55);text(s,x+0.21,y+0.20,0.48,0.31,n,13,CORAL,True)
+ text(s,x+0.75,y+0.18,2.90,0.38,t,16,DEEP,True);text(s,x+0.75,y+0.76,2.89,0.52,d,14,MUTED)
+text(s,0.69,5.87,11.9,0.48,'Fresh synthetic seed: 37 routing-detail records; the mode summary has two rows.',15,INDIGO,True)
+note(s,'There are six print-ready administrative report types. The fresh seed has at least five groups or records per report; the routing summary contains the only two routing modes and a separate table with 37 complaint-level records. Real data can yield fewer rows.')
+
+# 13 / testing
+s=slide('Testing the implemented system','Evidence',13,'Recorded test results for the local demo.')
+panel(s,0.62,1.90,3.35,3.57,fill=DEEP,stroke=DEEP)
+text(s,0.95,2.17,2.7,1.12,'114',52,WHITE,True);text(s,0.95,3.36,2.75,0.77,'automated tests\npassed',19,RGBColor.from_string('E0E0EF'))
+for i,(t,d) in enumerate([('UNIT','Routing, priority and validation'),('INTEGRATION','Roles, status changes and reports'),('BROWSER / PRINT','Chromium on Linux and six report views')]):
+ y=1.90+i*1.23;panel(s,4.23,y,8.49,1.04)
+ text(s,4.50,y+0.16,2.25,0.34,t,15,INDIGO,True);text(s,6.79,y+0.16,5.55,0.62,d,16,MUTED)
+text(s,0.69,5.86,11.8,0.51,'Passing checks do not establish production readiness or the absence of defects.',15,INDIGO,True)
+note(s,'The documented source and extracted-package runs each recorded 114 passing tests. Automated tests use isolated seeded SQLite databases. Browser and print checks were performed in Linux/Chromium; they are not penetration, load, accessibility, native Windows or production-readiness tests.')
+
+# 14 / constraints
+s=slide('Know the current limitations','Privacy & limitations',14,'The implementation is a demonstration, not a production service.')
+items=[('ANONYMITY','Officers see masked identity fields; free text can still identify a student.'),('TRACKING','Complaint code and roll number are not strong secrets.'),('WORKFLOW','Reopen uses whole days; admin force-close has no enforced waiting period.'),('DEPLOYMENT','Demo credentials and the development server are not production-ready.')]
+for i,(t,d) in enumerate(items):
+ x=0.62+(i%2)*6.14;y=1.89+(i//2)*2.02;panel(s,x,y,5.91,1.77)
+ shape(s,x+0.24,y+0.25,0.07,1.18,CORAL,radius=True);text(s,x+0.53,y+0.25,4.95,0.35,t,16,DEEP,True);text(s,x+0.53,y+0.77,4.92,0.78,d,15,MUTED)
+note(s,'Anonymous identity fields are hidden from officers but visible to administrators; the complaint text itself may expose identity. Public tracking errors may reveal whether a code exists. Native Windows, penetration testing and production capacity were not verified. The application does not enforce an admin waiting period before force-close.')
+
+# 15 / improvements
+s=slide('Where the system could go next','Proposed enhancements',15,'These are future ideas, not implemented features.')
+for i,(n,t,d) in enumerate([('01','Notifications','Email or SMS updates for status changes.'),('02','Attachments','Evidence uploads with file validation.'),('03','Configuration','Admin interface for categories and keywords.'),('04','Deployment','Hardened hosting, backups and database scaling.')]):
+ ncard(s,0.62+i*3.07,1.95,2.84,3.38,n,t,d,CORAL if i==3 else INDIGO)
+text(s,0.69,5.81,11.9,0.52,'Each enhancement requires design, security review and testing.',16,INDIGO,True)
+note(s,'Notifications, attachments, administrative category management and production deployment are proposed enhancements only. They are not implemented. Scaling beyond SQLite requires adaptation of schema, queries and connection handling.')
+
+# 16 / close
+s=prs.slides.add_slide(BLANK);s.background.fill.solid();s.background.fill.fore_color.rgb=DEEP
+shape(s,0,0,0.17,7.5,CORAL)
+text(s,0.71,0.67,9.0,0.34,'CAMPUS SHIKAYAT SETU',12,RGBColor.from_string('C8C6EE'),True)
+text(s,0.70,1.50,8.6,1.03,'Thank you.',52,WHITE,True)
+text(s,0.73,2.80,8.8,0.56,'Questions & discussion',22,RGBColor.from_string('DCDDEF'))
+shape(s,0.73,3.57,1.08,0.06,CORAL)
+text(s,0.73,4.02,7.6,0.95,'Submit  →  Route  →  Resolve  →  Review',21,WHITE,True)
+text(s,0.73,6.38,9.0,0.38,'Yashwant Santosh Ahire  ·  MCA-I Semester I',14,RGBColor.from_string('D3D7E8'))
+shape(s,9.15,1.20,3.15,4.50,RGBColor.from_string('303353'),radius=True)
+for i,(n,label) in enumerate([('01','Role-based workflow'),('02','Transparent routing'),('03','Status and reporting')]):
+ y=1.69+i*1.22;circle(s,9.48,y,0.50,CORAL if i==1 else VIOLET)
+ text(s,9.48,y,0.50,0.50,n,11,WHITE,True,PP_ALIGN.CENTER,MSO_ANCHOR.MIDDLE)
+ text(s,10.16,y+0.06,1.85,0.55,label,15,WHITE,True)
+note(s,'Conclude with the implemented features and answer questions. The project is a local demonstration with the limitations already described.')
+
+
+def apply_office_theme(path):
+    """Set the Office theme palette/fonts for editable PowerPoint shapes."""
+    ns = {'a':'http://schemas.openxmlformats.org/drawingml/2006/main'}
+    with zipfile.ZipFile(path) as src:
+        payload = [(entry, src.read(entry.filename)) for entry in src.infolist()]
+    fd, tmp = tempfile.mkstemp(suffix='.pptx', dir=path.parent); os.close(fd)
+    try:
+        with zipfile.ZipFile(tmp, 'w') as dst:
+            for info, data in payload:
+                if info.filename == 'ppt/theme/theme1.xml':
+                    root = ET.fromstring(data)
+                    root.set('name', 'Campus Professional')
+                    clr = root.find('.//a:clrScheme', ns)
+                    if clr is not None:
+                        clr.set('name','Campus Professional')
+                        for key,val in {'dk2':'1F2242','lt2':'F5F6FA','accent1':'4B4B98','accent2':'DF6D5D','accent3':'7267B4','accent4':'397968','accent5':'5E6980','accent6':'DEE2EC'}.items():
+                            entry = clr.find('a:'+key,ns)
+                            if entry is not None and len(entry):
+                                entry[0].set('val',val)
+                    for font in root.findall('.//a:majorFont/a:latin',ns)+root.findall('.//a:minorFont/a:latin',ns):
+                        font.set('typeface',FONT)
+                    data = ET.tostring(root,encoding='utf-8',xml_declaration=True)
+                dst.writestr(info,data)
+        os.replace(tmp,path)
+    finally:
+        if os.path.exists(tmp):os.unlink(tmp)
+
+
+if __name__ == '__main__':
+    assert len(prs.slides) == TOTAL
+    prs.save(OUT)
+    apply_office_theme(OUT)
+    print(f'Saved: {OUT} | {len(prs.slides)} slides')
