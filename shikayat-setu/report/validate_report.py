@@ -34,7 +34,7 @@ def main():
                     if 125 < y0 < 756:  # exclude the header and footer
                         assert y0 >= 139 and y1 <= 739, (page.number + 1, span)
         text = page.get_text()
-        captions = list(re.finditer(r'Figure (1\.1|3\.\d+[a-d]?|10\.\d+)(?!\d)', text))
+        captions = list(re.finditer(r'Figure (1\.1|3\.\d+[a-e]?|10\.\d+)(?!\d)', text))
         descriptions = list(re.finditer(r'Description:', text))
         assert len(captions) == len(descriptions), (page.number + 1, 'figure/description count')
         for caption, description in zip(captions, descriptions):
@@ -43,7 +43,7 @@ def main():
         if captions:
             assert len(page.get_images()) >= len(captions), (page.number + 1, 'missing image')
     expected_figures = (['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] +
-                        [f'3.{n}' for n in range(3, 12)] + [f'10.{n}' for n in range(1, 26)])
+                        [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)])
     assert sorted(figures) == sorted(expected_figures), (figures, expected_figures)
     index_pages = []
     for page in list(doc)[6:]:

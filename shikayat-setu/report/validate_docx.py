@@ -30,9 +30,9 @@ def main():
     text = ' '.join(paragraphs + [cell.text for table in doc.tables for row in table.rows for cell in row.cells])
     for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
         assert forbidden not in text.lower(), forbidden
-    assert len(doc.inline_shapes) == 43  # logo + all 42 numbered figures
-    assert text.count('Description:') == 42
-    for number in ['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] + [f'3.{n}' for n in range(3, 12)] + [f'10.{n}' for n in range(1, 26)]:
+    assert len(doc.inline_shapes) == 48  # logo + all 47 numbered figures
+    assert text.count('Description:') == 47
+    for number in ['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] + [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)]:
         assert re.search(r'Figure ' + re.escape(number) + r'(?![\da-z])', text), number
     with ZipFile(REPORT) as z:
         xml = z.read('word/document.xml').decode()

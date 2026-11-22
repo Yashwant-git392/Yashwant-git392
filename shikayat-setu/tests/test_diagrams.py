@@ -68,7 +68,7 @@ def test_usecase_has_separate_editable_actor_pages():
     root = ET.parse(project / 'report' / 'diagrams' / 'fig-usecase.drawio').getroot()
     pages = root.findall('diagram')
     assert [p.get('name') for p in pages] == ['Student', 'Officer', 'Administrator', 'Public visitor']
-    for page, expected_uses in zip(pages, (7, 7, 12, 1)):
+    for page, expected_uses in zip(pages, (8, 7, 12, 1)):
         cells = page.findall('.//mxCell')
         actors = [c for c in cells if 'shape=umlActor' in c.get('style', '')]
         uses = [c for c in cells if c.get('style', '').startswith('ellipse;')]
@@ -76,7 +76,7 @@ def test_usecase_has_separate_editable_actor_pages():
         assert len(actors) == 1 and len(uses) == expected_uses and len(edges) == expected_uses
         assert all(e.get('style', '').find('endArrow=none') >= 0 for e in edges)
         # The actor sits outside the system boundary; each use case is inside it.
-        boundary = next(c for c in cells if c.get('style', '').startswith('rounded=0;fillColor=#ffffff;strokeColor=#187b77'))
+        boundary = next(c for c in cells if c.get('style', '').startswith('rounded=0;') and c.find('mxGeometry').get('x') == '350')
         left = float(boundary.find('mxGeometry').get('x'))
         actor = actors[0].find('mxGeometry')
         assert float(actor.get('x')) + float(actor.get('width')) < left
@@ -113,7 +113,18 @@ def test_chen_relationships_and_activity_are_editable_and_connected():
         keys = [c for c in cells if c.get('value') == 'id' and c.get('style', '').startswith('ellipse;')]
         assert keys and all('fontStyle=4;' in c.get('style', '') for c in keys)
     activity = ET.parse(base / 'fig-activity.drawio').getroot()
-    values = {c.get('value') for c in activity.findall('.//mxCell')}
+    pages = activity.findall('diagram')
+    assert [p.get('name') for p in pages] == ['Submission', 'Resolution', 'Feedback', 'Reopening', 'Admin closure']
+    values = {c.get('value') for c in pages[0].findall('.//mxCell')}
     assert {'[invalid]', '[valid]', 'Validate input', 'Save complaint and events'} <= values
-    assert len([c for c in activity.findall('.//mxCell') if c.get('style', '').startswith('rhombus;')]) == 2
-    assert all('fork' not in c.get('style', '').lower() for c in activity.findall('.//mxCell'))
+    for page in pages:
+        cells = page.findall('.//mxCell')
+        assert len([c for c in cells if c.get('style', '').startswith('rhombus;')]) == 2
+        assert all('fork' not in c.get('style', '').lower() for c in cells)
+    for page, expected_action in zip(pages[1:], ('Set Resolved if unchanged', 'Set Closed if unchanged', 'Set In Progress if unchanged', 'Set Closed if unchanged')):
+        values = {c.get('value') for c in page.findall('.//mxCell')}
+        assert {expected_action, '[no]', '[yes]', '[changed]', '[updated]'} <= values
+    classes = ET.parse(base / 'fig-class.drawio').getroot().findall('diagram')
+    assert len(classes) == 2
+    extra = {c.get('value') for c in classes[1].findall('.//mxCell')}
+    assert {'assigned department', 'event actor', 'assigned complaints'} <= extra

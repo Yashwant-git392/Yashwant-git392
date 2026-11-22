@@ -90,10 +90,15 @@ FIGURE_DESCRIPTIONS = {
     'fig-erd-c.png': 'A complaint can have many events and at most one feedback record. Each event belongs to one complaint and may have an associated user as its actor.',
     'fig-usecase-student.png': 'The student actor registers or signs in, submits and tracks their own complaints, and can give feedback or request reopening when the relevant conditions are met.',
     'fig-usecase-officer.png': 'The department officer signs in, reviews the assigned queue and records permitted complaint actions, including acknowledgement, work and resolution.',
-    'fig-usecase-administrator.png': 'The administrator manages users and complaints across departments, can reassign or escalate eligible complaints, and views the management reports.',
+    'fig-usecase-administrator.png': 'The administrator can create officers, toggle user status, manage complaints across departments and view management reports. The feedback route accepts an administrator, although the admin interface has no feedback form.',
     'fig-usecase-public-visitor.png': 'A visitor without a login can use the public tracker with a complaint code and the matching roll number to view the corresponding status and timeline.',
-    'fig-class.png': 'The conceptual record types and associations illustrate the data represented by the application. They describe the relational design rather than Python ORM classes.',
+    'fig-class.png': 'The conceptual domain types and associations illustrate stored project data. They are a domain model, not implemented Python ORM classes.',
+    'fig-class-b.png': 'The additional associations show users assigned to departments, event actors and the departments assigned to complaints. Multiplicities follow the SQLite constraints.',
     'fig-activity.png': 'A student enters complaint details. Invalid input returns for correction; valid input is routed, prioritised and saved with events before the complaint code is returned.',
+    'fig-activity-b.png': 'An authorised officer or administrator submits a resolution remark. The system checks the complaint and remark, then records a successful resolution or reports a rejection or stale change.',
+    'fig-activity-c.png': 'A student submits a rating for an owned, resolved complaint. A successful update closes the complaint and stores feedback and events; invalid or stale requests do not proceed.',
+    'fig-activity-d.png': 'A student requests reopening of an owned resolved complaint. The system checks the reason and resolution age, returning the complaint to In Progress when the update succeeds.',
+    'fig-activity-e.png': 'An administrator requests closure of a resolved complaint. On a successful conditional update the system records a closure event; a rejection or stale change is reported.',
     'fig-deployment.png': 'A browser communicates with the Flask application, which uses the local SQLite database. The diagram represents a single-node demo, with optional access from a LAN peer.',
     'fig-modules.png': 'The hierarchy groups the project into authentication, complaint workflow, routing, database, reports and presentation modules, and maps responsibilities to the implemented files.',
     'screen-login.png': 'A student, officer or administrator enters a username or roll number and password. The page also links to student registration and the public tracker.',
@@ -689,10 +694,16 @@ def ch3(pdf: Report):
     ], [32, 18, 128])
 
     pdf.h2("3.5  Class Diagram", reserve=140)
-    pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3  Conceptual data records and selected associations; the app does not use ORM classes.")
+    pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3a  Conceptual class diagram — primary associations.")
+    pdf.figure(f"{IMG}/fig-class-b.png", 178, "Figure 3.3b  Conceptual class diagram — additional associations.")
 
     pdf.h2("3.6  Activity Diagram", reserve=155)
-    pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4  Activity diagram — complaint submission and validation.")
+    pdf.p("The following separate activity diagrams model selected operations rather than assuming that the actions happen automatically in a fixed sequence.")
+    pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4a  Activity diagram — complaint submission.")
+    pdf.figure(f"{IMG}/fig-activity-b.png", 178, "Figure 3.4b  Activity diagram — complaint resolution.")
+    pdf.figure(f"{IMG}/fig-activity-c.png", 178, "Figure 3.4c  Activity diagram — feedback and closure.")
+    pdf.figure(f"{IMG}/fig-activity-d.png", 178, "Figure 3.4d  Activity diagram — reopening.")
+    pdf.figure(f"{IMG}/fig-activity-e.png", 178, "Figure 3.4e  Activity diagram — administrator force-close.")
     pdf.note("Overdue is never stored — it is derived: now > sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
 
     pdf.h2("3.7  Deployment Diagram", reserve=110)

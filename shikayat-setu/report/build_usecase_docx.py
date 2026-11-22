@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Make a Word companion to the four-page landscape use-case diagram PDF."""
 from io import BytesIO
+from PIL import Image
 from pathlib import Path
 
 import pymupdf
@@ -34,7 +35,9 @@ def main():
         p.paragraph_format.line_spacing = 1
         p.paragraph_format.page_break_before = i > 0
         run = p.add_run(); run.font.size = Pt(1)
-        picture = run.add_picture(BytesIO(image), width=Mm(242.7))
+        with Image.open(BytesIO(image)) as im:
+            width, height = im.size
+        picture = run.add_picture(BytesIO(image), width=Mm(min(242.7, 175 * width / height)))
         picture._inline.docPr.set('descr', f'{label} use-case diagram')
     doc.core_properties.title = 'Campus Shikayat Setu — Use-Case Diagrams'
     doc.save(OUT)

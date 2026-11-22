@@ -12,7 +12,7 @@ HERE=Path(__file__).resolve().parent
 OUT=HERE/'Campus_Shikayat_Setu_Project_Diagrams.pdf'
 FILES=['fig-erd.png','fig-erd-b.png','fig-erd-c.png',
        'fig-usecase-student.png','fig-usecase-officer.png','fig-usecase-administrator.png','fig-usecase-public-visitor.png',
-       'fig-class.png','fig-activity.png','fig-deployment.png','fig-modules.png']
+       'fig-class.png','fig-class-b.png','fig-activity.png','fig-activity-b.png','fig-activity-c.png','fig-activity-d.png','fig-activity-e.png','fig-deployment.png','fig-modules.png']
 
 def main():
     pdf=pymupdf.open(); doc=Document(); sec=doc.sections[0]
