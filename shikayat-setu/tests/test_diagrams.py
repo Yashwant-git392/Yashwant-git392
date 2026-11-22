@@ -83,3 +83,37 @@ def test_usecase_has_separate_editable_actor_pages():
         assert all(float(c.find('mxGeometry').get('x')) > left for c in uses)
     public_values = [c.get('value', '') for c in pages[-1].findall('.//mxCell')]
     assert 'External actor: not a stored user role' in public_values
+
+
+def test_chen_relationships_and_activity_are_editable_and_connected():
+    import xml.etree.ElementTree as ET
+    base = Path(__file__).resolve().parent.parent / 'report' / 'diagrams'
+    pages = ET.parse(base / 'fig-erd.drawio').getroot().findall('diagram')
+    assert len(pages) == 3
+    expected = [
+        {'defines', 'assigned to', 'classifies'},
+        {'assigned', 'receives', 'lodges'},
+        {'has feedback', 'records', 'acts on'},
+    ]
+    for page, names in zip(pages, expected):
+        cells = page.findall('.//mxCell')
+        diamonds = [c for c in cells if c.get('style', '').startswith('rhombus;')]
+        assert {c.get('value') for c in diamonds} == names
+        edges = [c for c in cells if c.get('edge') == '1']
+        for diamond in diamonds:
+            geo = diamond.find('mxGeometry')
+            x,y,w,h = (float(geo.get(k)) for k in ('x','y','width','height'))
+            ports = {(x+w/2,y), (x+w,y+h/2), (x+w/2,y+h), (x,y+h/2)}
+            hits = 0
+            for edge in edges:
+                for point in edge.findall('mxGeometry/mxPoint'):
+                    if point.get('as') in ('sourcePoint', 'targetPoint') and (float(point.get('x')), float(point.get('y'))) in ports:
+                        hits += 1
+            assert hits == 2, (diamond.get('value'), hits)
+        keys = [c for c in cells if c.get('value') == 'id' and c.get('style', '').startswith('ellipse;')]
+        assert keys and all('fontStyle=4;' in c.get('style', '') for c in keys)
+    activity = ET.parse(base / 'fig-activity.drawio').getroot()
+    values = {c.get('value') for c in activity.findall('.//mxCell')}
+    assert {'[invalid]', '[valid]', 'Validate input', 'Save complaint and events'} <= values
+    assert len([c for c in activity.findall('.//mxCell') if c.get('style', '').startswith('rhombus;')]) == 2
+    assert all('fork' not in c.get('style', '').lower() for c in activity.findall('.//mxCell'))

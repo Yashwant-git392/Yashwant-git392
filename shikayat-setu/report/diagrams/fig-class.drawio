@@ -1,125 +1,137 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net" version="32.6.10" type="device">
-  <diagram name="Conceptual class / record model" id="page-1">
-    <mxGraphModel dx="1400" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="1100" math="0" shadow="0">
+  <diagram name="Class diagram — Conceptual domain model" id="Class-diagram-—-Conceptual-domain-model">
+    <mxGraphModel dx="1400" dy="1050" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="1400" pageHeight="1050">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="2" value="Conceptual class / record model" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=28;fontStyle=1;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="30" y="10" width="1340" height="45" as="geometry" />
+        <mxCell id="2" value="Class diagram — Conceptual domain model" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=30;fontColor=#183044;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="12" width="1340" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="3" value="SQLite rows shown as conceptual records, not implemented Python or ORM classes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#536670;" vertex="1" parent="1">
-          <mxGeometry x="30" y="53" width="1340" height="30" as="geometry" />
+        <mxCell id="3" value="Domain types and selected associations; not implemented ORM classes" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=17;fontColor=#536875;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="62" width="1340" height="32" as="geometry" />
         </mxCell>
-        <mxCell id="4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="40" y="160" width="340" height="210" as="geometry" />
+        <mxCell id="4" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="55" y="190" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="«record»  User" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="40" y="160" width="340" height="40" as="geometry" />
+        <mxCell id="5" value="Department" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="55" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="6" value="id, role, username&#10;password_hash, full_name&#10;roll_no, phone, status&#10;department_id [FK]" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="52" y="208" width="316" height="154" as="geometry" />
+        <mxCell id="6" value="id : Integer&#10;name : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="242" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="7" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="530" y="160" width="340" height="210" as="geometry" />
+        <mxCell id="7" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="545" y="190" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="8" value="«record»  Complaint" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="530" y="160" width="340" height="40" as="geometry" />
+        <mxCell id="8" value="Category" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="545" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="id, code, student_id [FK]&#10;category_id, department_id [FK]&#10;title, description, status&#10;priority, routing, sla_due_at" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="542" y="208" width="316" height="154" as="geometry" />
+        <mxCell id="9" value="id : Integer&#10;name : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="555" y="242" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="10" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="160" width="340" height="210" as="geometry" />
+        <mxCell id="10" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="190" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="11" value="«record»  Department" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="160" width="340" height="40" as="geometry" />
+        <mxCell id="11" value="User" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="12" value="id, name&#10;head_name, email, location" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="1032" y="208" width="316" height="154" as="geometry" />
+        <mxCell id="12" value="id : Integer&#10;role : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1045" y="242" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="13" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="40" y="510" width="340" height="210" as="geometry" />
+        <mxCell id="13" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="545" y="650" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="14" value="«record»  Category" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="40" y="510" width="340" height="40" as="geometry" />
+        <mxCell id="14" value="Complaint" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="545" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="15" value="id, name&#10;department_id [FK]&#10;default_priority, keywords" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="52" y="558" width="316" height="154" as="geometry" />
+        <mxCell id="15" value="id : Integer&#10;code : String&#10;status : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="555" y="702" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="16" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="530" y="510" width="340" height="210" as="geometry" />
+        <mxCell id="16" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="55" y="650" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="17" value="«record»  ComplaintEvent" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="530" y="510" width="340" height="40" as="geometry" />
+        <mxCell id="17" value="Feedback" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="55" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="18" value="id, complaint_id [FK]&#10;event_type, note&#10;actor_id [FK], created_at" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="542" y="558" width="316" height="154" as="geometry" />
+        <mxCell id="18" value="id : Integer&#10;rating : Integer" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="702" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="19" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#172b3a;strokeWidth=2;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="510" width="340" height="210" as="geometry" />
+        <mxCell id="19" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="650" width="310" height="180" as="geometry" />
         </mxCell>
-        <mxCell id="20" value="«record»  Feedback" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#172b3a;strokeColor=#172b3a;fontColor=#ffffff;fontStyle=1;fontSize=18;fontFamily=Arial;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="510" width="340" height="40" as="geometry" />
+        <mxCell id="20" value="ComplaintEvent" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="21" value="id, complaint_id [FK/UQ]&#10;rating, comment, created_at" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=16;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="1032" y="558" width="316" height="154" as="geometry" />
+        <mxCell id="21" value="id : Integer&#10;eventType : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1045" y="702" width="290" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="22" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+        <mxCell id="22" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="380" y="260" as="sourcePoint" />
-            <mxPoint x="530" y="260" as="targetPoint" />
+            <mxPoint x="365" y="260" as="sourcePoint" />
+            <mxPoint x="545" y="260" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="23" value="student_id" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="390" y="215" width="130" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="870" y="260" as="sourcePoint" />
-            <mxPoint x="1020" y="260" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="25" value="department_id" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="875" y="215" width="140" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="26" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="210" y="510" as="sourcePoint" />
-            <Array as="points">
-              <mxPoint x="210" y="445" />
-              <mxPoint x="600" y="445" />
-            </Array>
-            <mxPoint x="600" y="370" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="27" value="category_id" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="300" y="410" width="200" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="28" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+        <mxCell id="23" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="370" as="sourcePoint" />
-            <mxPoint x="700" y="510" as="targetPoint" />
+            <mxPoint x="700" y="650" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="29" value="complaint_id" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="710" y="410" width="160" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="30" value="" style="edgeStyle=none;rounded=0;html=1;strokeColor=#50616b;strokeWidth=2;endArrow=none;endFill=1;dashed=0;" edge="1" parent="1">
+        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="800" y="370" as="sourcePoint" />
+            <mxPoint x="1035" y="300" as="sourcePoint" />
             <Array as="points">
-              <mxPoint x="800" y="460" />
-              <mxPoint x="1190" y="460" />
+              <mxPoint x="930" y="300" />
+              <mxPoint x="930" y="570" />
+              <mxPoint x="855" y="570" />
             </Array>
-            <mxPoint x="1190" y="510" as="targetPoint" />
+            <mxPoint x="855" y="690" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="31" value="complaint_id" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=15;fontStyle=0;fontColor=#172b3a;" vertex="1" parent="1">
-          <mxGeometry x="900" y="425" width="200" height="30" as="geometry" />
+        <mxCell id="25" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="365" y="730" as="sourcePoint" />
+            <mxPoint x="545" y="730" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="32" value="Selected associations only. For all eight foreign keys and cardinalities, refer to the ERD. app.py and routing.py contain functions, not ORM classes." style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fff9e9;strokeColor=#c6a650;fontFamily=Arial;fontSize=16;fontColor=#172b3a;spacing=8;" vertex="1" parent="1">
-          <mxGeometry x="45" y="780" width="1310" height="70" as="geometry" />
+        <mxCell id="26" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="855" y="730" as="sourcePoint" />
+            <mxPoint x="1035" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="27" value="1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="375" y="225" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="28" value="0..*" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="470" y="225" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="29" value="1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="710" y="385" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="30" value="0..*" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="710" y="610" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="31" value="1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="945" y="260" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="32" value="0..*" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="860" y="580" width="80" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="33" value="0..1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="375" y="695" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="34" value="1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="465" y="695" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="35" value="1" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="865" y="695" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="36" value="0..*" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="955" y="695" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="37" value="Selected associations only; the ER diagrams show all eight foreign-key relationships.&#10;User represents all roles; a complaint is lodged by a student in application logic." style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="30" y="900" width="1340" height="75" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

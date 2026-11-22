@@ -9,13 +9,15 @@ OUTPUT = ROOT / 'Campus_Shikayat_Setu_College_Submission.zip'
 
 README = '''CAMPUS SHIKAYAT SETU — COLLEGE SUBMISSION PACKAGE
 
-This package contains the runnable application, project report, use-case
+This package contains the runnable application, project report, project
 diagrams, and presentation. Project data shown in the documents is illustrative.
 
 PROJECT DOCUMENTS
 - report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf
 - report/CampusShikayatSetu_MCA-Mini-Project_Report.docx
 - report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf and .docx
+- report/Campus_Shikayat_Setu_Project_Diagrams.pdf and .docx
+- report/diagrams/ contains editable diagrams.net source files
 - presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx
 
 Before submission, add your roll number and confirmed guide to the report and
@@ -56,6 +58,14 @@ FILES = [
     'report/CampusShikayatSetu_MCA-Mini-Project_Report.docx',
     'report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf',
     'report/Campus_Shikayat_Setu_Use_Case_Diagrams.docx',
+    'report/Campus_Shikayat_Setu_Project_Diagrams.pdf',
+    'report/Campus_Shikayat_Setu_Project_Diagrams.docx',
+    'report/diagrams/fig-erd.drawio',
+    'report/diagrams/fig-usecase.drawio',
+    'report/diagrams/fig-class.drawio',
+    'report/diagrams/fig-activity.drawio',
+    'report/diagrams/fig-deployment.drawio',
+    'report/diagrams/fig-modules.drawio',
     'presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx',
 ]
 RUNTIME_SUFFIXES = {'.py', '.sql', '.html', '.css', '.js'}

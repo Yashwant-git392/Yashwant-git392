@@ -42,7 +42,7 @@ def main():
             figures.append(caption.group(1))
         if captions:
             assert len(page.get_images()) >= len(captions), (page.number + 1, 'missing image')
-    expected_figures = (['1.1', '3.1'] + [f'3.2{c}' for c in 'abcd'] +
+    expected_figures = (['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] +
                         [f'3.{n}' for n in range(3, 12)] + [f'10.{n}' for n in range(1, 26)])
     assert sorted(figures) == sorted(expected_figures), (figures, expected_figures)
     index_pages = []

@@ -85,13 +85,15 @@ def extract_template_fonts(directory):
 
 FIGURE_DESCRIPTIONS = {
     'fig-architecture.png': 'The browser communicates with the Flask application over HTTP. The application applies routing and access rules and reads or updates the SQLite database.' ,
-    'fig-erd.png': 'The boxes represent the SQLite tables and key fields. The connecting lines show foreign-key relationships and cardinalities among departments, categories, users, complaints, events and feedback.',
+    'fig-erd.png': 'The Chen diagram shows categories and assigned departments. Each complaint has one category and one assigned department; reassignment can change the assigned department independently.',
+    'fig-erd-b.png': 'A user may belong to a department and may lodge complaints. The application restricts complaint submission to students; the database foreign key references the users table.',
+    'fig-erd-c.png': 'A complaint can have many events and at most one feedback record. Each event belongs to one complaint and may have an associated user as its actor.',
     'fig-usecase-student.png': 'The student actor registers or signs in, submits and tracks their own complaints, and can give feedback or request reopening when the relevant conditions are met.',
     'fig-usecase-officer.png': 'The department officer signs in, reviews the assigned queue and records permitted complaint actions, including acknowledgement, work and resolution.',
     'fig-usecase-administrator.png': 'The administrator manages users and complaints across departments, can reassign or escalate eligible complaints, and views the management reports.',
     'fig-usecase-public-visitor.png': 'A visitor without a login can use the public tracker with a complaint code and the matching roll number to view the corresponding status and timeline.',
     'fig-class.png': 'The conceptual record types and associations illustrate the data represented by the application. They describe the relational design rather than Python ORM classes.',
-    'fig-activity.png': 'The flow begins with complaint submission and routing, then shows the supported officer and student actions and status transitions. Overdue status is calculated rather than stored.',
+    'fig-activity.png': 'A student enters complaint details. Invalid input returns for correction; valid input is routed, prioritised and saved with events before the complaint code is returned.',
     'fig-deployment.png': 'A browser communicates with the Flask application, which uses the local SQLite database. The diagram represents a single-node demo, with optional access from a LAN peer.',
     'fig-modules.png': 'The hierarchy groups the project into authentication, complaint workflow, routing, database, reports and presentation modules, and maps responsibilities to the implemented files.',
     'screen-login.png': 'A student, officer or administrator enters a username or roll number and password. The page also links to student registration and the public tracker.',
@@ -653,7 +655,10 @@ def ch3(pdf: Report):
     ], [18, 160])
 
     pdf.h2("3.2  Entity Relationship Diagram (ERD)", reserve=150)
-    pdf.figure(f"{IMG}/fig-erd.png", 178, "Figure 3.1  ERD — actual SQLite foreign keys and relationship cardinalities.")
+    pdf.p("The three Chen-notation views show selected attributes and all eight foreign-key relationships. An underlined attribute is a key. Each (minimum, maximum) pair is the participation of an instance of the adjacent entity; N means many. The full columns and constraints are listed in Section 3.3.")
+    pdf.figure(f"{IMG}/fig-erd.png", 178, "Figure 3.1a  ERD — category and assigned department.")
+    pdf.figure(f"{IMG}/fig-erd-b.png", 178, "Figure 3.1b  ERD — users and complaints.")
+    pdf.figure(f"{IMG}/fig-erd-c.png", 178, "Figure 3.1c  ERD — events and feedback.")
 
     pdf.h2("3.3  Table Structure")
     pdf.p("Physical schema (verbatim from <b>schema.sql</b>, Appendix A) — every column, key and CHECK constraint in force:")
@@ -687,11 +692,11 @@ def ch3(pdf: Report):
     pdf.figure(f"{IMG}/fig-class.png", 178, "Figure 3.3  Conceptual data records and selected associations; the app does not use ORM classes.")
 
     pdf.h2("3.6  Activity Diagram", reserve=155)
-    pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4  Activity diagram — submission and supported status transitions.")
+    pdf.figure(f"{IMG}/fig-activity.png", 178, "Figure 3.4  Activity diagram — complaint submission and validation.")
     pdf.note("Overdue is never stored — it is derived: now > sla_due_at AND status NOT IN (Resolved, Closed). This keeps every register consistent even if the server is restarted after a long break.")
 
     pdf.h2("3.7  Deployment Diagram", reserve=110)
-    pdf.figure(f"{IMG}/fig-deployment.png", 178, "Figure 3.5  Deployment — single node lab PC; browsers on same PC or LAN peers.")
+    pdf.figure(f"{IMG}/fig-deployment.png", 178, "Figure 3.5  Deployment — local demonstration on one computer.")
 
     pdf.h2("3.8  Module Hierarchy Diagram", reserve=125)
     pdf.figure(f"{IMG}/fig-modules.png", 178, "Figure 3.6  Module hierarchy — actual project files and responsibilities.")
