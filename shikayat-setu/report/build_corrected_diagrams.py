@@ -215,9 +215,7 @@ def usecase_pages():
 
 def activity_page():
     c=Canvas('Activity diagram — Lodge a complaint','Scope: student submission, validation, routing and storage',1400,1450)
-    # partitions run from top to bottom; all actions are within the correct responsible lane.
-    c.shape('rect',60,120,570,1240,'',fill='white'); c.shape('rect',630,120,710,1240,'',fill='white')
-    c.text(60,130,570,42,'STUDENT',23,True,TEAL); c.text(630,130,710,42,'FLASK APPLICATION',23,True,TEAL)
+    # Unpartitioned UML activity: control-flow arrows show the sequence.
     c.dot(345,200); c.edge([(345,213),(345,225)],True)
     c.shape('diamond',315,225,60,45,'',20,'white'); c.edge([(345,270),(345,290)],True)
     c.shape('round',180,290,330,76,'Enter complaint details',21,BG,True)
@@ -242,8 +240,7 @@ def activity_page():
 def operation_activity(title, role, open_action, submit_action, check_action, update_action, finish_action, note):
     """A single request; alternate rejection and stale-update flows terminate separately."""
     c=Canvas('Activity diagram — '+title,'One request by an authorised '+role.lower()+'; rejected requests may be retried',1400,1550)
-    c.shape('rect',60,120,570,1300,'',fill='white'); c.shape('rect',630,120,710,1300,'',fill='white')
-    c.text(60,130,570,42,role.upper(),23,True,TEAL); c.text(630,130,710,42,'FLASK APPLICATION',23,True,TEAL)
+    # Unpartitioned flow; actions and guards remain explicitly connected.
     c.dot(345,200);c.edge([(345,213),(345,245)],True)
     c.shape('round',140,245,410,72,open_action,19,BG,True)
     c.edge([(345,317),(345,350)],True);c.shape('round',140,350,410,72,submit_action,19,BG,True)

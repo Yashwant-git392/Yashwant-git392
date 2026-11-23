@@ -24,7 +24,10 @@ const inputs = {
     const app = pathToFileURL(path.join(process.env.DRAWIO_WEBAPP,'index.html')).href+'?offline=1&ui=min';
     await page.goto(app,{waitUntil:'load',timeout:30000});
     await page.waitForFunction('typeof Graph !== "undefined" && typeof mxCodec !== "undefined"');
+    const selected=process.argv.slice(2);
+    if (selected.some(name=>!Object.hasOwn(inputs,name))) throw new Error('Unknown diagram name');
     for (const [file,names] of Object.entries(inputs)) {
+      if (selected.length && !selected.includes(file)) continue;
       const xml=fs.readFileSync(path.join(base,'diagrams',file+'.drawio'),'utf8');
       for (let index=0;index<names.length;index++) {
         const size=await page.evaluate(({xml,index})=>{

@@ -114,6 +114,9 @@ def test_chen_relationships_and_activity_are_editable_and_connected():
         cells = page.findall('.//mxCell')
         assert len([c for c in cells if c.get('style', '').startswith('rhombus;')]) == 2
         assert all('fork' not in c.get('style', '').lower() for c in cells)
+        # Activities are deliberately unpartitioned: no lane container boxes.
+        assert not any(c.get('style', '').startswith('rounded=0;') and float(c.find('mxGeometry').get('height')) > 800 for c in cells if c.find('mxGeometry') is not None)
+        assert not any(c.get('value') == 'FLASK APPLICATION' for c in cells)
     for page, expected_action in zip(pages[1:], ('Set Resolved if unchanged', 'Set Closed if unchanged', 'Set In Progress if unchanged', 'Set Closed if unchanged')):
         values = {c.get('value') for c in page.findall('.//mxCell')}
         assert {expected_action, '[no]', '[yes]', '[changed]', '[updated]'} <= values
