@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Single-source report generator for the Campus Shikayat Setu mini project.
 Produces: shikayat-setu/report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf
-Two-pass build: pass 1 records chapter page numbers, pass 2 renders the real index.
+Two-pass build preserves pagination before inserting the official index pages.
 """
 from pathlib import Path
 import os
@@ -9,6 +9,7 @@ import re
 import html
 import tempfile
 import sqlite3
+import importlib.util
 from datetime import date
 
 from fpdf import FPDF
@@ -149,6 +150,7 @@ class Report(FPDF):
         for style, file in [('', 'Tinos-Regular.ttf'), ('B', 'Tinos-Bold.ttf'),
                             ('I', 'Tinos-Italic.ttf'), ('BI', 'Tinos-BoldItalic.ttf')]:
             self.add_font('Tinos', style, str(REPORT_DIR / 'fonts' / file))
+        self.add_font('Mono', '', D + 'DejaVuSansMono.ttf')
         self.add_font('Symbols', '', D + 'DejaVuSans.ttf')
         self.add_font('Symbols', 'B', D + 'DejaVuSans-Bold.ttf')
         self.add_font('Symbols', 'I', D + 'DejaVuSans.ttf')
@@ -339,9 +341,42 @@ class Report(FPDF):
                 lines=[column[take:] for column in lines]
         self.ln(3)
 
-    def code(self, code_text, title=None):
+    def notebook_cell(self, code_text, output=None, number=None):
+        """Editable notebook-inspired cells, not a screenshot of Jupyter."""
+        prompt = f'In [{number}]:' if number is not None else 'In [ ]:'
+        if self.get_y() + LINE_H * 3 > 297 - BOTTOM:
+            self.add_page()
+        self.set_font('DVS', 'B', 13)
+        self.set_text_color(31, 72, 133)
+        self.set_x(LEFT)
+        self.cell(CONTENT_W, LINE_H, prompt)
+        self.ln(LINE_H)
+        self.set_font('Mono', '', 10.5)
+        self.set_text_color(0, 0, 0)
+        self.set_fill_color(245, 247, 250)
+        for line in code_text.splitlines():
+            self.set_x(LEFT)
+            self.multi_cell(CONTENT_W, LINE_H, line or ' ', fill=True, wrapmode='CHAR')
+        if output is not None:
+            if self.get_y() + LINE_H * 2 > 297 - BOTTOM:
+                self.add_page()
+            self.set_font('DVS', 'B', 13)
+            self.set_text_color(153, 56, 28)
+            self.set_x(LEFT)
+            self.cell(CONTENT_W, LINE_H, f'Out[{number}]:')
+            self.ln(LINE_H)
+            self.set_font('Mono', '', 10.5)
+            self.set_text_color(0, 0, 0)
+            self.set_x(LEFT)
+            self.multi_cell(CONTENT_W, LINE_H, output, wrapmode='CHAR')
+        self.ln(2)
+
+    def code(self, code_text, title=None, notebook=False):
         if title:
             self.h3(title)
+        if notebook:
+            self.notebook_cell(code_text)
+            return
         self.set_font('DVS', '', 13)
         self.set_text_color(0, 0, 0)
         self.set_fill_color(0, 0, 0)
@@ -650,18 +685,21 @@ def ch3(pdf: Report):
 
 def ch4(pdf: Report):
     pdf.h1("ch4", "Coding", "Chapter 4")
-    pdf.p("The following examples illustrate the main routing, workflow, validation and database logic. Ellipses indicate omitted lines.")
+    pdf.p("The Python source excerpts below use a Jupyter Notebook-inspired cell layout. Empty prompts indicate excerpts, not standalone executed cells; ellipses indicate omitted lines. SQL remains SQL. The worked examples show results computed from the project routing functions, not screenshots from Jupyter. The Flask application output remains in the browser.")
 
     pdf.h2("4.1  Code snippets")
     pdf.h3("4.1.1  Routing engine — scoring and SLA")
     pdf.code('''def score_category(text: str, keywords: str) -> int:
     score = 0
     low = text.lower()
-    for kw in (k.strip().lower() for k in keywords.split(",") if k.strip()):
+    words = (k.strip().lower() for k in keywords.split(",")
+             if k.strip())
+    for kw in words:
         pattern = r"(?<![a-z0-9])" + re.escape(kw) + r"(?![a-z0-9])"
         hits = len(re.findall(pattern, low))
         if hits:
-            weight = len(kw.split()) * 2  # Multi-word keywords carry more weight.
+            # Multi-word keywords carry more weight.
+            weight = len(kw.split()) * 2
             score += weight * hits
     return score
 
@@ -672,7 +710,18 @@ def assign_priority(default_priority, title, description):
     p = default_priority
     if any(p_ in text for p_ in MASS_IMPACT):
         p = bump_priority(p)
-    return p''', title="routing.py — keyword scorer & priority resolver")
+    return p''', title="routing.py — keyword scorer & priority resolver; formatting adapted", notebook=True)
+
+    # Compute displayed results from the actual project module.
+    spec = importlib.util.spec_from_file_location("report_routing", REPORT_DIR.parent / "app" / "routing.py")
+    routing = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(routing)
+    pdf.h3("Worked example — keyword scoring")
+    pdf.notebook_cell('from routing import score_category\nscore_category("leaking leak leak.", "leak")',
+                      repr(routing.score_category("leaking leak leak.", "leak")), 1)
+    pdf.h3("Worked example — priority assignment")
+    pdf.notebook_cell('from routing import assign_priority\nassign_priority("Low", "Fire in laboratory", "Smoke reported")',
+                      repr(routing.assign_priority("Low", "Fire in laboratory", "Smoke reported")), 2)
 
     pdf.h3("4.1.2  Selecting a routing category")
     pdf.code('''def select_category(title, description, chosen, categories):
@@ -682,7 +731,7 @@ def assign_priority(default_priority, title, description):
                     score > score_category(text, chosen["keywords"])):
         return matched, "auto", score
     return chosen, "manual", 0''',
-        title="routing.py — selection shared by submission, preview and seed")
+        title="routing.py — selection shared by submission, preview and seed", notebook=True)
 
     pdf.h3("4.1.3  Resolution workflow — status transitions")
     pdf.code('''@app.route("/complaint/<code>/resolve", methods=["POST"])
@@ -694,12 +743,14 @@ def resolve(code):
     if c["status"] not in ("In Progress", "Acknowledged", "Submitted"):
         flash("Complaint is already resolved or closed.", "warning")
     else:
-        if not transition_status(conn, c, 'Resolved',
-                                 datetime.now().strftime("%Y-%m-%d %H:%M:%S")):
+        if not transition_status(
+                conn, c, 'Resolved',
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S")):
             stale_complaint()
             return redirect(url_for("complaint_detail", code=code))
-        log_event(conn, c["id"], "status", f"Resolved — {remark}", user["id"])
-        conn.commit()''', title="app.py — resolve() excerpt")
+        log_event(conn, c["id"], "status",
+                  f"Resolved — {remark}", user["id"])
+        conn.commit()''', title="app.py — resolve() excerpt; formatting adapted", notebook=True)
 
     pdf.h3("4.1.4  SLA compliance report — SQL")
     pdf.code('''SELECT d.name AS dept,
@@ -722,13 +773,15 @@ rating   INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5)  -- feedback''', title=
     pdf.h3("4.1.6  Server-side complaint validation")
     pdf.p("The following checks run on submission. The form's browser-side checks assist users but do not replace these server-side checks. A rejected submission is not inserted.")
     pdf.code('''if len(title) < 8: errors.append("Title must be at least 8 characters.")
-if len(desc) < 20: errors.append("Description must be at least 20 characters — help the department.")
+if len(desc) < 20:
+    errors.append("Description must be at least 20 characters — "
+                  "help the department.")
 if not cat_id.isdigit() or not conn.execute(
         "SELECT 1 FROM categories WHERE id=?", (cat_id,)).fetchone():
     errors.append("Choose a valid category.")
 if errors:
     for e in errors: flash(e, "danger")
-    return render_template("lodge.html", cats=cats, form=request.form), 400''', title="app.py — lodge() validation excerpt; formatting adapted")
+    return render_template("lodge.html", cats=cats, form=request.form), 400''', title="app.py — lodge() validation excerpt; formatting adapted", notebook=True)
 # =====================================================================
 def ch5(pdf: Report):
     pdf.h1("ch5", "Testing", "Chapter 5")
@@ -972,7 +1025,7 @@ class ChapterCalls:
         self.calls=[]
 
     def __getattr__(self, name):
-        if name not in {'h1','h2','h3','p','bullets','note','figure','table','code'}:
+        if name not in {'h1','h2','h3','p','bullets','note','figure','table','code','notebook_cell'}:
             raise AttributeError(name)
         def collect(*args, **kwargs):
             self.calls.append((name,args,kwargs))
@@ -998,7 +1051,7 @@ def render_chapter(pdf, fn):
     for group in groups:
         # Try to keep each manageable subtopic together; large tables,
         # multiple figures and code may still span multiple pages.
-        if group[0][0] in ('h2','h3') and not group[0][2].get('new_page') and not any(item[0] in ('code','h1') for item in group) and sum(item[0]=='figure' for item in group) <= 1:
+        if group[0][0] in ('h2','h3') and not group[0][2].get('new_page') and not any(item[0] == 'h1' for item in group) and sum(item[0]=='figure' for item in group) <= 1:
             records=pdf.recorder; previous=dict(records)
             with pdf.offset_rendering() as probe:
                 execute(probe.pdf,group)

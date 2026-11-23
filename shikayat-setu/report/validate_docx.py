@@ -35,6 +35,8 @@ def main():
     assert 'CHAPTER 1' in paragraphs[5]
     assert abs(doc.styles['Normal'].paragraph_format.line_spacing - 1.5) < .01
     text = ' '.join(paragraphs + [cell.text for table in doc.tables for row in table.rows for cell in row.cells])
+    for expected in ('In [ ]:', 'In [1]:', 'Out[1]:', 'In [2]:', 'Out[2]:'):
+        assert expected in paragraphs, expected
     for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
         assert forbidden not in text.lower(), forbidden
     assert len(doc.inline_shapes) == 51  # four supplied pages + 47 report figures

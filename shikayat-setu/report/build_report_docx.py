@@ -197,9 +197,32 @@ class DocxReport:
                           RGBColor(255,255,255) if row_index == 0 else None)
         self.doc.add_paragraph().paragraph_format.space_after = Pt(0)
 
-    def code(self, code_text, title=None):
+    def notebook_cell(self, code_text, output=None, number=None):
+        # Separate editable paragraphs with a lightly shaded code cell.
+        p = self.doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(0)
+        style_run(p.add_run(f'In [{number}]:' if number is not None else 'In [ ]:'), color=RGBColor(31, 72, 133), bold=True)
+        keep(p, next_=True)
+        p = self.doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(3)
+        ppr = p._p.get_or_add_pPr()
+        shd = OxmlElement('w:shd'); shd.set(qn('w:fill'), 'F5F7FA'); ppr.append(shd)
+        run = style_run(p.add_run(code_text), size=10.5)
+        run.font.name = 'Consolas'
+        run._element.get_or_add_rPr().rFonts.set(qn('w:eastAsia'), 'Consolas')
+        if output is not None:
+            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(0)
+            style_run(p.add_run(f'Out[{number}]:'), bold=True, color=RGBColor(153, 56, 28))
+            keep(p, next_=True)
+            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(5)
+            run = style_run(p.add_run(output), size=10.5); run.font.name = 'Consolas'
+
+    def code(self, code_text, title=None, notebook=False):
         if title:
             self.h3(title)
+        if notebook:
+            self.notebook_cell(code_text)
+            return
         # Preserve whitespace and source lines as editable text.
         p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(5)
         style_run(p.add_run(code_text))

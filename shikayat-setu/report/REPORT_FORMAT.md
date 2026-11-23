@@ -4,7 +4,7 @@ The report starts with the four supplied pages in `reference/PROJECT REPORT Sequ
 
 The PDF inserts the four supplied pages without re-rendering. The supplied PDF is image-only; the Word report and the companion reference DOCX therefore contain those pages as images, not editable text. The remainder of the Word report contains editable text and tables, with screenshots and diagrams as images. Its pagination may differ from the PDF, so check it in Word before printing. The official index is an image, not an automatic Word index, and cannot be populated by updating fields. Section bookmarks and page-number fields remain in the editable report.
 
-The body retains Chapters 1–10 and supporting appendices. Requirements and specifications use tables, text uses 1.5 line spacing, and each application screenshot has its own page with its caption and explanation. Descriptions remain beneath numbered figures. The original reference material remains in `reference/`.
+The body retains Chapters 1–10 and supporting appendices. Requirements and specifications use tables, text uses 1.5 line spacing, and each application screenshot has its own page with its caption and explanation. Descriptions remain beneath numbered figures. Chapter 4 Python excerpts use editable notebook-inspired cells; blank input prompts mark non-standalone excerpts. The worked example results are computed from the project routing module, not captured from Jupyter, and Flask screens remain browser screenshots. Notebook-style PDF cells use DejaVu Sans Mono; Word requests Consolas. The original reference material remains in `reference/`.
 
 ## Before printing or submission
 

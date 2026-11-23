@@ -33,7 +33,7 @@ def main():
                 for span in line['spans']:
                     x0, y0, x1, y1 = span['bbox']
                     assert x0 >= LEFT*72/25.4-4 and x1 <= page.rect.width-RIGHT*72/25.4+4 and y0 >= 0 and y1 <= page.rect.height, (page.number + 1, span)
-                    assert round(span['size'], 1) in (13.0, 15.0, 16.0), (page.number + 1, span)
+                    assert round(span['size'], 1) in (10.5, 13.0, 15.0, 16.0), (page.number + 1, span)
                     if 85 < y0 < 765:  # exclude the header and footer
                         assert y0 >= TOP*72/25.4-5 and y1 <= (297-BOTTOM)*72/25.4+5, (page.number + 1, span)
         text = page.get_text()
@@ -69,6 +69,8 @@ def main():
         else:
             assert 'APPENDIX ' + number in body_text, (number, title)
     full_text = normalize(' '.join(page.get_text() for page in doc))
+    for expected in ('In [1]:', 'Out[1]:', 'In [2]:', 'Out[2]:', 'score_category("leaking leak leak.", "leak")'):
+        assert expected in full_text, expected
     for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
         assert forbidden not in full_text.lower(), forbidden
     for n in range(1, 26):
