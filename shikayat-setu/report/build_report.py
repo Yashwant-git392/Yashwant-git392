@@ -18,6 +18,8 @@ REPORT_DIR = Path(__file__).resolve().parent
 IMG = REPORT_DIR / "images"
 DB = Path(os.environ.get("SHIKAYAT_DB", REPORT_DIR.parent / "app" / "shikayat_setu.db"))
 OUT = REPORT_DIR / "CampusShikayatSetu_MCA-Mini-Project_Report.pdf"
+OFFICIAL_FRONT = REPORT_DIR / "reference" / "PROJECT REPORT Sequence Yashwant.pdf"
+OFFICIAL_PAGES = 4
 
 D = str(REPORT_DIR / "fonts") + os.sep
 LEFT, RIGHT, TOP, BOTTOM = 25.4, 15.0, 36.0, 25.4  # enlarged diagram area; binding space on left
@@ -30,7 +32,6 @@ LIGHT = (245, 247, 250)
 TODAY = date.today().strftime("%d %B %Y")
 
 SECTIONS = [
-    ("Certificate", "certificate"),
     ("Chapter 1 — Introduction", "ch1"),
     ("Chapter 2 — Proposed System", "ch2"),
     ("Chapter 3 — System Analysis and Design", "ch3"),
@@ -158,7 +159,7 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
 
     def header(self):
-        if self.page_no() <= 1:  # cover only
+        if self.page_no() <= OFFICIAL_PAGES:  # placeholders replaced by supplied pages
             return
         self.set_y(17)
         self.set_x(LEFT)
@@ -173,7 +174,7 @@ class Report(FPDF):
         self.set_y(TOP)
 
     def footer(self):
-        if self.page_no() <= 1:
+        if self.page_no() <= OFFICIAL_PAGES:
             return
         self.set_y(-23)
         self.set_x(LEFT)
@@ -356,67 +357,6 @@ class Report(FPDF):
         self.p(text)
 
 
-def cover(pdf):
-    pdf.add_page()
-    pdf.recorder['cover'] = pdf.page_no()
-    pdf.set_font('DVS', 'B', 16)
-    pdf.set_text_color(*NAVY)
-    pdf.set_fill_color(*NAVY)
-    for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
-        pdf.set_x(LEFT)
-        pdf.multi_cell(CONTENT_W, LINE_H, line, align='C')
-    pdf.set_draw_color(*GOLD)
-    pdf.set_line_width(0.7)
-    pdf.line(LEFT + 35, pdf.get_y() + 1, LEFT + CONTENT_W - 35, pdf.get_y() + 1)
-    pdf.ln(3)
-    pdf.set_text_color(0, 0, 0)
-    pdf.set_fill_color(0, 0, 0)
-    pdf.set_font('DVS', '', 13)
-    for line in ['Submitted By', 'Yashwant Santosh Ahire', 'MCA-I SEM-I',
-                 'Roll No.: ____________________', 'UNDER THE GUIDANCE OF',
-                 'Project Guide: ____________________', 'In Partial Fulfillment of',
-                 'SAVITRIBAI PHULE PUNE UNIVERSITY', 'MASTER OF COMPUTER APPLICATIONS',
-                 "K.B.H.S.S. Trust’s", 'Dr. B. V. Hiray College of Management & Research Centre']:
-        pdf.set_x(LEFT)
-        pdf.multi_cell(CONTENT_W, LINE_H, line, align='C')
-    logo = IMG / 'college-logo.png'
-    pdf.image(str(logo), x=LEFT + (CONTENT_W - 24) / 2, w=24)
-    pdf.set_x(LEFT)
-    pdf.multi_cell(CONTENT_W, LINE_H, '2026–2027', align='C')
-
-
-def certificate(pdf):
-    pdf.h1('certificate', 'COLLEGE CERTIFICATE')
-    pdf.p('Project report titled “Campus Shikayat Setu”, submitted by Yashwant Santosh Ahire, '
-          'MCA-I Semester-I, academic year 2026–2027, under the guidance of the undersigned '
-          'at Dr. B. V. Hiray College of Management & Research Centre, Malegaon.')
-    pdf.p('Date: ____________________       Place: Malegaon')
-    pdf.p('Project Guide: ____________________')
-    pdf.p('Head of Department: ____________________')
-    pdf.p('Director / College authority: ____________________')
-
-
-def declaration(pdf):
-    pdf.h1('declaration', 'DECLARATION')
-    pdf.p('I, Yashwant Santosh Ahire, student of Master of Computer Applications, academic year '
-          '2026–2027, declare that the information in the project report titled “Campus Shikayat Setu” '
-          'is accurate to the best of my knowledge.')
-    pdf.p('Date: ____________________')
-    pdf.p('Place: Malegaon')
-    pdf.p('Signature: ____________________')
-    pdf.p('Yashwant Santosh Ahire')
-
-
-def acknowledgement(pdf):
-    pdf.h1('acknowledgement', 'ACKNOWLEDGEMENT')
-    pdf.p('I would like to thank the Director, my project guide ____________________, and the faculty '
-          'of Dr. B. V. Hiray College of Management & Research Centre, Malegaon, for their guidance '
-          'and support. I also thank my family and friends for their encouragement during the project.')
-    pdf.p('Date: ____________________')
-    pdf.p('Place: Malegaon')
-    pdf.p('Yashwant Santosh Ahire')
-
-
 INDEX_ITEMS = [
     ('1', 'Introduction', 'ch1'),
     ('1.1', 'Abstract', 'section:1.1'), ('1.2', 'Existing System and Need for System', 'section:1.2'),
@@ -440,14 +380,6 @@ INDEX_ITEMS = [
     ('C', 'Glossary', 'appc'),
 ]
 
-
-def index(pdf):
-    pdf.h1('index', 'INDEX')
-    pdf.p('Chapter / section — details — PDF page number')
-    for number, title, key in INDEX_ITEMS:
-        # Fixed-width number text avoids changes in wrapping between passes.
-        page = str(pdf.toc.get(key, '000')).zfill(3)
-        pdf.p(f'{number}   {title}   —   {page}')
 
 # =====================================================================
 def ch1(pdf: Report):
@@ -1087,11 +1019,10 @@ def build(toc, recorder, font_dir):
     pdf.set_title("Campus Shikayat Setu — College Grievance Redressal System (MCA-I Sem-I Mini Project Report)")
     pdf.set_author("Yashwant Santosh Ahire — Dr. B.V. Hiray College of Management and Research Centre, Malegaon (SPPU)")
     pdf.set_creator("Campus Shikayat Setu report generator (build_report.py)")
-    cover(pdf)
-    certificate(pdf)
-    declaration(pdf)
-    acknowledgement(pdf)
-    index(pdf)
+    # The body is laid out after four placeholders so its page numbers match
+    # the official pages inserted into the final PDF.
+    for _ in range(OFFICIAL_PAGES):
+        pdf.add_page()
     for key, fn in [("ch1", ch1), ("ch2", ch2), ("ch3", ch3), ("ch4", ch4), ("ch5", ch5),
                     ("ch6", ch6), ("ch7", ch7), ("ch8", ch8), ("ch9", ch9), ("ch10", ch10),
                     ("appa", appa), ("appb", appb), ("appc", appc)]:
@@ -1107,6 +1038,18 @@ if __name__ == "__main__":
         pdf = build(rec1, rec2, font_dir)
         if rec1 != rec2:
             raise RuntimeError(f"Report pagination differs between passes: {rec1} != {rec2}")
-        pdf.output(OUT)
+        # Insert the user-supplied image-only pages without re-rendering them.
+        import pymupdf
+        with pymupdf.open(OFFICIAL_FRONT) as official, pymupdf.open(stream=bytes(pdf.output()), filetype='pdf') as body:
+            if len(official) != OFFICIAL_PAGES:
+                raise ValueError('Expected four supplied official pages')
+            result = pymupdf.open()
+            result.insert_pdf(official)
+            result.insert_pdf(body, from_page=OFFICIAL_PAGES)
+            result.set_metadata({'title':'Campus Shikayat Setu — Mini Project Report', 'author':'Yashwant Santosh Ahire'})
+            toc = [entry for entry in body.get_toc() if entry[2] > OFFICIAL_PAGES]
+            if toc: result.set_toc(toc)
+            result.save(OUT, garbage=4, deflate=True)
+            result.close()
         print("PDF written:", OUT)
-        print("Pages:", pdf.page_no(), "sections:", {k: rec1[k] for _, k in SECTIONS})
+        print("Pages:", pdf.page_no(), "sections:", {k: rec1[k] for _, k in SECTIONS if k in rec1})

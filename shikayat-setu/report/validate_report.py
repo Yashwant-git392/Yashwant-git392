@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 import pymupdf
-from build_report import INDEX_ITEMS, LEFT, RIGHT, TOP, BOTTOM
+from build_report import INDEX_ITEMS, LEFT, RIGHT, TOP, BOTTOM, OFFICIAL_FRONT, OFFICIAL_PAGES
 
 PDF = Path(__file__).with_name('CampusShikayatSetu_MCA-Mini-Project_Report.pdf')
 
@@ -15,12 +15,15 @@ def normalize(text):
 
 def main():
     doc = pymupdf.open(PDF)
-    for index, expected in [(0, 'PROJECT REPORT'), (1, 'COLLEGE CERTIFICATE'),
-                            (2, 'DECLARATION'), (3, 'ACKNOWLEDGEMENT'), (4, 'INDEX')]:
-        assert expected in doc[index].get_text(), (index + 1, expected)
+    with pymupdf.open(OFFICIAL_FRONT) as official:
+        assert len(official) == OFFICIAL_PAGES == 4
+        for i in range(OFFICIAL_PAGES):
+            assert doc[i].rect == official[i].rect
+            assert doc[i].get_pixmap(alpha=False).samples == official[i].get_pixmap(alpha=False).samples, ('Official page changed', i+1)
+    assert 'CHAPTER 1' in doc[OFFICIAL_PAGES].get_text()
     figures = []
     screenshot_pages = {}
-    for page in doc:
+    for page in list(doc)[OFFICIAL_PAGES:]:
         assert abs(page.rect.width - 595.28) < 1 and abs(page.rect.height - 841.89) < 1
         for block in page.get_text('dict')['blocks']:
             if block['type'] == 1:
@@ -34,6 +37,7 @@ def main():
                     if 85 < y0 < 765:  # exclude the header and footer
                         assert y0 >= TOP*72/25.4-5 and y1 <= (297-BOTTOM)*72/25.4+5, (page.number + 1, span)
         text = page.get_text()
+        assert re.search(r'\n' + str(page.number + 1) + r'\nManagement & Research Centre', text), (page.number + 1, 'incorrect printed page number')
         captions = list(re.finditer(r'Figure (1\.1|3\.\d+[a-e]?|10\.\d+)(?!\d)', text))
         descriptions = list(re.finditer(r'Description:', text))
         assert len(captions) == len(descriptions), (page.number + 1, 'figure/description count')
@@ -54,33 +58,22 @@ def main():
                         [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)])
     assert sorted(figures) == sorted(expected_figures), (figures, expected_figures)
     assert len(screenshot_pages) == 30 and len(set(screenshot_pages.values())) == 30
-    index_pages = []
-    for page in list(doc)[4:]:
-        if 'CHAPTER 1' in page.get_text():
-            break
-        index_pages.append(page.get_text())
-    index_text = normalize(' '.join(index_pages))
-    previous_page = 1
+    # The selected official index is image-only and has blank page numbers;
+    # verify that the report body retains the indexed sections instead.
+    body_text = normalize(' '.join(page.get_text() for page in list(doc)[OFFICIAL_PAGES:]))
     for number, title, key in INDEX_ITEMS:
-        pattern = rf'(?<!\S){re.escape(number)}\s+{re.escape(title)}\s+—\s+(\d{{3}})'
-        match = re.search(pattern, index_text)
-        assert match, (number, title, 'not found in index')
-        page_no = int(match.group(1))
-        assert page_no >= previous_page and page_no <= len(doc), (number, page_no)
-        previous_page = page_no
-        text = normalize(doc[page_no - 1].get_text())
         if key.startswith('section:'):
-            assert re.search(r'(?<!\S)' + re.escape(number) + r'\s', text), (number, page_no)
+            assert re.search(r'(?<!\S)' + re.escape(number) + r'\s', body_text), (number, title)
         elif key.startswith('ch'):
-            assert 'CHAPTER ' + number in text, (number, page_no)
+            assert 'CHAPTER ' + number in body_text, (number, title)
         else:
-            assert 'APPENDIX ' + number in text, (number, page_no)
+            assert 'APPENDIX ' + number in body_text, (number, title)
     full_text = normalize(' '.join(page.get_text() for page in doc))
     for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
         assert forbidden not in full_text.lower(), forbidden
     for n in range(1, 26):
         assert re.search(rf'Figure 10\.{n}(?!\d)', full_text), f'missing manual screenshot {n}'
-    print(f'Validated {len(doc)} pages, {len(INDEX_ITEMS)} index entries and {len(figures)} figures with descriptions.')
+    print(f'Validated {len(doc)} pages, 4 unchanged official pages, {len(INDEX_ITEMS)} body sections and {len(figures)} figures with descriptions.')
 
 
 if __name__ == '__main__':

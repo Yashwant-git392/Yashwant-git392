@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build an editable Word version from the report's shared content functions.
 
-Word computes pagination itself. PAGEREF fields and page numbers are updated
-when the document is opened/refreshed in a word processor.
+The supplied image-only official pages are inserted as images. The remaining
+report text and tables are editable; Word computes pagination itself.
 """
 from pathlib import Path
 import re
@@ -17,6 +17,7 @@ from docx.shared import Inches, Mm, Pt, RGBColor
 from PIL import Image
 
 import build_report as source
+from official_front import add_official_pages, build_reference_docx
 
 OUT = source.REPORT_DIR / 'CampusShikayatSetu_MCA-Mini-Project_Report.docx'
 NAVY = RGBColor(22, 36, 61)
@@ -65,7 +66,8 @@ class DocxReport:
     def __init__(self):
         self.doc = Document()
         self.bookmark_id = 0
-        self.expected_keys = {key for _, _, key in source.INDEX_ITEMS}
+        self.expected_keys = {key for _, _, key in source.INDEX_ITEMS if key != 'certificate'}
+        self.first_body_heading = True
         self.written_keys = set()
         normal = self.doc.styles['Normal']
         normal.font.name = 'Times New Roman'
@@ -99,21 +101,15 @@ class DocxReport:
         self.written_keys.add(key)
 
     def cover(self):
-        for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
-            p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.paragraph_format.space_after = Pt(0)
-            style_run(p.add_run(line), 16, True, NAVY)
-        for line in ['Submitted By', 'Yashwant Santosh Ahire', 'MCA-I SEM-I',
-                     'Roll No.: ____________________', 'UNDER THE GUIDANCE OF',
-                     'Project Guide: ____________________', 'In Partial Fulfillment of',
-                     'SAVITRIBAI PHULE PUNE UNIVERSITY', 'MASTER OF COMPUTER APPLICATIONS',
-                     'K.B.H.S.S. Trust’s', 'Dr. B. V. Hiray College of Management & Research Centre']:
-            p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.paragraph_format.space_after = Pt(0); style_run(p.add_run(line))
-        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_after = Pt(0); p.add_run().add_picture(str(source.IMG / 'college-logo.png'), width=Mm(24))
-        p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER; style_run(p.add_run('2026–2027'))
+        # The uploaded PDF has no text layer; these four Word pages are
+        # faithful page images, not editable transcription.
+        add_official_pages(self.doc)
         sec = self.doc.add_section(WD_SECTION.NEW_PAGE)
+        # Keep the section break tiny enough to remain after the fourth page.
+        separator = self.doc.paragraphs[-1]
+        separator.paragraph_format.space_before = separator.paragraph_format.space_after = Pt(0)
+        separator.paragraph_format.line_spacing = Pt(1)
+        style_run(separator.add_run(), 1)
         self.section_layout(sec)
         sec.header.is_linked_to_previous = False
         sec.footer.is_linked_to_previous = False
@@ -127,7 +123,8 @@ class DocxReport:
 
     def h1(self, key, text, kicker=None):
         p = self.doc.add_paragraph()
-        p.paragraph_format.page_break_before = key != 'certificate'
+        p.paragraph_format.page_break_before = not self.first_body_heading
+        self.first_body_heading = False
         p.paragraph_format.space_after = Pt(6)
         keep(p, True)
         if kicker:
@@ -207,14 +204,6 @@ class DocxReport:
         p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(5)
         style_run(p.add_run(code_text))
 
-    def index(self):
-        self.h1('index', 'INDEX')
-        self.p('Chapter / section — details — page number')
-        for number, title, key in source.INDEX_ITEMS:
-            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(1)
-            style_run(p.add_run(f'{number}   {title}   —   '))
-            field(p, 'PAGEREF ' + bookmark_name(key) + ' \\h')
-
 
 def keep_subtopic_paragraphs_together(doc):
     """Word may split a group longer than a page; tables/figures break groups."""
@@ -238,10 +227,6 @@ def keep_subtopic_paragraphs_together(doc):
 def main():
     pdf = DocxReport()
     pdf.cover()
-    source.certificate(pdf)
-    source.declaration(pdf)
-    source.acknowledgement(pdf)
-    pdf.index()
     for fn in (source.ch1, source.ch2, source.ch3, source.ch4, source.ch5,
                source.ch6, source.ch7, source.ch8, source.ch9, source.ch10,
                source.appa, source.appb, source.appc):
@@ -249,6 +234,7 @@ def main():
     keep_subtopic_paragraphs_together(pdf.doc)
     assert pdf.written_keys == pdf.expected_keys, ('Missing bookmarks', pdf.expected_keys-pdf.written_keys)
     pdf.doc.save(OUT)
+    build_reference_docx()
     print('Editable report:', OUT)
 
 

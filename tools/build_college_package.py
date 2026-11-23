@@ -18,12 +18,14 @@ PROJECT DOCUMENTS
 - report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf and .docx
 - report/Campus_Shikayat_Setu_Project_Diagrams.pdf and .docx
 - report/diagrams/ contains editable diagrams.net source files
+- report/reference/PROJECT REPORT Sequence Yashwant.pdf and .docx contain the supplied front pages
 - presentation/CampusShikayatSetu_MCA-Mini-Project_Review.pptx
 
-Before submission, add your roll number and confirmed guide to the report and
-presentation. The college certificate must be issued and signed by the college;
-review the declaration for accuracy before signing. In the editable report, open
-in Word and update page-reference fields (Ctrl+A, then F9); inspect pagination.
+The supplied official index has blank page numbers; fill them in before submission.
+The supplied pages do not include a certificate; confirm whether one is required.
+The four supplied pages are images in Word, and their text is not editable.
+Add any required roll number and confirmed guide, review the declaration before
+signing, and inspect Word pagination before printing.
 The report starts with the cover and uses reduced margins to enlarge diagrams,
 as requested; confirm these changes and the required binding with the college.
 The PDF uses font fallbacks for characters absent from the supplied template.
@@ -57,6 +59,8 @@ FILES = [
     '.vscode/tasks.json', '.vscode/settings.json',
     'report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf',
     'report/CampusShikayatSetu_MCA-Mini-Project_Report.docx',
+    'report/reference/PROJECT REPORT Sequence Yashwant.pdf',
+    'report/reference/PROJECT REPORT Sequence Yashwant.docx',
     'report/Campus_Shikayat_Setu_Use_Case_Diagrams.pdf',
     'report/Campus_Shikayat_Setu_Use_Case_Diagrams.docx',
     'report/Campus_Shikayat_Setu_Project_Diagrams.pdf',
