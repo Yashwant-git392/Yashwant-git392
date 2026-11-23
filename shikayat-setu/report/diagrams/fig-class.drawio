@@ -17,8 +17,8 @@
         <mxCell id="5" value="Department" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="55" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="6" value="id : Integer&#10;name : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="65" y="242" width="290" height="115" as="geometry" />
+        <mxCell id="6" value="id : Integer&#10;name : String&#10;email : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="242" width="270" height="115" as="geometry" />
         </mxCell>
         <mxCell id="7" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="545" y="190" width="310" height="180" as="geometry" />
@@ -26,8 +26,8 @@
         <mxCell id="8" value="Category" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="545" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="9" value="id : Integer&#10;name : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="555" y="242" width="290" height="115" as="geometry" />
+        <mxCell id="9" value="id : Integer&#10;name : String&#10;default_priority : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="565" y="242" width="270" height="115" as="geometry" />
         </mxCell>
         <mxCell id="10" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1035" y="190" width="310" height="180" as="geometry" />
@@ -35,8 +35,8 @@
         <mxCell id="11" value="User" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1035" y="190" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="12" value="id : Integer&#10;role : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="1045" y="242" width="290" height="115" as="geometry" />
+        <mxCell id="12" value="id : Integer&#10;role : String&#10;username : String&#10;full_name : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="242" width="270" height="115" as="geometry" />
         </mxCell>
         <mxCell id="13" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="545" y="650" width="310" height="180" as="geometry" />
@@ -44,8 +44,8 @@
         <mxCell id="14" value="Complaint" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="545" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="15" value="id : Integer&#10;code : String&#10;status : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="555" y="702" width="290" height="115" as="geometry" />
+        <mxCell id="15" value="id : Integer&#10;code : String&#10;title : String&#10;priority : String&#10;status : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="565" y="702" width="270" height="115" as="geometry" />
         </mxCell>
         <mxCell id="16" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="55" y="650" width="310" height="180" as="geometry" />
@@ -53,8 +53,8 @@
         <mxCell id="17" value="Feedback" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="55" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="18" value="id : Integer&#10;rating : Integer" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="65" y="702" width="290" height="115" as="geometry" />
+        <mxCell id="18" value="id : Integer&#10;rating : Integer&#10;comment : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="75" y="702" width="270" height="115" as="geometry" />
         </mxCell>
         <mxCell id="19" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1035" y="650" width="310" height="180" as="geometry" />
@@ -62,22 +62,22 @@
         <mxCell id="20" value="ComplaintEvent" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1035" y="650" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="21" value="id : Integer&#10;eventType : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
-          <mxGeometry x="1045" y="702" width="290" height="115" as="geometry" />
+        <mxCell id="21" value="id : Integer&#10;event_type : String&#10;note : String" style="text;html=0;align=left;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="1055" y="702" width="270" height="115" as="geometry" />
         </mxCell>
-        <mxCell id="22" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="22" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=1.0000;exitY=0.3889;exitPerimeter=0;entryX=0.0000;entryY=0.3889;entryPerimeter=0;" edge="1" parent="1" source="4" target="7">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="365" y="260" as="sourcePoint" />
             <mxPoint x="545" y="260" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="23" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="23" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="7" target="14">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="370" as="sourcePoint" />
             <mxPoint x="700" y="650" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.0000;exitY=0.6111;exitPerimeter=0;entryX=1.0000;entryY=0.8696;entryPerimeter=0;" edge="1" parent="1" source="10" target="14">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1035" y="300" as="sourcePoint" />
             <Array as="points">
@@ -88,13 +88,13 @@
             <mxPoint x="855" y="690" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="25" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="25" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=1.0000;exitY=0.4444;exitPerimeter=0;entryX=0.0000;entryY=0.4444;entryPerimeter=0;" edge="1" parent="1" source="16" target="13">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="365" y="730" as="sourcePoint" />
             <mxPoint x="545" y="730" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="26" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="26" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=1.0000;exitY=0.4444;exitPerimeter=0;entryX=0.0000;entryY=0.4444;entryPerimeter=0;" edge="1" parent="1" source="13" target="19">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="855" y="730" as="sourcePoint" />
             <mxPoint x="1035" y="730" as="targetPoint" />
@@ -171,7 +171,7 @@
         <mxCell id="11" value="ComplaintEvent" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=21;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="80" y="670" width="310" height="46" as="geometry" />
         </mxCell>
-        <mxCell id="12" value="id : Integer&#10;eventType : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
+        <mxCell id="12" value="id : Integer&#10;event_type : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="90" y="722" width="290" height="100" as="geometry" />
         </mxCell>
         <mxCell id="13" value="" style="rounded=0;whiteSpace=wrap;html=0;fillColor=white;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=20;fontColor=#183044;fontStyle=0;align=center;verticalAlign=middle;" vertex="1" parent="1">
@@ -183,7 +183,7 @@
         <mxCell id="15" value="id : Integer&#10;code : String" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=19;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="1020" y="722" width="290" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="16" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="16" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=1.0000;exitY=0.5000;exitPerimeter=0;entryX=0.0000;entryY=0.5000;entryPerimeter=0;" edge="1" parent="1" source="4" target="7">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="390" y="295" as="sourcePoint" />
             <mxPoint x="1010" y="295" as="targetPoint" />
@@ -198,7 +198,7 @@
         <mxCell id="19" value="assigned department" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="545" y="260" width="300" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="20" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="20" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="4" target="11">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="235" y="380" as="sourcePoint" />
             <mxPoint x="235" y="670" as="targetPoint" />
@@ -213,7 +213,7 @@
         <mxCell id="23" value="event actor" style="text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize=18;fontColor=#183044;fontStyle=0;" vertex="1" parent="1">
           <mxGeometry x="270" y="495" width="250" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="24" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="7" target="14">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1165" y="380" as="sourcePoint" />
             <mxPoint x="1165" y="670" as="targetPoint" />

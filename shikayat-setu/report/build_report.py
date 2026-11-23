@@ -677,7 +677,7 @@ def ch3(pdf: Report):
     ], [30, 148])
 
     pdf.h2("3.4  Use-Case Diagrams", reserve=140)
-    pdf.p("Each actor has a separate use-case diagram. The first three are stored user roles; the public visitor is an external actor, not a database role.")
+    pdf.p("Each actor has a separate use-case diagram. The first three are stored user roles; the public visitor is an external actor, not a database role. Repeated actor symbols on a page denote the same role and improve readability.")
     pdf.figure(f"{IMG}/fig-usecase-student.png", 170, "Figure 3.2a  Student use cases.")
     pdf.figure(f"{IMG}/fig-usecase-officer.png", 170, "Figure 3.2b  Department officer use cases.")
     pdf.figure(f"{IMG}/fig-usecase-administrator.png", 170, "Figure 3.2c  Administrator use cases.")

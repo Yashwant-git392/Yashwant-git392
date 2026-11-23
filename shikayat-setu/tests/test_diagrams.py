@@ -68,18 +68,18 @@ def test_usecase_has_separate_editable_actor_pages():
     root = ET.parse(project / 'report' / 'diagrams' / 'fig-usecase.drawio').getroot()
     pages = root.findall('diagram')
     assert [p.get('name') for p in pages] == ['Student', 'Officer', 'Administrator', 'Public visitor']
-    for page, expected_uses in zip(pages, (8, 7, 12, 1)):
+    for page, expected_uses, expected_actors in zip(pages, (8, 7, 12, 1), (2, 2, 3, 1)):
         cells = page.findall('.//mxCell')
         actors = [c for c in cells if 'shape=umlActor' in c.get('style', '')]
         uses = [c for c in cells if c.get('style', '').startswith('ellipse;')]
         edges = [c for c in cells if c.get('edge') == '1']
-        assert len(actors) == 1 and len(uses) == expected_uses and len(edges) == expected_uses
+        assert len(actors) == expected_actors and len(uses) == expected_uses and len(edges) == expected_uses
+        assert all(e.get('source') in {a.get('id') for a in actors} and e.get('target') in {u.get('id') for u in uses} for e in edges)
         assert all(e.get('style', '').find('endArrow=none') >= 0 for e in edges)
         # The actor sits outside the system boundary; each use case is inside it.
         boundary = next(c for c in cells if c.get('style', '').startswith('rounded=0;') and c.find('mxGeometry').get('x') == '350')
         left = float(boundary.find('mxGeometry').get('x'))
-        actor = actors[0].find('mxGeometry')
-        assert float(actor.get('x')) + float(actor.get('width')) < left
+        assert all(float(a.find('mxGeometry').get('x')) + float(a.find('mxGeometry').get('width')) < left for a in actors)
         assert all(float(c.find('mxGeometry').get('x')) > left for c in uses)
     public_values = [c.get('value', '') for c in pages[-1].findall('.//mxCell')]
     assert 'External actor: not a stored user role' in public_values
@@ -101,14 +101,7 @@ def test_chen_relationships_and_activity_are_editable_and_connected():
         assert {c.get('value') for c in diamonds} == names
         edges = [c for c in cells if c.get('edge') == '1']
         for diamond in diamonds:
-            geo = diamond.find('mxGeometry')
-            x,y,w,h = (float(geo.get(k)) for k in ('x','y','width','height'))
-            ports = {(x+w/2,y), (x+w,y+h/2), (x+w/2,y+h), (x,y+h/2)}
-            hits = 0
-            for edge in edges:
-                for point in edge.findall('mxGeometry/mxPoint'):
-                    if point.get('as') in ('sourcePoint', 'targetPoint') and (float(point.get('x')), float(point.get('y'))) in ports:
-                        hits += 1
+            hits = sum(diamond.get('id') in (edge.get('source'), edge.get('target')) for edge in edges)
             assert hits == 2, (diamond.get('value'), hits)
         keys = [c for c in cells if c.get('value') == 'id' and c.get('style', '').startswith('ellipse;')]
         assert keys and all('fontStyle=4;' in c.get('style', '') for c in keys)
@@ -128,3 +121,15 @@ def test_chen_relationships_and_activity_are_editable_and_connected():
     assert len(classes) == 2
     extra = {c.get('value') for c in classes[1].findall('.//mxCell')}
     assert {'assigned department', 'event actor', 'assigned complaints'} <= extra
+
+
+def test_indexed_diagram_edges_attach_to_editable_vertices():
+    import xml.etree.ElementTree as ET
+    base = Path(__file__).resolve().parent.parent / 'report' / 'diagrams'
+    for name in ('fig-erd', 'fig-usecase', 'fig-class', 'fig-activity', 'fig-deployment', 'fig-modules'):
+        for page in ET.parse(base / (name + '.drawio')).getroot().findall('diagram'):
+            cells = page.findall('.//mxCell')
+            vertices = {c.get('id') for c in cells if c.get('vertex') == '1'}
+            for edge in (c for c in cells if c.get('edge') == '1'):
+                assert edge.get('source') in vertices, (name, page.get('name'), edge.get('id'))
+                assert edge.get('target') in vertices, (name, page.get('name'), edge.get('id'))

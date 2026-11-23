@@ -43,8 +43,8 @@ class Canvas:
             if underline:
                 half=max(7,len(line)*size*.27); self.svg.append(f'<line x1="{x+w/2-half}" y1="{yy+4}" x2="{x+w/2+half}" y2="{yy+4}" stroke="{color}" stroke-width="1.5"/>')
             yy+=lineheight
-    def text(self,x,y,w,h,label,size=18,bold=False,color=INK):
-        self.n+=1; cell=ET.SubElement(self.root,'mxCell',id=str(self.n),value=label,style=f'text;html=0;align=center;verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize={size};fontColor={color};fontStyle={1 if bold else 0};',vertex='1',parent='1')
+    def text(self,x,y,w,h,label,size=18,bold=False,color=INK,align='center'):
+        self.n+=1; cell=ET.SubElement(self.root,'mxCell',id=str(self.n),value=label,style=f'text;html=0;align={align};verticalAlign=middle;whiteSpace=wrap;strokeColor=none;fillColor=none;fontFamily=Arial;fontSize={size};fontColor={color};fontStyle={1 if bold else 0};',vertex='1',parent='1')
         ET.SubElement(cell,'mxGeometry',x=str(x),y=str(y),width=str(w),height=str(h),**{'as':'geometry'})
         self._svgtext(x,y,w,h,label,size,bold,color)
     def edge(self,points,arrow=False,dashed=False):
@@ -89,21 +89,57 @@ class Canvas:
         doc=pymupdf.open(stream=svg.encode(),filetype='svg')
         doc[0].get_pixmap(matrix=pymupdf.Matrix(1.5,1.5), alpha=False).save(str(path)); doc.close()
 
+def attach_connectors(canvas):
+    """Attach matching line ends to diagram vertices, retaining fixed waypoints.
+
+    Large swimlane and boundary rectangles and text-only vertices are excluded.
+    Explicit connection points preserve the drawn layout when opened in draw.io.
+    """
+    shapes=[]
+    for cell in canvas.root.findall('mxCell'):
+        if cell.get('vertex') != '1': continue
+        style=cell.get('style','')
+        if not style.startswith(('rounded=0;', 'rounded=1;', 'ellipse;', 'rhombus;', 'shape=umlActor;')): continue
+        geo=cell.find('mxGeometry')
+        x,y,w,h=(float(geo.get(k)) for k in ('x','y','width','height'))
+        if w >= 600 or h >= 800: continue
+        shapes.append((cell,x,y,w,h))
+    for edge in canvas.root.findall("mxCell[@edge='1']"):
+        geometry=edge.find('mxGeometry')
+        for which in ('source','target'):
+            point=geometry.find(f"mxPoint[@as='{which}Point']")
+            if point is None: continue
+            px,py=float(point.get('x')),float(point.get('y'))
+            candidates=[]
+            for cell,x,y,w,h in shapes:
+                if not (x-1 <= px <= x+w+1 and y-1 <= py <= y+h+1): continue
+                distance=min(abs(px-x),abs(px-x-w),abs(py-y),abs(py-y-h))
+                if distance <= 1 or (cell.get('style','').startswith('shape=umlActor;') and abs(px-(x+w/2)) < 1):
+                    candidates.append((distance,w*h,cell,x,y,w,h))
+            if not candidates: continue
+            _,_,cell,x,y,w,h=min(candidates,key=lambda item:(item[0],item[1]))
+            edge.set(which,cell.get('id'))
+            prefix='exit' if which=='source' else 'entry'
+            rx=(px-x)/w;ry=(py-y)/h
+            edge.set('style',edge.get('style')+f'{prefix}X={rx:.4f};{prefix}Y={ry:.4f};{prefix}Perimeter=0;')
+
 def write_doc(pages,path):
     root=ET.Element('mxfile',host='app.diagrams.net',version='32.6.10',type='device')
-    for p in pages: root.append(p.page)
+    for p in pages:
+        attach_connectors(p)
+        root.append(p.page)
     ET.indent(root); ET.ElementTree(root).write(path,encoding='utf-8',xml_declaration=True)
 
 def entity(c,x,y,name,key,field):
+    """Selected actual attributes; full schema is documented in the table section."""
+    extra={'Department':'email','Category':'default_priority','User':'username',
+           'Complaint':'status','Feedback':'comment','Complaint Event':'created_at'}[name]
     c.shape('rect',x,y,230,70,name,23,BG,True)
-    if y > 500:
-        c.edge([(x+25,y+70),(x+25,y+90)]); c.edge([(x+205,y+70),(x+205,y+90)])
-        oval_y=y+90
-    else:
-        c.edge([(x+25,y),(x+25,y-45)]); c.edge([(x+205,y),(x+205,y-45)])
-        oval_y=y-95
-    c.shape('ellipse',x-50,oval_y,150,50,key,18,underline=True)
-    c.shape('ellipse',x+130,oval_y,150,50,field,18)
+    bottom=y>500
+    oval_y=y+90 if bottom else y-95
+    for offset,label in zip((7,115,223),(key,field,extra)):
+        c.edge([(x+offset,y+70 if bottom else y),(x+offset,y+90 if bottom else y-45)])
+        c.shape('ellipse',x+offset-52,oval_y,104,50,label,13 if len(label)>10 else 16,underline=label==key)
 
 def rel(c,x,y,label): c.shape('diamond',x,y,170,90,label,18,'#fdf6e8')
 def legend(c,text): c.text(35,940,1330,50,text,17,False,'#536875')
@@ -162,14 +198,21 @@ def usecase_pages():
         c.page.set('name',name);c.page.set('id','usecase-'+name.lower().replace(' ','-'))
         c.shape('rect',350,125,1000,865,'',fill='white')
         c.text(510,135,680,40,'CAMPUS SHIKAYAT SETU',23,True,TEAL)
-        c.actor(90,425,110,170);c.text(15,605,260,40,name,23,True)
+        # Repeat the same actor symbol in groups of at most four associations.
+        # UML permits repeated representations of an actor; this keeps the
+        # associations distinct and prevents a twelve-line starburst.
         gap=61 if len(uses)>9 else 85
         top=190+(750-(len(uses)-1)*gap-52)/2
-        for i,label in enumerate(uses):
-            y=round(top+i*gap)
-            c.edge([(200,502),(650,y+26)])
-            c.shape('ellipse',650,y,560,52,label,20,'white')
-        c.text(20,1015,1360,60,note,17,False,'#536875')
+        for first in range(0,len(uses),4):
+            group=uses[first:first+4]
+            center=round(top+(first+(len(group)-1)/2)*gap+26)
+            c.actor(115,center-55,85,110)
+            c.text(15,center+58,250,30,name,18,True)
+            for offset,label in enumerate(group):
+                y=round(top+(first+offset)*gap)
+                c.edge([(157.5,center),(650,y+26)])
+                c.shape('ellipse',650,y,500,52,label,20,'white')
+        c.text(20,1015,1360,75,note+('\nRepeated actor symbols denote the same role.' if len(uses)>4 else ''),17,False,'#536875')
         pages.append(c)
     return pages
 
@@ -249,9 +292,9 @@ def activity_pages():
 def klass_page():
     c=Canvas('Class diagram — Conceptual domain model','Domain types and selected associations; not implemented ORM classes',1400,1050)
     # Diagrams deliberately contain no invented class operations or inheritance.
-    boxes=[(55,190,'Department','id : Integer\nname : String'),(545,190,'Category','id : Integer\nname : String'),(1035,190,'User','id : Integer\nrole : String'),(545,650,'Complaint','id : Integer\ncode : String\nstatus : String'),(55,650,'Feedback','id : Integer\nrating : Integer'),(1035,650,'ComplaintEvent','id : Integer\neventType : String')]
+    boxes=[(55,190,'Department','id : Integer\nname : String\nemail : String'),(545,190,'Category','id : Integer\nname : String\ndefault_priority : String'),(1035,190,'User','id : Integer\nrole : String\nusername : String\nfull_name : String'),(545,650,'Complaint','id : Integer\ncode : String\ntitle : String\npriority : String\nstatus : String'),(55,650,'Feedback','id : Integer\nrating : Integer\ncomment : String'),(1035,650,'ComplaintEvent','id : Integer\nevent_type : String\nnote : String')]
     for x,y,name,body in boxes:
-        c.shape('rect',x,y,310,180,'',fill='white'); c.shape('rect',x,y,310,46,name,21,BG,True); c.text(x+10,y+52,290,115,body,19)
+        c.shape('rect',x,y,310,180,'',fill='white'); c.shape('rect',x,y,310,46,name,21,BG,True); c.text(x+20,y+52,270,115,body,18,align='left')
     # Relationship lines and UML end multiplicities.
     for pts in [[(365,260),(545,260)],[(700,370),(700,650)],[(1035,300),(930,300),(930,570),(855,570),(855,690)],[(365,730),(545,730)],[(855,730),(1035,730)]]: c.edge(pts)
     c.text(375,225,75,30,'1',19);c.text(470,225,75,30,'0..*',19)
@@ -264,7 +307,7 @@ def klass_page():
 
 def klass_supplement():
     c=Canvas('Class diagram — Additional associations','Conceptual domain model • multiplicities correspond to the SQLite constraints')
-    boxes=[(80,210,'User','id : Integer\nrole : String'),(1010,210,'Department','id : Integer\nname : String'),(80,670,'ComplaintEvent','id : Integer\neventType : String'),(1010,670,'Complaint','id : Integer\ncode : String')]
+    boxes=[(80,210,'User','id : Integer\nrole : String'),(1010,210,'Department','id : Integer\nname : String'),(80,670,'ComplaintEvent','id : Integer\nevent_type : String'),(1010,670,'Complaint','id : Integer\ncode : String')]
     for x,y,name,body in boxes:
         c.shape('rect',x,y,310,170,'',fill='white');c.shape('rect',x,y,310,46,name,21,BG,True);c.text(x+10,y+52,290,100,body,19)
     c.edge([(390,295),(1010,295)]);c.text(400,260,90,30,'0..*',19);c.text(900,260,90,30,'0..1',19)
@@ -307,13 +350,8 @@ def build(name,out,images=None):
     else: pages=[dict(fig_deployment=deployment_page,fig_modules=modules_page)[name.replace('-','_')]()]
     write_doc(pages,out/(name+'.drawio'))
     if images is not None:
-        images=Path(images);images.mkdir(parents=True,exist_ok=True)
-        for i,page in enumerate(pages):
-            if name=='fig-usecase': filename='fig-usecase-'+('student','officer','administrator','public-visitor')[i]+'.png'
-            elif len(pages)>1: filename=name+('' if i==0 else '-'+chr(97+i))+'.png'
-            else: filename=name+'.png'
-            page.save_png(images/filename)
+        raise ValueError('Export PNGs with render_drawio.js to match the editable files.')
 
 if __name__=='__main__':
     for name in ('fig-erd','fig-usecase','fig-activity','fig-class','fig-deployment','fig-modules'):
-        build(name,HERE/'diagrams',HERE/'images')
+        build(name,HERE/'diagrams')

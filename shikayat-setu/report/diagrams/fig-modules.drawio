@@ -14,7 +14,7 @@
         <mxCell id="4" value="Campus Shikayat Setu" style="rounded=0;whiteSpace=wrap;html=0;fillColor=#eef7f5;strokeColor=#183044;strokeWidth=2;fontFamily=Arial;fontSize=24;fontColor=#183044;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="470" y="140" width="460" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="5" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="4" target="10">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="220" as="sourcePoint" />
             <Array as="points">
@@ -24,7 +24,7 @@
             <mxPoint x="205" y="340" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="6" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="6" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="4" target="13">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="220" as="sourcePoint" />
             <Array as="points">
@@ -34,7 +34,7 @@
             <mxPoint x="535" y="340" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="7" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="7" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="4" target="16">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="220" as="sourcePoint" />
             <Array as="points">
@@ -44,7 +44,7 @@
             <mxPoint x="865" y="340" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="8" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;" edge="1" parent="1">
+        <mxCell id="8" value="" style="edgeStyle=none;rounded=0;strokeColor=#344b5c;strokeWidth=2;endArrow=none;endFill=0;dashed=0;exitX=0.5000;exitY=1.0000;exitPerimeter=0;entryX=0.5000;entryY=0.0000;entryPerimeter=0;" edge="1" parent="1" source="4" target="19">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="700" y="220" as="sourcePoint" />
             <Array as="points">
