@@ -180,32 +180,26 @@ class DocxReport:
         if not rows:
             self.p('No records.')
             return
-        if len(headers) == 2:
-            table = self.doc.add_table(rows=1, cols=2)
-            table.alignment = WD_TABLE_ALIGNMENT.CENTER
-            table.autofit = False
-            table.style = 'Table Grid'
-            first = max(29, min(40, CONTENT_MM * widths[0] / sum(widths)))
-            for col, width in zip(table.columns, (first, CONTENT_MM-first)):
-                col.width = Mm(width)
-            for row_index, values in enumerate([headers] + list(rows)):
-                cells = table.rows[0].cells if row_index == 0 else table.add_row().cells
-                for cell, value, width in zip(cells, values, (first, CONTENT_MM-first)):
-                    cell.width = Mm(width); cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
-                    if row_index == 0:
-                        shade(cell, '16243D')
-                    p = cell.paragraphs[0]; p.paragraph_format.space_after = Pt(0)
-                    style_run(p.add_run(source._plain(value)), 13, row_index == 0,
-                              RGBColor(255,255,255) if row_index == 0 else None)
-            self.doc.add_paragraph().paragraph_format.space_after = Pt(0)
-            return
-        for values in rows:
-            p = self.doc.add_paragraph(); p.paragraph_format.space_after = Pt(0)
-            keep(p, True)
-            style_run(p.add_run(source._plain(str(headers[0]) + ': ' + str(values[0]))), 13, True, NAVY)
-            for header, value in zip(headers[1:], values[1:]):
-                p = self.p(str(header) + ': ' + str(value))
-                p.paragraph_format.space_after = Pt(0)
+        headers, rows, widths_mm = source.table_layout(headers, rows, widths)
+        table = self.doc.add_table(rows=1, cols=len(headers))
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+        table.autofit = False
+        table.style = 'Table Grid'
+        for col, width in zip(table.columns, widths_mm):
+            col.width = Mm(width)
+        # Word repeats the header when a table runs across pages.
+        tr_pr = table.rows[0]._tr.get_or_add_trPr()
+        tr_pr.append(OxmlElement('w:tblHeader'))
+        for row_index, values in enumerate([headers] + rows):
+            cells = table.rows[0].cells if row_index == 0 else table.add_row().cells
+            for cell, value, width in zip(cells, values, widths_mm):
+                cell.width = Mm(width); cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
+                if row_index == 0:
+                    shade(cell, '16243D')
+                p = cell.paragraphs[0]; p.paragraph_format.space_after = Pt(0)
+                style_run(p.add_run(source._plain(value)), 13, row_index == 0,
+                          RGBColor(255,255,255) if row_index == 0 else None)
+        self.doc.add_paragraph().paragraph_format.space_after = Pt(0)
 
     def code(self, code_text, title=None):
         if title:

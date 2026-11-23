@@ -68,7 +68,7 @@ def test_usecase_has_separate_editable_actor_pages():
     root = ET.parse(project / 'report' / 'diagrams' / 'fig-usecase.drawio').getroot()
     pages = root.findall('diagram')
     assert [p.get('name') for p in pages] == ['Student', 'Officer', 'Administrator', 'Public visitor']
-    for page, expected_uses, expected_actors in zip(pages, (8, 7, 12, 1), (2, 2, 3, 1)):
+    for page, expected_uses, expected_actors in zip(pages, (8, 7, 12, 1), (1, 1, 1, 1)):
         cells = page.findall('.//mxCell')
         actors = [c for c in cells if 'shape=umlActor' in c.get('style', '')]
         uses = [c for c in cells if c.get('style', '').startswith('ellipse;')]
@@ -133,3 +133,28 @@ def test_indexed_diagram_edges_attach_to_editable_vertices():
             for edge in (c for c in cells if c.get('edge') == '1'):
                 assert edge.get('source') in vertices, (name, page.get('name'), edge.get('id'))
                 assert edge.get('target') in vertices, (name, page.get('name'), edge.get('id'))
+
+
+def test_report_has_readable_repeatable_specification_tables():
+    import xml.etree.ElementTree as ET
+    from zipfile import ZipFile
+    report = Path(__file__).resolve().parent.parent / 'report' / 'CampusShikayatSetu_MCA-Mini-Project_Report.docx'
+    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    with ZipFile(report) as archive:
+        document = ET.fromstring(archive.read('word/document.xml'))
+    tables = document.findall('.//w:tbl', ns)
+    found = {}
+    for table in tables:
+        rows = table.findall('./w:tr', ns)
+        if not rows:
+            continue
+        header = tuple(''.join(cell.itertext()) for cell in rows[0].findall('./w:tc', ns))
+        if header in (('ID', 'Requirement', 'Priority'),
+                      ('Component', 'Minimum', 'Recommended (dev/demo)'),
+                      ('Software', 'Version used', 'Purpose')):
+            assert rows[0].find('./w:trPr/w:tblHeader', ns) is not None
+            found[header] = ''.join(table.itertext())
+    assert len(found) == 3
+    assert 'FR-1' in found[('ID', 'Requirement', 'Priority')] and 'FR-12' in found[('ID', 'Requirement', 'Priority')]
+    assert 'RAM' in found[('Component', 'Minimum', 'Recommended (dev/demo)')]
+    assert 'SQLite' in found[('Software', 'Version used', 'Purpose')]

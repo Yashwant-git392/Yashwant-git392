@@ -198,21 +198,18 @@ def usecase_pages():
         c.page.set('name',name);c.page.set('id','usecase-'+name.lower().replace(' ','-'))
         c.shape('rect',350,125,1000,865,'',fill='white')
         c.text(510,135,680,40,'CAMPUS SHIKAYAT SETU',23,True,TEAL)
-        # Repeat the same actor symbol in groups of at most four associations.
-        # UML permits repeated representations of an actor; this keeps the
-        # associations distinct and prevents a twelve-line starburst.
+        # A single actor represents the role; associations are individually
+        # attached and ordered to avoid crossing one another.
         gap=61 if len(uses)>9 else 85
         top=190+(750-(len(uses)-1)*gap-52)/2
-        for first in range(0,len(uses),4):
-            group=uses[first:first+4]
-            center=round(top+(first+(len(group)-1)/2)*gap+26)
-            c.actor(115,center-55,85,110)
-            c.text(15,center+58,250,30,name,18,True)
-            for offset,label in enumerate(group):
-                y=round(top+(first+offset)*gap)
-                c.edge([(157.5,center),(650,y+26)])
-                c.shape('ellipse',650,y,500,52,label,20,'white')
-        c.text(20,1015,1360,75,note+('\nRepeated actor symbols denote the same role.' if len(uses)>4 else ''),17,False,'#536875')
+        center=round(top+(len(uses)-1)*gap/2+26)
+        c.actor(115,center-55,85,110)
+        c.text(15,center+58,250,30,name,18,True)
+        for i,label in enumerate(uses):
+            y=round(top+i*gap)
+            c.edge([(157.5,center),(650,y+26)])
+            c.shape('ellipse',650,y,500,52,label,20,'white')
+        c.text(20,1015,1360,75,note,17,False,'#536875')
         pages.append(c)
     return pages
 

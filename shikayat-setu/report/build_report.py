@@ -60,6 +60,31 @@ def _plain(text):
     return html.unescape(re.sub(r'</?(?:b|i|em|strong|br)\s*/?>', '', str(text)))
 
 
+def table_layout(headers, rows, widths):
+    """Produce readable table columns inside the template's narrow margins.
+
+    The highlighted requirements and environment lists keep their three
+    columns. Other wide tables use a key and a labelled-details column, so
+    values remain readable rather than squeezing four or five columns.
+    """
+    if len(headers) == 3 and headers[0] in ('Component', 'Software', 'ID') and headers in (
+            ['Component', 'Minimum', 'Recommended (dev/demo)'],
+            ['Software', 'Version used', 'Purpose'], ['ID', 'Requirement', 'Priority']):
+        if headers[0] == 'ID':
+            dims=(20, CONTENT_W-43, 23)
+        elif headers[0] == 'Software':
+            dims=(30, 43, CONTENT_W-73)
+        else:
+            dims=(30, 37, CONTENT_W-67)
+        return headers, list(rows), dims
+    if len(headers) > 2:
+        transformed = [[row[0], '\n'.join(f'{h}: {v}' for h, v in zip(headers[1:], row[1:]))] for row in rows]
+        first = max(29, min(40, CONTENT_W * widths[0] / sum(widths)))
+        return [headers[0], 'Details'], transformed, (first, CONTENT_W-first)
+    first = max(29, min(40, CONTENT_W * widths[0] / sum(widths)))
+    return headers, list(rows), (first, CONTENT_W-first)
+
+
 def extract_template_fonts(directory):
     """Use Times New Roman subsets embedded in the supplied template PDF.
 
@@ -260,90 +285,58 @@ class Report(FPDF):
         self.p(description)
 
     def table(self, headers, rows, widths, **kwargs):
-        # The specified 121 mm content width cannot hold the original four-
-        # and five-column tables legibly at 13 pt. Display their records as
-        # structured cards with navy title rows; use true tables where possible.
-        self.set_font('DVS', '', 13)
         if not rows:
             self.p('No records.')
             return
-        if len(headers) == 2:
-            col1 = max(29, min(40, CONTENT_W * widths[0] / sum(widths)))
-            max_lines = 0
-            for row in [headers] + list(rows):
-                for value, width in zip(row, (col1, CONTENT_W-col1)):
-                    lines = self.multi_cell(width - 3, LINE_H, _plain(value),
-                                            dry_run=True, output=MethodReturnValue.LINES)
-                    max_lines = max(max_lines, len(lines))
-            # Oversized rows must flow as cards instead of breaking inside a table row.
-            if max_lines * LINE_H < (297 - TOP - BOTTOM - 3 * LINE_H):
-                widths_mm = (col1, CONTENT_W - col1)
+        headers, rows, widths_mm = table_layout(headers, rows, widths)
+        bottom = 297 - BOTTOM
 
-                def draw_row(values, is_header=False):
-                    self.set_font('DVS', 'B' if is_header else '', 13)
-                    lines = [self.multi_cell(width - 3, LINE_H, _plain(value), align='L',
-                                             dry_run=True, output=MethodReturnValue.LINES)
-                             for value, width in zip(values, widths_mm)]
-                    height = max(map(len, lines)) * LINE_H + 2
-                    y = self.get_y()
-                    self.set_draw_color(190, 190, 190)
-                    self.set_line_width(0.2)
-                    text_color = (255, 255, 255) if is_header else (0, 0, 0)
-                    self.set_text_color(*text_color)
-                    x = LEFT
-                    for text_lines, width in zip(lines, widths_mm):
-                        self.set_fill_color(*(NAVY if is_header else LIGHT))
-                        self.rect(x, y, width, height, style='DF')
-                        # fpdf's fallback-font switches must not be wrapped in
-                        # separate q/Q blocks for each line; equal fill/text colours.
-                        self.set_fill_color(*text_color)
-                        self.set_xy(x + 1, y + 1)
-                        self.multi_cell(width - 3, LINE_H, '\n'.join(text_lines), align='L')
-                        x += width
-                    self.set_y(y + height)
-                    self.set_x(LEFT)
-                    self.set_text_color(0, 0, 0)
-                    return height
-
-                def row_height(values, bold=False):
-                    self.set_font('DVS', 'B' if bold else '', 13)
-                    return max(len(self.multi_cell(width - 3, LINE_H, _plain(value), align='L',
-                                                   dry_run=True, output=MethodReturnValue.LINES))
-                               for value, width in zip(values, widths_mm)) * LINE_H + 2
-
-                heading_height = row_height(headers, True)
-                if self.get_y() + heading_height + row_height(rows[0]) > 297 - BOTTOM:
-                    self.add_page()
-                draw_row(headers, True)
-                for values in rows:
-                    if self.get_y() + row_height(values) > 297 - BOTTOM:
-                        self.add_page()
-                        draw_row(headers, True)
-                    draw_row(values)
-                self.ln(3)
-                return
-        for values in rows:
-            label = _plain(str(headers[0]) + ': ' + str(values[0]))
-            self.set_font('DVS', 'B', 13)
-            lines = self.multi_cell(CONTENT_W, LINE_H, label, align='L',
+        def wrapped(values, bold=False):
+            self.set_font('DVS', 'B' if bold else '', 13)
+            return [self.multi_cell(width-3, LINE_H, _plain(value), align='L',
                                     dry_run=True, output=MethodReturnValue.LINES)
-            height = len(lines) * LINE_H
-            if self.get_y() + height + LINE_H > 297 - BOTTOM:
-                self.add_page()
-            y = self.get_y()
-            self.set_fill_color(*NAVY2)
-            self.rect(LEFT, y, CONTENT_W, height, style='F')
-            self.set_fill_color(255, 255, 255)
-            self.set_text_color(255, 255, 255)
-            self.set_x(LEFT)
-            self.multi_cell(CONTENT_W, LINE_H, label, align='L')
-            self.set_text_color(0, 0, 0)
-            self.set_fill_color(0, 0, 0)
-            for header, value in zip(headers[1:], values[1:]):
-                self.set_x(LEFT)
-                self.set_font('DVS', '', 13)
-                self.multi_cell(CONTENT_W, LINE_H, _plain(str(header) + ': ' + str(value)), align='L')
-            self.ln(3)
+                    for value,width in zip(values,widths_mm)]
+
+        def draw_lines(lines, is_header=False):
+            height=max(map(len,lines))*LINE_H+2
+            y=self.get_y(); x=LEFT
+            color=(255,255,255) if is_header else (0,0,0)
+            self.set_font('DVS', 'B' if is_header else '', 13)
+            self.set_draw_color(190,190,190); self.set_line_width(0.2)
+            self.set_text_color(*color)
+            for value,width in zip(lines,widths_mm):
+                self.set_fill_color(*(NAVY if is_header else LIGHT))
+                self.rect(x,y,width,height,style='DF')
+                self.set_fill_color(*color); self.set_xy(x+1,y+1)
+                if value:
+                    self.multi_cell(width-3,LINE_H,'\n'.join(value),align='L')
+                x+=width
+            self.set_y(y+height); self.set_x(LEFT); self.set_text_color(0,0,0)
+
+        heading=wrapped(headers,True)
+        heading_height=max(map(len,heading))*LINE_H+2
+        first=wrapped(rows[0]); first_height=min(max(map(len,first))*LINE_H+2, LINE_H+2)
+        if self.get_y()+heading_height+first_height > bottom:
+            self.add_page()
+        draw_lines(heading,True)
+        for values in rows:
+            lines=wrapped(values)
+            # Split exceptionally tall rows across pages without losing data;
+            # repeat the header on each continuation page.
+            while any(lines):
+                available=int((bottom-self.get_y()-2)//LINE_H)
+                if available < 1:
+                    self.add_page(); draw_lines(heading,True)
+                    available=int((bottom-self.get_y()-2)//LINE_H)
+                total=max(map(len,lines))
+                # Keep ordinary rows together when they fit on a fresh page.
+                fresh=int((bottom-TOP-heading_height-2)//LINE_H)
+                if total > available and total <= fresh:
+                    self.add_page(); draw_lines(heading,True); continue
+                take=min(total,available)
+                draw_lines([column[:take] for column in lines])
+                lines=[column[take:] for column in lines]
+        self.ln(3)
 
     def code(self, code_text, title=None):
         if title:
@@ -537,7 +530,7 @@ def ch1(pdf: Report):
         ["Jinja2", "3.x", "Server-side templating"],
         ["SQLite", "3.x (file: shikayat_setu.db)", "Relational database (migration requires changes and testing)"],
         ["Werkzeug", "3.x", "WSGI stack + Werkzeug password hashing"],
-        ["pytest", "9.x", "Unit / integration test runner (114 tests)"],
+        ["pytest", "9.x", "Unit / integration test runner"],
         ["Browser", "Chrome 120+ / Firefox 120+ / Edge 120+", "Client"],
         ["IDE / Editor", "VS Code", "Source code editing and debugging"],
     ], [42, 62, 74])
@@ -677,7 +670,7 @@ def ch3(pdf: Report):
     ], [30, 148])
 
     pdf.h2("3.4  Use-Case Diagrams", reserve=140)
-    pdf.p("Each actor has a separate use-case diagram. The first three are stored user roles; the public visitor is an external actor, not a database role. Repeated actor symbols on a page denote the same role and improve readability.")
+    pdf.p("Each actor has a separate use-case diagram. The first three are stored user roles; the public visitor is an external actor, not a database role.")
     pdf.figure(f"{IMG}/fig-usecase-student.png", 170, "Figure 3.2a  Student use cases.")
     pdf.figure(f"{IMG}/fig-usecase-officer.png", 170, "Figure 3.2b  Department officer use cases.")
     pdf.figure(f"{IMG}/fig-usecase-administrator.png", 170, "Figure 3.2c  Administrator use cases.")

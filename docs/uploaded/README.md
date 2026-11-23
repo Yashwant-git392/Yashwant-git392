@@ -4,6 +4,8 @@ Files provided by Yashwant Santosh Ahire for this project, tracked in Git as sou
 
 | File | Source | Used for |
 |---|---|---|
-| `Project_Review_Schedule_2026-27_MCA-I_SEM-I.pdf` | Official circular from the MCA Department, K.B.H.S.S.T's Dr. B. V. Hiray College of Management and Research Centre, Malegaon — dated 30th Sep 2026 (scanned copy, uploaded 2026-11-12) | Authoritative milestones & marks cited across the report (Appendix D, certificate, Ch-1 timeline), the review deck, and START_HERE.txt |
+| `Project_Review_Schedule_2026-27_MCA-I_SEM-I.pdf` | Official circular from the MCA Department, K.B.H.S.S.T's Dr. B. V. Hiray College of Management and Research Centre, Malegaon — dated 30th Sep 2026 (scanned copy, uploaded 2026-11-12) | Reference for review milestones and marks |
 
-Note: this is a college-circulated notice; the full schedule is also reproduced in tabular form in `shikayat-setu/report/CampusShikayatSetu_MCA-Mini-Project_Report.pdf` (Appendix D).
+| `image-3.png`, `image-4.png` | User-provided screenshots of report pages | Reference for the report table-formatting request |
+
+The screenshots are retained as uploaded source material outside the submission package.
