@@ -135,14 +135,15 @@ class DocxReport:
         style_run(p.add_run(source._plain(text)), 16, True, NAVY)
         self.mark(p, key)
 
-    def h2(self, text, reserve=20):
-        self.heading(text, 'Heading 2')
+    def h2(self, text, reserve=20, new_page=False):
+        self.heading(text, 'Heading 2', new_page)
 
-    def h3(self, text, reserve=16):
-        self.heading(text, 'Heading 3')
+    def h3(self, text, reserve=16, new_page=False):
+        self.heading(text, 'Heading 3', new_page)
 
-    def heading(self, text, style):
+    def heading(self, text, style, new_page=False):
         p = self.doc.add_paragraph(style=style); keep(p, True)
+        p.paragraph_format.page_break_before = new_page
         p.paragraph_format.space_after = Pt(4)
         style_run(p.add_run(source._plain(text)), 15, True, NAVY)
         self.mark(p, 'section:' + text.split(' ', 1)[0])
@@ -158,7 +159,7 @@ class DocxReport:
     def note(self, text):
         self.p(text)
 
-    def figure(self, path, width_mm, caption_text, description=None):
+    def figure(self, path, width_mm, caption_text, description=None, new_page=False):
         description = description or source.FIGURE_DESCRIPTIONS.get(Path(path).name)
         if not description:
             raise ValueError(f'No description for {path}')
@@ -167,6 +168,7 @@ class DocxReport:
         image_width = min(width_mm, CONTENT_MM, 190 * width / height)
         p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1
+        p.paragraph_format.page_break_before = new_page
         keep(p, True); p.add_run().add_picture(str(path), width=Mm(image_width))
         p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_after = Pt(3); keep(p, True)

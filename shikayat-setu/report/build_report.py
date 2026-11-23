@@ -205,8 +205,8 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
         self.start_section(text, level=0)
 
-    def h2(self, text, reserve=20):
-        if self.get_y() + min(reserve, 95) > 297 - BOTTOM:
+    def h2(self, text, reserve=20, new_page=False):
+        if new_page or self.get_y() + min(reserve, 95) > 297 - BOTTOM:
             self.add_page()
         self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
         self.set_font('DVS', 'B', 15)
@@ -217,8 +217,8 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
         self.ln(2)
 
-    def h3(self, text, reserve=16):
-        if self.get_y() + min(reserve, 105) > 297 - BOTTOM:
+    def h3(self, text, reserve=16, new_page=False):
+        if new_page or self.get_y() + min(reserve, 105) > 297 - BOTTOM:
             self.add_page()
         self.recorder['section:' + text.split(' ', 1)[0]] = self.page_no()
         self.set_font('DVS', 'B', 15)
@@ -250,7 +250,7 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
         self.ln(1)
 
-    def figure(self, path, width_mm, caption_text, description=None):
+    def figure(self, path, width_mm, caption_text, description=None, new_page=False):
         from PIL import Image
         if description is None:
             description = FIGURE_DESCRIPTIONS.get(Path(path).name)
@@ -276,7 +276,7 @@ class Report(FPDF):
         if h > max_height:
             w *= max_height / h
             h = max_height
-        if self.get_y() + h + text_height > 297 - BOTTOM:
+        if new_page or self.get_y() + h + text_height > 297 - BOTTOM:
             self.add_page()
         self.set_x(LEFT)
         self.image(str(path), x=LEFT + (CONTENT_W - w) / 2, w=w)
@@ -702,13 +702,13 @@ def ch3(pdf: Report):
 
     pdf.h2("3.9  Sample Input and Output Screens", reserve=40)
     pdf.p("Screenshots use synthetic seeded data; see Appendix B. The fresh-seed reports contain at least five data rows; routing has two mode summaries and a separate complaint-level table. The full screen catalogue and validation notes are in Chapter 10.")
-    pdf.figure(f"{IMG}/screen-login.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).")
-    pdf.figure(f"{IMG}/screen-dashboard.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).")
-    pdf.figure(f"{IMG}/screen-lodge.png", 148, "Figure 3.9  Sample input — Complaint form with estimated routing.")
-    pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (fresh-seed filterable register).")
-    pdf.figure(f"{IMG}/screen-timeline.png", 148, "Figure 3.11  Sample output — Complaint detail: SLA clock, stepper and timeline.")
+    pdf.figure(f"{IMG}/screen-login.png", 120, "Figure 3.7  Sample input — Sign-in screen (roll no./username + password).", new_page=True)
+    pdf.figure(f"{IMG}/screen-dashboard.png", 132, "Figure 3.8  Sample output — Student dashboard (KPI tiles, status donut, latest complaints).", new_page=True)
+    pdf.figure(f"{IMG}/screen-lodge.png", 148, "Figure 3.9  Sample input — Complaint form with estimated routing.", new_page=True)
+    pdf.figure(f"{IMG}/screen-console.png", 148, "Figure 3.10  Sample output — Admin console (fresh-seed filterable register).", new_page=True)
+    pdf.figure(f"{IMG}/screen-timeline.png", 148, "Figure 3.11  Sample output — Complaint detail: SLA clock, stepper and timeline.", new_page=True)
 
-    pdf.h3("3.9.1  Constraints and Assumptions")
+    pdf.h3("3.9.1  Constraints and Assumptions", new_page=True)
     pdf.bullets([
         "One campus, one server process, SQLite file in the app directory; contention and capacity depend on workload and have not been load-tested.",
         "Keyword lists are curated per domain; sarcasm/vindication requires admin reassignment (Chapter 6, L-2).",
@@ -928,10 +928,10 @@ def ch10(pdf: Report):
       ("Access error", "forbidden", "A 403 page is shown for forbidden access. Missing pages or complaints use the same error template with 404."),
     ]
     for i, (title, filename, description) in enumerate(screens, 1):
-        pdf.h3(f"10.3.{i}  {title}", reserve=132)
+        pdf.h3(f"10.3.{i}  {title}", reserve=132, new_page=True)
         pdf.figure(f"{IMG}/screen-{filename}.png", 162, f"Figure 10.{i}  {title} — synthetic demo.", description)
 
-    pdf.h2("10.4  Frequently asked questions")
+    pdf.h2("10.4  Frequently asked questions", new_page=True)
     pdf.bullets([
         "<b>“The complaint is routed wrong!”</b> — Admins reassign in one click; the timeline records old → new department.",
         "<b>“How do I see overdue complaints?”</b> — the reports tab “Department Pendency” has an Overdue column; officer queue sorts High priority first.",
@@ -1066,7 +1066,7 @@ def render_chapter(pdf, fn):
     for group in groups:
         # Try to keep each manageable subtopic together; large tables,
         # multiple figures and code may still span multiple pages.
-        if group[0][0] in ('h2','h3') and not any(item[0] in ('code','h1') for item in group) and sum(item[0]=='figure' for item in group) <= 1:
+        if group[0][0] in ('h2','h3') and not group[0][2].get('new_page') and not any(item[0] in ('code','h1') for item in group) and sum(item[0]=='figure' for item in group) <= 1:
             records=pdf.recorder; previous=dict(records)
             with pdf.offset_rendering() as probe:
                 execute(probe.pdf,group)

@@ -34,6 +34,18 @@ def main():
         assert forbidden not in text.lower(), forbidden
     assert len(doc.inline_shapes) == 48  # logo + all 47 numbered figures
     assert text.count('Description:') == 47
+    # The document requests an explicit page break before each screenshot:
+    # on the image for chapter 3, or on the corresponding manual heading.
+    image_starts = 0
+    manual_starts = 0
+    for i, paragraph in enumerate(doc.paragraphs):
+        if re.match(r'Figure 3\.(?:7|8|9|10|11)(?!\d)', paragraph.text):
+            assert i > 0 and doc.paragraphs[i-1].paragraph_format.page_break_before, paragraph.text
+            image_starts += 1
+        if re.match(r'10\.3\.\d+\s', paragraph.text):
+            assert paragraph.paragraph_format.page_break_before, paragraph.text
+            manual_starts += 1
+    assert image_starts == 5 and manual_starts == 25
     for number in ['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] + [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)]:
         assert re.search(r'Figure ' + re.escape(number) + r'(?![\da-z])', text), number
     with ZipFile(REPORT) as z:

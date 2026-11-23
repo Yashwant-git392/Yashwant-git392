@@ -19,6 +19,7 @@ def main():
                             (2, 'DECLARATION'), (3, 'ACKNOWLEDGEMENT'), (4, 'INDEX')]:
         assert expected in doc[index].get_text(), (index + 1, expected)
     figures = []
+    screenshot_pages = {}
     for page in doc:
         assert abs(page.rect.width - 595.28) < 1 and abs(page.rect.height - 841.89) < 1
         for block in page.get_text('dict')['blocks']:
@@ -39,6 +40,11 @@ def main():
         for caption, description in zip(captions, descriptions):
             assert caption.end() < description.start(), (page.number + 1, 'description must follow figure')
             figures.append(caption.group(1))
+        screen_captions = [c.group(1) for c in captions if c.group(1) in {'3.7','3.8','3.9','3.10','3.11'} or c.group(1).startswith('10.')]
+        if screen_captions:
+            assert len(captions) == 1 and len(screen_captions) == 1, (page.number + 1, 'screenshot must have its own page')
+            assert len(page.get_image_info()) == 1, (page.number + 1, 'screenshot page must have one image')
+            screenshot_pages[screen_captions[0]] = page.number + 1
         if captions:
             assert len(page.get_images()) >= len(captions), (page.number + 1, 'missing image')
             if re.search(r'Figure 3\.(?:1[a-c]|2[a-d]|3[a-b]|4[a-e]|5|6)(?![\da-z])', text):
@@ -47,6 +53,7 @@ def main():
     expected_figures = (['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] +
                         [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)])
     assert sorted(figures) == sorted(expected_figures), (figures, expected_figures)
+    assert len(screenshot_pages) == 30 and len(set(screenshot_pages.values())) == 30
     index_pages = []
     for page in list(doc)[4:]:
         if 'CHAPTER 1' in page.get_text():
