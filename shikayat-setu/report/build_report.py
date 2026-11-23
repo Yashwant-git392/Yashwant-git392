@@ -20,7 +20,7 @@ DB = Path(os.environ.get("SHIKAYAT_DB", REPORT_DIR.parent / "app" / "shikayat_se
 OUT = REPORT_DIR / "CampusShikayatSetu_MCA-Mini-Project_Report.pdf"
 
 D = str(REPORT_DIR / "fonts") + os.sep
-LEFT, RIGHT, TOP, BOTTOM = 50.8, 38.1, 50.8, 38.1  # 2, 1.5, 2, 1.5 inches
+LEFT, RIGHT, TOP, BOTTOM = 25.4, 15.0, 36.0, 25.4  # enlarged diagram area; binding space on left
 CONTENT_W = 210 - LEFT - RIGHT
 LINE_H = 13 * 1.5 * 25.4 / 72
 NAVY = (22, 36, 61)
@@ -158,9 +158,9 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
 
     def header(self):
-        if self.page_no() <= 3:  # two genuinely blank pages and the cover
+        if self.page_no() <= 1:  # cover only
             return
-        self.set_y(29)
+        self.set_y(17)
         self.set_x(LEFT)
         self.set_font('DVS', '', 13)
         self.set_text_color(*NAVY)
@@ -168,12 +168,12 @@ class Report(FPDF):
         self.cell(CONTENT_W, LINE_H, 'Campus Shikayat Setu', align='R')
         self.set_draw_color(*GOLD)
         self.set_line_width(0.3)
-        self.line(LEFT, 40, LEFT + CONTENT_W, 40)
+        self.line(LEFT, 29, LEFT + CONTENT_W, 29)
         self.set_text_color(0, 0, 0)
         self.set_y(TOP)
 
     def footer(self):
-        if self.page_no() <= 3:
+        if self.page_no() <= 1:
             return
         self.set_y(-23)
         self.set_x(LEFT)
@@ -235,7 +235,7 @@ class Report(FPDF):
         self.set_text_color(0, 0, 0)
         self.set_fill_color(0, 0, 0)
         self.multi_cell(CONTENT_W, LINE_H, _plain(text), align='L')
-        self.ln(2)
+        self.ln(3)
 
     def bullets(self, items, indent=6):
         for item in items:
@@ -354,11 +354,6 @@ class Report(FPDF):
 
     def note(self, text):
         self.p(text)
-
-
-def blank_pages(pdf):
-    pdf.add_page()
-    pdf.add_page()
 
 
 def cover(pdf):
@@ -1039,12 +1034,59 @@ def appc(pdf: Report):
     pdf.table(["Term", "Meaning"], words, [34, 144], size=8.0)
 
 
+class ChapterCalls:
+    """Collect content calls so small subtopics can stay together when possible."""
+    def __init__(self):
+        self.calls=[]
+
+    def __getattr__(self, name):
+        if name not in {'h1','h2','h3','p','bullets','note','figure','table','code'}:
+            raise AttributeError(name)
+        def collect(*args, **kwargs):
+            self.calls.append((name,args,kwargs))
+        return collect
+
+
+def render_chapter(pdf, fn):
+    capture=ChapterCalls(); fn(capture)
+    groups=[]; current=[]
+    for call in capture.calls:
+        name=call[0]
+        if name in ('h1','h2','h3') and current:
+            # Retain consecutive parent/child headings together.
+            if not all(item[0] in ('h1','h2','h3') for item in current):
+                groups.append(current); current=[]
+        current.append(call)
+    if current: groups.append(current)
+
+    def execute(target, calls):
+        for name,args,kwargs in calls:
+            getattr(target,name)(*args,**kwargs)
+
+    for group in groups:
+        # Try to keep each manageable subtopic together; large tables,
+        # multiple figures and code may still span multiple pages.
+        if group[0][0] in ('h2','h3') and not any(item[0] in ('code','h1') for item in group) and sum(item[0]=='figure' for item in group) <= 1:
+            records=pdf.recorder; previous=dict(records)
+            with pdf.offset_rendering() as probe:
+                execute(probe.pdf,group)
+            records.clear();records.update(previous);pdf.recorder=records
+            if probe.page_break_triggered:
+                records=pdf.recorder;previous=dict(records)
+                with pdf.offset_rendering() as fresh:
+                    fresh.add_page(); start=fresh.page_no()
+                    execute(fresh.pdf,group)
+                    fits=fresh.page_no()==start
+                records.clear();records.update(previous);pdf.recorder=records
+                if fits: pdf.add_page()
+        execute(pdf,group)
+
+
 def build(toc, recorder, font_dir):
     pdf = Report(toc=toc, recorder=recorder, font_dir=font_dir)
     pdf.set_title("Campus Shikayat Setu — College Grievance Redressal System (MCA-I Sem-I Mini Project Report)")
     pdf.set_author("Yashwant Santosh Ahire — Dr. B.V. Hiray College of Management and Research Centre, Malegaon (SPPU)")
     pdf.set_creator("Campus Shikayat Setu report generator (build_report.py)")
-    blank_pages(pdf)
     cover(pdf)
     certificate(pdf)
     declaration(pdf)
@@ -1053,7 +1095,7 @@ def build(toc, recorder, font_dir):
     for key, fn in [("ch1", ch1), ("ch2", ch2), ("ch3", ch3), ("ch4", ch4), ("ch5", ch5),
                     ("ch6", ch6), ("ch7", ch7), ("ch8", ch8), ("ch9", ch9), ("ch10", ch10),
                     ("appa", appa), ("appb", appb), ("appc", appc)]:
-        fn(pdf)
+        render_chapter(pdf, fn)
     return pdf
 
 

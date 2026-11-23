@@ -24,7 +24,8 @@ Before submission, add your roll number and confirmed guide to the report and
 presentation. The college certificate must be issued and signed by the college;
 review the declaration for accuracy before signing. In the editable report, open
 in Word and update page-reference fields (Ctrl+A, then F9); inspect pagination.
-Check with the college whether Semester I and the required binding are correct.
+The report starts with the cover and uses reduced margins to enlarge diagrams,
+as requested; confirm these changes and the required binding with the college.
 The PDF uses font fallbacks for characters absent from the supplied template.
 
 RUN THE APPLICATION

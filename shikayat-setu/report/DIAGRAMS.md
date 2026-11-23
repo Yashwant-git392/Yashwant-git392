@@ -11,7 +11,7 @@ The college's report sequence lists an ER diagram, use-case diagram, class diagr
 - **Deployment:** A local single-computer demonstration of a browser, Python/Flask environment and SQLite file. LAN access is optional and depends on local settings. The server is not a production deployment.
 - **Module hierarchy:** Project files grouped by responsibility; the lines indicate grouping rather than direct imports. There are no Flask blueprints or background workers.
 
-`Campus_Shikayat_Setu_Project_Diagrams.pdf` and its DOCX companion provide 16 larger, separate A4 pages for viewing or printing, with portrait orientation for tall activity diagrams. The main report has narrower prescribed margins, so use this collection when small diagram labels need closer inspection. The report still contains the diagrams and descriptions under the required index sections. Diagram elements in the Word document are images; edit the `.drawio` files to change individual shapes.
+`Campus_Shikayat_Setu_Project_Diagrams.pdf` and its DOCX companion provide 16 larger, separate A4 pages for viewing or printing, with portrait orientation for tall activity diagrams. Use this collection when small diagram labels need closer inspection; the main report diagrams have also been enlarged within its A4 pages. The report still contains the diagrams and descriptions under the required index sections. Diagram elements in the Word document are images; edit the `.drawio` files to change individual shapes.
 
 ## Editing and rebuilding
 

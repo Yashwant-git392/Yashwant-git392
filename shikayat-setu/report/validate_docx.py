@@ -6,7 +6,7 @@ import re
 
 from docx import Document
 import pymupdf
-from build_report import INDEX_ITEMS
+from build_report import INDEX_ITEMS, LEFT, RIGHT, TOP, BOTTOM
 
 ROOT = Path(__file__).resolve().parent.parent
 REPORT = ROOT / 'report' / 'CampusShikayatSetu_MCA-Mini-Project_Report.docx'
@@ -23,10 +23,12 @@ def main():
     doc = Document(REPORT)
     assert len(doc.sections) == 2
     for section in doc.sections:
-        for actual, expected in ((section.left_margin.inches, 2), (section.right_margin.inches, 1.5),
-                                 (section.top_margin.inches, 2), (section.bottom_margin.inches, 1.5)):
-            assert abs(actual - expected) < .01
+        for actual, expected in ((section.left_margin.mm, LEFT), (section.right_margin.mm, RIGHT),
+                                 (section.top_margin.mm, TOP), (section.bottom_margin.mm, BOTTOM)):
+            assert abs(actual - expected) < .1
     paragraphs = [p.text for p in doc.paragraphs]
+    assert paragraphs[0].strip() == 'A', 'Report must start with the cover, not blank pages'
+    assert abs(doc.styles['Normal'].paragraph_format.line_spacing - 1.5) < .01
     text = ' '.join(paragraphs + [cell.text for table in doc.tables for row in table.rows for cell in row.cells])
     for forbidden in ('github', 'review 3', 'review schedule', 'draft:', 'before final submission'):
         assert forbidden not in text.lower(), forbidden
@@ -38,7 +40,6 @@ def main():
         xml = z.read('word/document.xml').decode()
         assert xml.count('PAGEREF ') == len(INDEX_ITEMS)
         assert xml.count('<w:bookmarkStart ') == len(INDEX_ITEMS)
-        assert xml.count('w:type="page"') >= 2
         assert 'w:updateFields' in z.read('word/settings.xml').decode()
     diagram_pdf = ROOT / 'report' / 'Campus_Shikayat_Setu_Use_Case_Diagrams.pdf'
     diagram_doc = Document(diagram_pdf.with_suffix('.docx'))

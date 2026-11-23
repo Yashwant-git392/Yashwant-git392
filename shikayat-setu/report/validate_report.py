@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 import pymupdf
-from build_report import INDEX_ITEMS
+from build_report import INDEX_ITEMS, LEFT, RIGHT, TOP, BOTTOM
 
 PDF = Path(__file__).with_name('CampusShikayatSetu_MCA-Mini-Project_Report.pdf')
 
@@ -15,9 +15,8 @@ def normalize(text):
 
 def main():
     doc = pymupdf.open(PDF)
-    assert all(not doc[i].get_text().strip() and not doc[i].get_images() for i in (0, 1))
-    for index, expected in [(2, 'PROJECT REPORT'), (3, 'COLLEGE CERTIFICATE'),
-                            (4, 'DECLARATION'), (5, 'ACKNOWLEDGEMENT'), (6, 'INDEX')]:
+    for index, expected in [(0, 'PROJECT REPORT'), (1, 'COLLEGE CERTIFICATE'),
+                            (2, 'DECLARATION'), (3, 'ACKNOWLEDGEMENT'), (4, 'INDEX')]:
         assert expected in doc[index].get_text(), (index + 1, expected)
     figures = []
     for page in doc:
@@ -25,14 +24,14 @@ def main():
         for block in page.get_text('dict')['blocks']:
             if block['type'] == 1:
                 x0, y0, x1, y1 = block['bbox']
-                assert x0 >= 143 and x1 <= 488 and y0 >= 142 and y1 <= 735, (page.number + 1, block['bbox'])
+                assert x0 >= LEFT*72/25.4-3 and x1 <= page.rect.width-RIGHT*72/25.4+3 and y0 >= TOP*72/25.4-4 and y1 <= (297-BOTTOM)*72/25.4+4, (page.number + 1, block['bbox'])
             for line in block.get('lines', []):
                 for span in line['spans']:
                     x0, y0, x1, y1 = span['bbox']
-                    assert x0 >= 140 and x1 <= 490 and y0 >= 0 and y1 <= page.rect.height, (page.number + 1, span)
+                    assert x0 >= LEFT*72/25.4-4 and x1 <= page.rect.width-RIGHT*72/25.4+4 and y0 >= 0 and y1 <= page.rect.height, (page.number + 1, span)
                     assert round(span['size'], 1) in (13.0, 15.0, 16.0), (page.number + 1, span)
-                    if 125 < y0 < 756:  # exclude the header and footer
-                        assert y0 >= 139 and y1 <= 739, (page.number + 1, span)
+                    if 85 < y0 < 765:  # exclude the header and footer
+                        assert y0 >= TOP*72/25.4-5 and y1 <= (297-BOTTOM)*72/25.4+5, (page.number + 1, span)
         text = page.get_text()
         captions = list(re.finditer(r'Figure (1\.1|3\.\d+[a-e]?|10\.\d+)(?!\d)', text))
         descriptions = list(re.finditer(r'Description:', text))
@@ -42,11 +41,14 @@ def main():
             figures.append(caption.group(1))
         if captions:
             assert len(page.get_images()) >= len(captions), (page.number + 1, 'missing image')
+            if re.search(r'Figure 3\.(?:1[a-c]|2[a-d]|3[a-b]|4[a-e]|5|6)(?![\da-z])', text):
+                rectangles = [r for img in page.get_images() for r in page.get_image_rects(img[0])]
+                assert rectangles and max(r.width for r in rectangles) >= 150 * 72 / 25.4, (page.number + 1, 'diagram is too small')
     expected_figures = (['1.1'] + [f'3.1{c}' for c in 'abc'] + [f'3.2{c}' for c in 'abcd'] +
                         [f'3.3{c}' for c in 'ab'] + [f'3.4{c}' for c in 'abcde'] + [f'3.{n}' for n in range(5, 12)] + [f'10.{n}' for n in range(1, 26)])
     assert sorted(figures) == sorted(expected_figures), (figures, expected_figures)
     index_pages = []
-    for page in list(doc)[6:]:
+    for page in list(doc)[4:]:
         if 'CHAPTER 1' in page.get_text():
             break
         index_pages.append(page.get_text())

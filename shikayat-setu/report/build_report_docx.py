@@ -72,7 +72,7 @@ class DocxReport:
         normal._element.rPr.rFonts.set(qn('w:eastAsia'), 'Times New Roman')
         normal.font.size = Pt(13)
         normal.paragraph_format.line_spacing = 1.5
-        normal.paragraph_format.space_after = Pt(5)
+        normal.paragraph_format.space_after = Pt(7)
         sec = self.doc.sections[0]
         self.section_layout(sec)
         settings = self.doc.settings._element
@@ -82,9 +82,9 @@ class DocxReport:
 
     def section_layout(self, sec):
         sec.page_width, sec.page_height = Mm(210), Mm(297)
-        sec.left_margin, sec.right_margin = Inches(2), Inches(1.5)
-        sec.top_margin, sec.bottom_margin = Inches(2), Inches(1.5)
-        sec.header_distance, sec.footer_distance = Mm(29), Mm(23)
+        sec.left_margin, sec.right_margin = Mm(source.LEFT), Mm(source.RIGHT)
+        sec.top_margin, sec.bottom_margin = Mm(source.TOP), Mm(source.BOTTOM)
+        sec.header_distance, sec.footer_distance = Mm(14), Mm(14)
 
     def mark(self, paragraph, key):
         if key not in self.expected_keys or key in self.written_keys:
@@ -99,9 +99,6 @@ class DocxReport:
         self.written_keys.add(key)
 
     def cover(self):
-        blank = self.doc.add_paragraph()
-        blank.paragraph_format.space_after = Pt(0)
-        run = blank.add_run(); run.add_break(WD_BREAK.PAGE); run.add_break(WD_BREAK.PAGE)
         for line in ['A', 'PROJECT REPORT', 'ON', 'CAMPUS SHIKAYAT SETU']:
             p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_after = Pt(0)
@@ -139,13 +136,13 @@ class DocxReport:
         self.mark(p, key)
 
     def h2(self, text, reserve=20):
-        self.heading(text)
+        self.heading(text, 'Heading 2')
 
     def h3(self, text, reserve=16):
-        self.heading(text)
+        self.heading(text, 'Heading 3')
 
-    def heading(self, text):
-        p = self.doc.add_paragraph(); keep(p, True)
+    def heading(self, text, style):
+        p = self.doc.add_paragraph(style=style); keep(p, True)
         p.paragraph_format.space_after = Pt(4)
         style_run(p.add_run(source._plain(text)), 15, True, NAVY)
         self.mark(p, 'section:' + text.split(' ', 1)[0])
@@ -167,7 +164,7 @@ class DocxReport:
             raise ValueError(f'No description for {path}')
         with Image.open(path) as image:
             width, height = image.size
-        image_width = min(width_mm, CONTENT_MM, 116 * width / height)
+        image_width = min(width_mm, CONTENT_MM, 190 * width / height)
         p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p.paragraph_format.space_after = Pt(0); p.paragraph_format.line_spacing = 1
         keep(p, True); p.add_run().add_picture(str(path), width=Mm(image_width))
@@ -217,6 +214,25 @@ class DocxReport:
             field(p, 'PAGEREF ' + bookmark_name(key) + ' \\h')
 
 
+def keep_subtopic_paragraphs_together(doc):
+    """Word may split a group longer than a page; tables/figures break groups."""
+    paragraphs = doc.paragraphs
+    in_topic = False
+    for index, p in enumerate(paragraphs):
+        if p.style.name in ('Heading 2','Heading 3'):
+            in_topic=True
+            continue
+        if not in_topic or index+1 >= len(paragraphs):
+            continue
+        next_p=paragraphs[index+1]
+        # Only chain consecutive text paragraphs, never across a table, image,
+        # or the next heading/chapter. Word can then pack short topics together.
+        if p._p.getnext() is next_p._p and next_p.style.name not in ('Heading 2','Heading 3') and not p._p.xpath('.//w:drawing') and not next_p._p.xpath('.//w:drawing') and not next_p.paragraph_format.page_break_before:
+            p.paragraph_format.keep_with_next=True
+        if next_p.paragraph_format.page_break_before:
+            in_topic=False
+
+
 def main():
     pdf = DocxReport()
     pdf.cover()
@@ -228,6 +244,7 @@ def main():
                source.ch6, source.ch7, source.ch8, source.ch9, source.ch10,
                source.appa, source.appb, source.appc):
         fn(pdf)
+    keep_subtopic_paragraphs_together(pdf.doc)
     assert pdf.written_keys == pdf.expected_keys, ('Missing bookmarks', pdf.expected_keys-pdf.written_keys)
     pdf.doc.save(OUT)
     print('Editable report:', OUT)
