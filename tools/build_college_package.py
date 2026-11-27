@@ -23,7 +23,8 @@ PROJECT DOCUMENTS
 
 The supplied official index has blank page numbers; fill them in before submission.
 The supplied pages do not include a certificate; confirm whether one is required.
-The four supplied pages are images in Word, and their text is not editable.
+The Word report reconstructs the supplied pages as editable text and a table;
+compare the reconstruction to the official PDF. Its logo remains an image.
 Add any required roll number and confirmed guide, review the declaration before
 signing, and inspect Word pagination before printing.
 The report starts with the cover and uses reduced margins to enlarge diagrams,

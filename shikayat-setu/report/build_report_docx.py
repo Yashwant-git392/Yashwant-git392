@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build an editable Word version from the report's shared content functions.
 
-The supplied image-only official pages are inserted as images. The remaining
-report text and tables are editable; Word computes pagination itself.
+The supplied image-only official pages are transcribed as editable Word text
+and tables; the PDF remains the exact scan. Word computes pagination itself.
 """
 from pathlib import Path
 import re
@@ -17,7 +17,7 @@ from docx.shared import Inches, Mm, Pt, RGBColor
 from PIL import Image
 
 import build_report as source
-from official_front import add_official_pages, build_reference_docx
+from official_front import add_editable_official_pages, build_reference_docx
 
 OUT = source.REPORT_DIR / 'CampusShikayatSetu_MCA-Mini-Project_Report.docx'
 NAVY = RGBColor(22, 36, 61)
@@ -101,9 +101,8 @@ class DocxReport:
         self.written_keys.add(key)
 
     def cover(self):
-        # The uploaded PDF has no text layer; these four Word pages are
-        # faithful page images, not editable transcription.
-        add_official_pages(self.doc)
+        # Reconstruct the four image-only supplied pages as editable content.
+        add_editable_official_pages(self.doc)
         sec = self.doc.add_section(WD_SECTION.NEW_PAGE)
         # Keep the section break tiny enough to remain after the fourth page.
         separator = self.doc.paragraphs[-1]
